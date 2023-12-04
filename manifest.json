@@ -1,0 +1,33 @@
+{
+  "Actions": [
+    {
+      "Name": "VoiceMeeter Action",
+      "States": [
+        {
+          "TitleAlignment": "middle",
+          "FontSize": "24"
+        }
+      ],
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": false,
+      "Tooltip": "VoiceMeeter Action Tooltip",
+      "UUID": "jp.hrko.voicemeeter.action"
+    }
+  ],
+  "SDKVersion": 2,
+  "Author": "hrko",
+  "CodePath": "streamdeck-voicemeeter.exe",
+  "Description": "Another VoiceMeeter integration for Stream Deck",
+  "Name": "VoiceMeeter",
+  "URL": "https://hrko.jp",
+  "Version": "0.1",
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Software": {
+    "MinimumVersion": "4.1"
+  }
+}
