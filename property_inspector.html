@@ -6,7 +6,18 @@
   </head>
 
   <body>
-    <sdpi-item label="Show Text">
+    <script>
+      SDPIComponents.i18n.locales = {
+        en: {
+          showText: "Show Text",
+        },
+        ja: {
+          showText: "テキストを表示",
+        },
+      };
+    </script>
+
+    <sdpi-item label="__MSG_showText__">
       <sdpi-checkbox setting="showText"></sdpi-checkbox>
     </sdpi-item>
   </body>
