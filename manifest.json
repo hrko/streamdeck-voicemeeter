@@ -5,7 +5,7 @@
       "States": [
         {
           "TitleAlignment": "middle",
-          "FontSize": "24"
+          "FontSize": "16"
         }
       ],
       "PropertyInspectorPath": "property_inspector.html",

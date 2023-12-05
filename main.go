@@ -13,12 +13,13 @@ import (
 	"github.com/FlowingSPDG/streamdeck"
 	sdcontext "github.com/FlowingSPDG/streamdeck/context"
 	"github.com/fufuok/cmap"
-	"github.com/shirou/gopsutil/cpu"
+	"github.com/onyx-and-iris/voicemeeter/v2"
 )
 
 const (
-	imgX = 72
-	imgY = 72
+	imgX   = 72
+	imgY   = 72
+	kindId = "potato"
 )
 
 type PropertyInspectorSettings struct {
@@ -33,14 +34,25 @@ func main() {
 	defer f.Close()
 	log.SetOutput(f)
 
+	vm, err := voicemeeter.NewRemote(kindId, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = vm.Login()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer vm.Logout()
+	vm.EventAdd("ldirty")
+
 	ctx := context.Background()
 	log.Println("Starting voicemeeter-streamdeck-plugin")
-	if err := run(ctx); err != nil {
+	if err := run(ctx, vm); err != nil {
 		panic(err)
 	}
 }
 
-func run(ctx context.Context) error {
+func run(ctx context.Context, vm *voicemeeter.Remote) error {
 	params, err := streamdeck.ParseRegistrationParams(os.Args)
 	if err != nil {
 		return err
@@ -49,14 +61,14 @@ func run(ctx context.Context) error {
 
 	client := streamdeck.NewClient(ctx, params)
 	log.Println("Client created")
-	setup(client)
+	setup(client, vm)
 	log.Println("Setup done")
 
 	log.Println("Running client")
 	return client.Run(ctx)
 }
 
-func setup(client *streamdeck.Client) {
+func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 	action := client.Action("jp.hrko.voicemeeter.action")
 
 	pi := &PropertyInspectorSettings{}
@@ -102,12 +114,31 @@ func setup(client *streamdeck.Client) {
 				readings[i] = readings[i+1]
 			}
 
-			r, err := cpu.Percent(0, false)
-			if err != nil {
-				log.Printf("error getting CPU reading: %v\n", err)
+			const busIndex = 5
+			const levelMaxDb = 0.0
+			const levelMinDb = -60.0
+			log.Println("Getting levels")
+			busCount := len(vm.Bus)
+			log.Printf("busCount: %v\n", busCount)
+			if busIndex >= busCount {
+				log.Printf("busIndex %v is out of range\n", busIndex)
+				continue
 			}
-			readings[imgX-1] = r[0]
-			log.Printf("CPU: %d%%\n", int(r[0]))
+			levels := vm.Bus[busIndex].Levels().All()
+			log.Println("Got levels")
+			levelDb := levels[0]
+			log.Printf("levelDb: %v\n", levelDb)
+			level := 0.0
+			if levelDb > levelMaxDb {
+				level = 1.0
+			} else if levelDb > levelMinDb {
+				level = (levelDb - levelMinDb) / (levelMaxDb - levelMinDb)
+			} else {
+				level = 0.0
+			}
+			readings[imgX-1] = level
+			log.Printf("level [dB]: %v\n", levelDb)
+			log.Printf("level: %v\n", level)
 
 			log.Printf("sdContexts: %v\n", sdContexts.Keys())
 			for item := range sdContexts.IterBuffered() {
@@ -128,7 +159,7 @@ func setup(client *streamdeck.Client) {
 
 				title := ""
 				if pi.ShowText {
-					title = fmt.Sprintf("CPU\n%d%%", int(r[0]))
+					title = fmt.Sprintf("%.1f dB", levelDb)
 				}
 
 				if err := client.SetTitle(ctx, title, streamdeck.HardwareAndSoftware); err != nil {
@@ -143,7 +174,7 @@ func setup(client *streamdeck.Client) {
 func graph(readings []float64) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, imgX, imgY))
 	for x := 0; x < imgX; x++ {
-		reading := readings[x] / 100
+		reading := readings[x]
 		upto := int(float64(imgY) * reading)
 		for y := 0; y < upto; y++ {
 			img.Set(x, imgY-y, color.RGBA{R: 255, A: 255})

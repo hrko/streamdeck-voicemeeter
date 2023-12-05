@@ -33,6 +33,9 @@ install: kill-streamdeck build
 logs:
 	ls -t "$(TMP)"/voicemeeter-streamdeck-plugin.*.log | head -n 1 | xargs tail -f
 
+logs-full:
+	ls -t "$(TMP)"/voicemeeter-streamdeck-plugin.*.log | head -n 1 | xargs less
+
 clear-logs:
 	rm -f "$(TMP)"/voicemeeter-streamdeck-plugin.*.log
 
