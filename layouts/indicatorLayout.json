@@ -1,0 +1,33 @@
+{
+  "id": "indicatorLayout",
+  "items": [
+    {
+      "key": "background",
+      "rect": [0, 0, 200, 100],
+      "type": "pixmap"
+    },
+    {
+      "key": "icon",
+      "rect": [16, 40, 48, 48],
+      "type": "pixmap"
+    },
+    {
+      "alignment": "right",
+      "font": {
+        "size": 24,
+        "weight": 600
+      },
+      "key": "gainValue",
+      "rect": [76, 40, 108, 32],
+      "type": "text"
+    },
+    {
+      "border_w": 0,
+      "key": "indicator",
+      "rect": [76, 74, 108, 12],
+      "subtype": 4,
+      "type": "bar",
+      "value": 0
+    }
+  ]
+}
