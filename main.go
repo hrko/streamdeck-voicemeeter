@@ -13,6 +13,7 @@ import (
 	"github.com/FlowingSPDG/streamdeck"
 	sdcontext "github.com/FlowingSPDG/streamdeck/context"
 	"github.com/fufuok/cmap"
+	"github.com/mattn/go-jsonpointer"
 	"github.com/onyx-and-iris/voicemeeter/v2"
 )
 
@@ -22,8 +23,33 @@ const (
 	kindId = "potato"
 )
 
-type PropertyInspectorSettings struct {
+type ActionInstanceSettings struct {
 	ShowText bool `json:"showText,omitempty"`
+}
+
+func (s *ActionInstanceSettings) setByEventPayload(payload []byte) error {
+	var obj interface{}
+	err := json.Unmarshal(payload, &obj)
+	if err != nil {
+		return err
+	}
+	v, err := jsonpointer.Get(obj, "/settings")
+	if err != nil {
+		return err
+	}
+	settings, ok := v.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("settings is not a map")
+	}
+	tmp, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(tmp, s)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func main() {
@@ -71,31 +97,47 @@ func run(ctx context.Context, vm *voicemeeter.Remote) error {
 func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 	action := client.Action("jp.hrko.voicemeeter.action")
 
-	pi := &PropertyInspectorSettings{}
+	settings := &ActionInstanceSettings{}
 	sdContexts := cmap.NewOf[string, struct{}]()
+
+	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
+		b, _ := json.MarshalIndent(event, "", "	")
+		log.Printf("event:%s\n", b)
+		err := settings.setByEventPayload(event.Payload)
+		if err != nil {
+			log.Printf("error setting settings: %v\n", err)
+			return err
+		}
+		return nil
+	})
 
 	action.RegisterHandler(streamdeck.SendToPlugin, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		return json.Unmarshal(event.Payload, pi)
+		return nil
 	})
 
 	action.RegisterHandler(streamdeck.KeyDown, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		return json.Unmarshal(event.Payload, pi)
+		return nil
 	})
 
 	action.RegisterHandler(streamdeck.KeyUp, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		return json.Unmarshal(event.Payload, pi)
+		return nil
 	})
 
 	action.RegisterHandler(streamdeck.WillAppear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
 		sdContexts.Set(event.Context, struct{}{})
+		err := settings.setByEventPayload(event.Payload)
+		if err != nil {
+			log.Printf("error setting settings: %v\n", err)
+			return err
+		}
 		return nil
 	})
 
@@ -117,17 +159,13 @@ func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 			const busIndex = 5
 			const levelMaxDb = 0.0
 			const levelMinDb = -60.0
-			log.Println("Getting levels")
 			busCount := len(vm.Bus)
-			log.Printf("busCount: %v\n", busCount)
 			if busIndex >= busCount {
 				log.Printf("busIndex %v is out of range\n", busIndex)
 				continue
 			}
 			levels := vm.Bus[busIndex].Levels().All()
-			log.Println("Got levels")
 			levelDb := levels[0]
-			log.Printf("levelDb: %v\n", levelDb)
 			level := 0.0
 			if levelDb > levelMaxDb {
 				level = 1.0
@@ -137,10 +175,7 @@ func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 				level = 0.0
 			}
 			readings[imgX-1] = level
-			log.Printf("level [dB]: %v\n", levelDb)
-			log.Printf("level: %v\n", level)
 
-			log.Printf("sdContexts: %v\n", sdContexts.Keys())
 			for item := range sdContexts.IterBuffered() {
 				ctxStr := item.Key
 				ctx := context.Background()
@@ -158,7 +193,7 @@ func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 				}
 
 				title := ""
-				if pi.ShowText {
+				if settings.ShowText {
 					title = fmt.Sprintf("%.1f dB", levelDb)
 				}
 

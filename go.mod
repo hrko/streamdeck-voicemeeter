@@ -5,6 +5,7 @@ go 1.21.4
 require (
 	github.com/FlowingSPDG/streamdeck v0.0.0-20230506011737-7eb85f091e90
 	github.com/fufuok/cmap v1.19.2
+	github.com/mattn/go-jsonpointer v0.0.1
 	github.com/onyx-and-iris/voicemeeter/v2 v2.0.1
 	github.com/tidwall/pretty v1.2.1
 )
