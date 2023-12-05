@@ -18,6 +18,7 @@ build:
 	$(GO) build $(GOFLAGS) -o $(BINNAME) main.go
 
 layouts:
+	rm -f layouts/*.json
 	$(GO) run ./cmd/layout-gen/ layouts.drawio layouts/
 
 test:
