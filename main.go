@@ -218,8 +218,6 @@ func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 						LevelMeter: imgLevelMeterBase64,
 						GainValue:  fmt.Sprintf("%.1f dB", vm.Bus[busIndex].Gain()),
 					}
-					b, _ := json.MarshalIndent(payload, "", "	")
-					log.Printf("payload: %s\n", b)
 					err = client.SetFeedback(ctx, payload)
 					if err != nil {
 						log.Printf("error setting feedback: %v\n", err)
