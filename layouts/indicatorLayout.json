@@ -2,9 +2,14 @@
   "id": "indicatorLayout",
   "items": [
     {
-      "key": "background",
-      "rect": [0, 0, 200, 100],
-      "type": "pixmap"
+      "alignment": "left",
+      "font": {
+        "size": 16,
+        "weight": 600
+      },
+      "key": "title",
+      "rect": [16, 10, 136, 24],
+      "type": "text"
     },
     {
       "key": "icon",

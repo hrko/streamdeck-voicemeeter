@@ -2,11 +2,6 @@
   "id": "customLayout",
   "items": [
     {
-      "key": "background",
-      "rect": [0, 0, 200, 100],
-      "type": "pixmap"
-    },
-    {
       "key": "icon",
       "rect": [16, 40, 48, 48],
       "type": "pixmap"
@@ -30,6 +25,16 @@
       "key": "gainSlider",
       "rect": [76, 80, 108, 8],
       "type": "pixmap"
+    },
+    {
+      "alignment": "left",
+      "font": {
+        "size": 16,
+        "weight": 600
+      },
+      "key": "title",
+      "rect": [16, 10, 136, 24],
+      "type": "text"
     }
   ]
 }
