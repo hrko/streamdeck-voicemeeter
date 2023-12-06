@@ -8,6 +8,8 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/FlowingSPDG/streamdeck"
@@ -15,6 +17,8 @@ import (
 	"github.com/fogleman/gg"
 	"github.com/fufuok/cmap"
 	"github.com/onyx-and-iris/voicemeeter/v2"
+	"github.com/tdewolff/canvas"
+	"github.com/tdewolff/canvas/renderers/rasterizer"
 )
 
 const (
@@ -137,61 +141,127 @@ func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 		return nil
 	})
 
-	readings := make([]float64, imgX, imgX)
-
 	go func() {
 		const refreshInterval = time.Second / 30
 		for range time.Tick(refreshInterval) {
-			for i := 0; i < imgX-1; i++ {
-				readings[i] = readings[i+1]
-			}
-
-			const busIndex = 5
-			const levelMaxDb = 12.0
-			const levelGoodDb = -24.0
-			const levelMinDb = -60.0
-			busCount := len(vm.Bus)
-			if busIndex >= busCount {
-				log.Printf("busIndex %v is out of range\n", busIndex)
-				continue
-			}
-			levels := vm.Bus[busIndex].Levels().All()
-			levels = levels[:2]
-			img := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, imgX, imgY, 2, 1, 1)
-
 			for item := range actionInstanceMap.IterBuffered() {
+				const busIndex = 5
+				const levelMaxDb = 12.0
+				const levelGoodDb = -24.0
+				const levelMinDb = -60.0
+				busCount := len(vm.Bus)
+				if busIndex >= busCount {
+					log.Printf("busIndex %v is out of range\n", busIndex)
+					continue
+				}
+				levels := vm.Bus[busIndex].Levels().All()
+				levels = levels[:2]
+
 				ctxStr := item.Key
 				ctx := context.Background()
 				ctx = sdcontext.WithContext(ctx, ctxStr)
 
-				img, err := streamdeck.Image(img)
-				if err != nil {
-					log.Printf("error creating image: %v\n", err)
-					continue
-				}
+				switch item.Val.Controller {
+				case "Keypad":
+					img := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, imgX, imgY, 2, 1, 1)
+					imgBase64, err := streamdeck.Image(img)
+					if err != nil {
+						log.Printf("error creating image: %v\n", err)
+						continue
+					}
+					err = client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware)
+					if err != nil {
+						log.Printf("error setting image: %v\n", err)
+						continue
+					}
+					title := ""
+					levelAvgDb := 0.0
+					for _, lvDb := range levels {
+						levelAvgDb += lvDb
+					}
+					levelAvgDb /= float64(len(levels))
+					if item.Val.Settings.ShowText {
+						title = fmt.Sprintf("%.1f dB", levelAvgDb)
+					}
 
-				if err := client.SetImage(ctx, img, streamdeck.HardwareAndSoftware); err != nil {
-					log.Printf("error setting image: %v\n", err)
-					continue
-				}
+					if err := client.SetTitle(ctx, title, streamdeck.HardwareAndSoftware); err != nil {
+						log.Printf("error setting title: %v\n", err)
+						continue
+					}
 
-				title := ""
-				levelAvgDb := 0.0
-				for _, lvDb := range levels {
-					levelAvgDb += lvDb
-				}
-				levelAvgDb /= float64(len(levels))
-				if item.Val.Settings.ShowText {
-					title = fmt.Sprintf("%.1f dB", levelAvgDb)
-				}
+				case "Encoder":
+					imgIcon, err := getMaterialIcon("e050")
+					if err != nil {
+						log.Printf("error creating image: %v\n", err)
+						continue
+					}
+					imgIconBase64, err := streamdeck.Image(imgIcon)
+					if err != nil {
+						log.Printf("error creating image: %v\n", err)
+						continue
+					}
 
-				if err := client.SetTitle(ctx, title, streamdeck.HardwareAndSoftware); err != nil {
-					log.Printf("error setting title: %v\n", err)
+					imgLevelMeter := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, 108, 8, 1, 1, 1)
+					imgLevelMeterBase64, err := streamdeck.Image(imgLevelMeter)
+					if err != nil {
+						log.Printf("error creating image: %v\n", err)
+						continue
+					}
+					payload := struct {
+						Title      string `json:"title"`
+						Icon       string `json:"icon"`
+						LevelMeter string `json:"levelMeter"`
+						GainValue  string `json:"gainValue"`
+					}{
+						Title:      vm.Bus[busIndex].Label(),
+						Icon:       imgIconBase64,
+						LevelMeter: imgLevelMeterBase64,
+						GainValue:  fmt.Sprintf("%.1f dB", vm.Bus[busIndex].Gain()),
+					}
+					b, _ := json.MarshalIndent(payload, "", "	")
+					log.Printf("payload: %s\n", b)
+					err = client.SetFeedback(ctx, payload)
+					if err != nil {
+						log.Printf("error setting feedback: %v\n", err)
+						continue
+					}
+
+				default:
+					log.Printf("unknown controller: %v\n", item.Val.Controller)
 					continue
 				}
 			}
 		}
 	}()
+}
+
+func mmToPoints(mm float64) float64 {
+	return mm * 2.834645669291339
+}
+
+func getMaterialIcon(codePoint string) (image.Image, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	exeDir := filepath.Dir(exe)
+	fontMaterial := canvas.NewFontFamily("Material Symbols Outlined")
+	err = fontMaterial.LoadFontFile(filepath.Join(exeDir, "MaterialSymbolsOutlined.woff2"), canvas.FontRegular)
+	if err != nil {
+		return nil, err
+	}
+	face := fontMaterial.Face(mmToPoints(48), color.White, canvas.FontRegular, canvas.FontNormal)
+
+	c := canvas.New(48, 48)
+	ctx := canvas.NewContext(c)
+	codeInt, err := strconv.ParseInt(codePoint, 16, 32)
+	if err != nil {
+		return nil, err
+	}
+	codeRune := rune(codeInt)
+	ctx.DrawText(0, 0, canvas.NewTextLine(face, string(codeRune), canvas.Left))
+
+	return rasterizer.Draw(c, canvas.DPMM(1.0), canvas.DefaultColorSpace), nil
 }
 
 func levelMeterHorizontal(dB []float64, dBMin float64, dBGood float64, dBMax float64, width int, height int, cellWidth int, cellMarginX int, cellMarginY int) image.Image {

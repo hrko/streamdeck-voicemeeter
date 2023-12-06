@@ -8,6 +8,10 @@
           "FontSize": "16"
         }
       ],
+      "Controllers": ["Keypad", "Encoder"],
+      "Encoder": {
+        "layout": "layouts/customLayout.json"
+      },
       "PropertyInspectorPath": "property_inspector.html",
       "SupportedInMultiActions": false,
       "Tooltip": "VoiceMeeter Action Tooltip",
@@ -28,6 +32,6 @@
     }
   ],
   "Software": {
-    "MinimumVersion": "4.1"
+    "MinimumVersion": "6.4"
   }
 }
