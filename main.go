@@ -13,7 +13,6 @@ import (
 	"github.com/FlowingSPDG/streamdeck"
 	sdcontext "github.com/FlowingSPDG/streamdeck/context"
 	"github.com/fufuok/cmap"
-	"github.com/mattn/go-jsonpointer"
 	"github.com/onyx-and-iris/voicemeeter/v2"
 )
 
@@ -27,29 +26,16 @@ type ActionInstanceSettings struct {
 	ShowText bool `json:"showText,omitempty"`
 }
 
-func (s *ActionInstanceSettings) setByEventPayload(payload []byte) error {
-	var obj interface{}
-	err := json.Unmarshal(payload, &obj)
-	if err != nil {
-		return err
-	}
-	v, err := jsonpointer.Get(obj, "/settings")
-	if err != nil {
-		return err
-	}
-	settings, ok := v.(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("settings is not a map")
-	}
-	tmp, err := json.Marshal(settings)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(tmp, s)
-	if err != nil {
-		return err
-	}
-	return nil
+type ActionInstanceCoordinates struct {
+	Column int `json:"column,omitempty"`
+	Row    int `json:"row,omitempty"`
+}
+
+type ActionInstanceProperty struct {
+	Controller      string                    `json:"controller,omitempty"` // "Keypad" | "Encoder"
+	Coordinates     ActionInstanceCoordinates `json:"coordinates,omitempty"`
+	IsInMultiAction bool                      `json:"isInMultiAction,omitempty"`
+	Settings        ActionInstanceSettings    `json:"settings,omitempty"`
 }
 
 func main() {
@@ -97,17 +83,18 @@ func run(ctx context.Context, vm *voicemeeter.Remote) error {
 func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 	action := client.Action("jp.hrko.voicemeeter.action")
 
-	settings := &ActionInstanceSettings{}
-	sdContexts := cmap.NewOf[string, struct{}]()
+	actionInstanceMap := cmap.NewOf[string, ActionInstanceProperty]() // key: context of action instance
 
 	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		err := settings.setByEventPayload(event.Payload)
+		var prop ActionInstanceProperty
+		err := json.Unmarshal(event.Payload, &prop)
 		if err != nil {
-			log.Printf("error setting settings: %v\n", err)
+			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
+		actionInstanceMap.Set(event.Context, prop)
 		return nil
 	})
 
@@ -132,19 +119,20 @@ func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 	action.RegisterHandler(streamdeck.WillAppear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		sdContexts.Set(event.Context, struct{}{})
-		err := settings.setByEventPayload(event.Payload)
+		var prop ActionInstanceProperty
+		err := json.Unmarshal(event.Payload, &prop)
 		if err != nil {
-			log.Printf("error setting settings: %v\n", err)
+			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
+		actionInstanceMap.Set(event.Context, prop)
 		return nil
 	})
 
 	action.RegisterHandler(streamdeck.WillDisappear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		sdContexts.Remove(event.Context)
+		actionInstanceMap.Remove(event.Context)
 		return nil
 	})
 
@@ -176,7 +164,7 @@ func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 			}
 			readings[imgX-1] = level
 
-			for item := range sdContexts.IterBuffered() {
+			for item := range actionInstanceMap.IterBuffered() {
 				ctxStr := item.Key
 				ctx := context.Background()
 				ctx = sdcontext.WithContext(ctx, ctxStr)
@@ -193,7 +181,7 @@ func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 				}
 
 				title := ""
-				if settings.ShowText {
+				if item.Val.Settings.ShowText {
 					title = fmt.Sprintf("%.1f dB", levelDb)
 				}
 
