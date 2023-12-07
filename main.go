@@ -69,6 +69,7 @@ func run(ctx context.Context) error {
 	client := streamdeck.NewClient(ctx, params)
 	log.Println("Client created")
 
+	registerNoActionHandlers(client)
 	registerActionHandlers(client)
 
 	chErr := make(chan error)
@@ -77,7 +78,29 @@ func run(ctx context.Context) error {
 		chErr <- client.Run(ctx)
 	}()
 
-	chGlobalSettings := make(chan *GlobalSettings, 1)
+	waitClientConnected(client)
+	globalSettings, err := fetchGlobalSettings(ctx, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Global settings: %v\n", globalSettings)
+
+	vm, err := loginVoicemeeter(globalSettings.VoiceMeeterKind)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer vm.Logout()
+	vm.EventAdd("ldirty")
+
+	go actionLoop(client, vm)
+
+	return <-chErr
+}
+
+var chGlobalSettings chan *GlobalSettings
+
+func registerNoActionHandlers(client *streamdeck.Client) {
+	chGlobalSettings = make(chan *GlobalSettings)
 	client.RegisterNoActionHandler(streamdeck.DidReceiveGlobalSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
@@ -97,43 +120,48 @@ func run(ctx context.Context) error {
 		}
 		return nil
 	})
+}
 
-	waitClientConnected(client)
-	var globalSettings *GlobalSettings
-	globalSettingsReceived := make(chan struct{})
+func fetchGlobalSettings(ctx context.Context, client *streamdeck.Client) (*GlobalSettings, error) {
+	if !client.IsConnected() {
+		return nil, fmt.Errorf("client is not connected")
+	}
+	var gs *GlobalSettings
+	eventReceived := make(chan struct{})
+	defer close(eventReceived)
 	go func() {
-		globalSettings = <-chGlobalSettings
-		log.Printf("global settings received: %v\n", globalSettings)
-		globalSettingsReceived <- struct{}{}
+		gs = <-chGlobalSettings
+		eventReceived <- struct{}{}
 	}()
-	if client.GetGlobalSettings(sdcontext.WithContext(ctx, client.UUID())) != nil {
-		log.Println("GetGlobalSettings error")
-		return err
+	ctx = sdcontext.WithContext(ctx, client.UUID())
+	if err := client.GetGlobalSettings(ctx); err != nil {
+		return nil, err
 	}
-	<-globalSettingsReceived
+	select {
+	case <-eventReceived:
+		return gs, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
 
-	var vmKind string
-	switch globalSettings.VoiceMeeterKind {
+func loginVoicemeeter(kindId string) (*voicemeeter.Remote, error) {
+	switch kindId {
 	case "basic", "banana", "potato":
-		vmKind = globalSettings.VoiceMeeterKind
 	default:
-		vmKind = "basic"
+		log.Printf("unknown kindId: '%v', fallback to 'basic'\n", kindId)
+		kindId = "basic"
 	}
-	vm, err := voicemeeter.NewRemote(vmKind, 0)
+	vm, err := voicemeeter.NewRemote(kindId, 0)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	log.Println("Login to voicemeeter")
 	err = vm.Login()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	defer vm.Logout()
-	vm.EventAdd("ldirty")
-
-	go actionLoop(client, vm)
-
-	return <-chErr
+	return vm, nil
 }
 
 func waitClientConnected(client *streamdeck.Client) error {
