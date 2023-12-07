@@ -27,6 +27,10 @@ const (
 	kindId = "potato"
 )
 
+type GlobalSettings struct {
+	VoiceMeeterKind string `json:"voiceMeeterKind"`
+}
+
 type ActionInstanceSettings struct {
 	ShowText bool `json:"showText,omitempty"`
 }
@@ -44,32 +48,16 @@ type ActionInstanceProperty struct {
 }
 
 func main() {
-	f, err := os.CreateTemp("", "voicemeeter-streamdeck-plugin.*.log")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-	log.SetOutput(f)
-
-	vm, err := voicemeeter.NewRemote(kindId, 0)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = vm.Login()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer vm.Logout()
-	vm.EventAdd("ldirty")
+	streamdeck.Log().SetOutput(os.Stderr)
 
 	ctx := context.Background()
 	log.Println("Starting voicemeeter-streamdeck-plugin")
-	if err := run(ctx, vm); err != nil {
+	if err := run(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func run(ctx context.Context, vm *voicemeeter.Remote) error {
+func run(ctx context.Context) error {
 	params, err := streamdeck.ParseRegistrationParams(os.Args)
 	if err != nil {
 		return err
@@ -78,11 +66,80 @@ func run(ctx context.Context, vm *voicemeeter.Remote) error {
 
 	client := streamdeck.NewClient(ctx, params)
 	log.Println("Client created")
-	setup(client, vm)
-	log.Println("Setup done")
 
-	log.Println("Running client")
-	return client.Run(ctx)
+	chErr := make(chan error)
+	go func() {
+		log.Println("Starting client")
+		chErr <- client.Run(ctx)
+	}()
+
+	chGlobalSettings := make(chan *GlobalSettings, 1)
+	client.RegisterNoActionHandler(streamdeck.DidReceiveGlobalSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
+		b, _ := json.MarshalIndent(event, "", "	")
+		log.Printf("event:%s\n", b)
+		payload := new(struct {
+			Settings *GlobalSettings `json:"settings"`
+		})
+		err := json.Unmarshal(event.Payload, payload)
+		if err != nil {
+			log.Printf("error unmarshaling payload: %v\n", err)
+			return err
+		}
+		select {
+		case chGlobalSettings <- payload.Settings:
+			log.Println("global settings received and sent to channel")
+		default:
+			log.Println("global settings received but no one is waiting for channel")
+		}
+		return nil
+	})
+
+	waitClientConnected(client)
+	var globalSettings *GlobalSettings
+	globalSettingsReceived := make(chan struct{})
+	go func() {
+		globalSettings = <-chGlobalSettings
+		log.Printf("global settings received: %v\n", globalSettings)
+		globalSettingsReceived <- struct{}{}
+	}()
+	if client.GetGlobalSettings(sdcontext.WithContext(ctx, client.UUID())) != nil {
+		log.Println("GetGlobalSettings error")
+		return err
+	}
+	<-globalSettingsReceived
+
+	var vmKind string
+	switch globalSettings.VoiceMeeterKind {
+	case "basic", "banana", "potato":
+		vmKind = globalSettings.VoiceMeeterKind
+	default:
+		vmKind = "basic"
+	}
+	vm, err := voicemeeter.NewRemote(vmKind, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("Login to voicemeeter")
+	err = vm.Login()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer vm.Logout()
+	vm.EventAdd("ldirty")
+
+	go setup(client, vm)
+
+	return <-chErr
+}
+
+func waitClientConnected(client *streamdeck.Client) error {
+	if !client.IsConnected() {
+		log.Println("Waiting for client to connect")
+		for !client.IsConnected() {
+			time.Sleep(time.Second / 10)
+		}
+	}
+	return nil
 }
 
 func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
