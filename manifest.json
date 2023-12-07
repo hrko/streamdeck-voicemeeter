@@ -20,7 +20,7 @@
   ],
   "SDKVersion": 2,
   "Author": "hrko",
-  "CodePath": "streamdeck-voicemeeter.exe",
+  "CodePath": "streamdeck-voicemeeter-wrapper.exe",
   "Description": "Another VoiceMeeter integration for Stream Deck",
   "Name": "VoiceMeeter",
   "URL": "https://hrko.jp",
