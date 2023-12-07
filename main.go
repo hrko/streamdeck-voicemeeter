@@ -48,7 +48,9 @@ type ActionInstanceProperty struct {
 }
 
 func main() {
+	log.SetPrefix("package main: ")
 	streamdeck.Log().SetOutput(os.Stderr)
+	streamdeck.Log().SetPrefix("package streamdeck: ")
 
 	ctx := context.Background()
 	log.Println("Starting voicemeeter-streamdeck-plugin")
