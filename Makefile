@@ -35,7 +35,7 @@ install: kill-streamdeck build layouts
 	# ldd $(BINNAME) | sed 's/^.*=> \([^ ]\+\).*/\1/' | grep -v /c/ | xargs -i{} cp {} $(INSTALLDIR)
 
 logs:
-	ls -t "$(TMP)"/voicemeeter-streamdeck-plugin.*.log | head -n 1 | xargs tail -f
+	ls -t "$(TMP)"/voicemeeter-streamdeck-plugin.*.log | head -n 1 | xargs tail +1f
 
 logs-full:
 	ls -t "$(TMP)"/voicemeeter-streamdeck-plugin.*.log | head -n 1 | xargs less
