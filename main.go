@@ -67,6 +67,8 @@ func run(ctx context.Context) error {
 	client := streamdeck.NewClient(ctx, params)
 	log.Println("Client created")
 
+	registerActionHandlers(client)
+
 	chErr := make(chan error)
 	go func() {
 		log.Println("Starting client")
@@ -127,7 +129,7 @@ func run(ctx context.Context) error {
 	defer vm.Logout()
 	vm.EventAdd("ldirty")
 
-	go setup(client, vm)
+	go actionLoop(client, vm)
 
 	return <-chErr
 }
@@ -142,10 +144,11 @@ func waitClientConnected(client *streamdeck.Client) error {
 	return nil
 }
 
-func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
-	action := client.Action("jp.hrko.voicemeeter.action")
+var actionInstanceMap *cmap.MapOf[string, ActionInstanceProperty]
 
-	actionInstanceMap := cmap.NewOf[string, ActionInstanceProperty]() // key: context of action instance
+func registerActionHandlers(client *streamdeck.Client) {
+	action := client.Action("jp.hrko.voicemeeter.action")
+	actionInstanceMap = cmap.NewOf[string, ActionInstanceProperty]() // key: context of action instance
 
 	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
@@ -197,97 +200,97 @@ func setup(client *streamdeck.Client, vm *voicemeeter.Remote) {
 		actionInstanceMap.Remove(event.Context)
 		return nil
 	})
+}
 
-	go func() {
-		const refreshInterval = time.Second / 30
-		for range time.Tick(refreshInterval) {
-			for item := range actionInstanceMap.IterBuffered() {
-				const busIndex = 5
-				const levelMaxDb = 12.0
-				const levelGoodDb = -24.0
-				const levelMinDb = -60.0
-				busCount := len(vm.Bus)
-				if busIndex >= busCount {
-					log.Printf("busIndex %v is out of range\n", busIndex)
+func actionLoop(client *streamdeck.Client, vm *voicemeeter.Remote) {
+	const refreshInterval = time.Second / 30
+	for range time.Tick(refreshInterval) {
+		for item := range actionInstanceMap.IterBuffered() {
+			const busIndex = 5
+			const levelMaxDb = 12.0
+			const levelGoodDb = -24.0
+			const levelMinDb = -60.0
+			busCount := len(vm.Bus)
+			if busIndex >= busCount {
+				log.Printf("busIndex %v is out of range\n", busIndex)
+				continue
+			}
+			levels := vm.Bus[busIndex].Levels().All()
+			levels = levels[:2]
+
+			ctxStr := item.Key
+			ctx := context.Background()
+			ctx = sdcontext.WithContext(ctx, ctxStr)
+
+			switch item.Val.Controller {
+			case "Keypad":
+				img := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, imgX, imgY, 2, 1, 1)
+				imgBase64, err := streamdeck.Image(img)
+				if err != nil {
+					log.Printf("error creating image: %v\n", err)
 					continue
 				}
-				levels := vm.Bus[busIndex].Levels().All()
-				levels = levels[:2]
-
-				ctxStr := item.Key
-				ctx := context.Background()
-				ctx = sdcontext.WithContext(ctx, ctxStr)
-
-				switch item.Val.Controller {
-				case "Keypad":
-					img := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, imgX, imgY, 2, 1, 1)
-					imgBase64, err := streamdeck.Image(img)
-					if err != nil {
-						log.Printf("error creating image: %v\n", err)
-						continue
-					}
-					err = client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware)
-					if err != nil {
-						log.Printf("error setting image: %v\n", err)
-						continue
-					}
-					title := ""
-					levelAvgDb := 0.0
-					for _, lvDb := range levels {
-						levelAvgDb += lvDb
-					}
-					levelAvgDb /= float64(len(levels))
-					if item.Val.Settings.ShowText {
-						title = fmt.Sprintf("%.1f dB", levelAvgDb)
-					}
-
-					if err := client.SetTitle(ctx, title, streamdeck.HardwareAndSoftware); err != nil {
-						log.Printf("error setting title: %v\n", err)
-						continue
-					}
-
-				case "Encoder":
-					imgIcon, err := getMaterialIcon("e050")
-					if err != nil {
-						log.Printf("error creating image: %v\n", err)
-						continue
-					}
-					imgIconBase64, err := streamdeck.Image(imgIcon)
-					if err != nil {
-						log.Printf("error creating image: %v\n", err)
-						continue
-					}
-
-					imgLevelMeter := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, 108, 8, 1, 1, 1)
-					imgLevelMeterBase64, err := streamdeck.Image(imgLevelMeter)
-					if err != nil {
-						log.Printf("error creating image: %v\n", err)
-						continue
-					}
-					payload := struct {
-						Title      string `json:"title"`
-						Icon       string `json:"icon"`
-						LevelMeter string `json:"levelMeter"`
-						GainValue  string `json:"gainValue"`
-					}{
-						Title:      vm.Bus[busIndex].Label(),
-						Icon:       imgIconBase64,
-						LevelMeter: imgLevelMeterBase64,
-						GainValue:  fmt.Sprintf("%.1f dB", vm.Bus[busIndex].Gain()),
-					}
-					err = client.SetFeedback(ctx, payload)
-					if err != nil {
-						log.Printf("error setting feedback: %v\n", err)
-						continue
-					}
-
-				default:
-					log.Printf("unknown controller: %v\n", item.Val.Controller)
+				err = client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware)
+				if err != nil {
+					log.Printf("error setting image: %v\n", err)
 					continue
 				}
+				title := ""
+				levelAvgDb := 0.0
+				for _, lvDb := range levels {
+					levelAvgDb += lvDb
+				}
+				levelAvgDb /= float64(len(levels))
+				if item.Val.Settings.ShowText {
+					title = fmt.Sprintf("%.1f dB", levelAvgDb)
+				}
+
+				if err := client.SetTitle(ctx, title, streamdeck.HardwareAndSoftware); err != nil {
+					log.Printf("error setting title: %v\n", err)
+					continue
+				}
+
+			case "Encoder":
+				imgIcon, err := getMaterialIcon("e050")
+				if err != nil {
+					log.Printf("error creating image: %v\n", err)
+					continue
+				}
+				imgIconBase64, err := streamdeck.Image(imgIcon)
+				if err != nil {
+					log.Printf("error creating image: %v\n", err)
+					continue
+				}
+
+				imgLevelMeter := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, 108, 8, 1, 1, 1)
+				imgLevelMeterBase64, err := streamdeck.Image(imgLevelMeter)
+				if err != nil {
+					log.Printf("error creating image: %v\n", err)
+					continue
+				}
+				payload := struct {
+					Title      string `json:"title"`
+					Icon       string `json:"icon"`
+					LevelMeter string `json:"levelMeter"`
+					GainValue  string `json:"gainValue"`
+				}{
+					Title:      vm.Bus[busIndex].Label(),
+					Icon:       imgIconBase64,
+					LevelMeter: imgLevelMeterBase64,
+					GainValue:  fmt.Sprintf("%.1f dB", vm.Bus[busIndex].Gain()),
+				}
+				err = client.SetFeedback(ctx, payload)
+				if err != nil {
+					log.Printf("error setting feedback: %v\n", err)
+					continue
+				}
+
+			default:
+				log.Printf("unknown controller: %v\n", item.Val.Controller)
+				continue
 			}
 		}
-	}()
+	}
 }
 
 func mmToPoints(mm float64) float64 {
