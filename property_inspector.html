@@ -60,6 +60,11 @@
           radio_iconFontParams_opsz: "Optical Size",
         },
       };
+
+      const openUrl = async (url) => {
+        const payload = { url };
+        await SDPIComponents.streamDeckClient.send("openUrl", payload);
+      };
     </script>
 
     <sdpi-item>
@@ -90,9 +95,7 @@
         placeholder="__MSG_textfield_iconCodePoint_placeholder__"
       ></sdpi-textfield>
       <p><sdpi-i18n key="textfield_iconCodePoint_description"></sdpi-i18n></p>
-      <sdpi-button
-        onclick="window.open('https://fonts.google.com/icons', '_blank')"
-      >
+      <sdpi-button onclick="openUrl('https://fonts.google.com/icons')">
         <sdpi-i18n key="textfield_iconCodePoint_openGoogleFonts"></sdpi-i18n>
       </sdpi-button>
     </sdpi-item>
