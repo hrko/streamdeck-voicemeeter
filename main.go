@@ -30,6 +30,12 @@ const (
 	kindId = "potato"
 )
 
+var (
+	chGlobalSettings     chan *GlobalSettings
+	actionInstanceMap    *cmap.MapOf[string, Action1InstanceProperty]
+	materialSymbolsCache *cmap.MapOf[string, []byte]
+)
+
 type GlobalSettings struct {
 	VoiceMeeterKind string `json:"voiceMeeterKind"`
 }
@@ -103,8 +109,6 @@ func run(ctx context.Context) error {
 
 	return <-chErr
 }
-
-var chGlobalSettings chan *GlobalSettings
 
 func registerNoActionHandlers(client *streamdeck.Client) {
 	chGlobalSettings = make(chan *GlobalSettings)
@@ -180,8 +184,6 @@ func waitClientConnected(client *streamdeck.Client) error {
 	}
 	return nil
 }
-
-var actionInstanceMap *cmap.MapOf[string, Action1InstanceProperty]
 
 func registerActionHandlers(client *streamdeck.Client) {
 	action := client.Action("jp.hrko.voicemeeter.action")
@@ -560,8 +562,6 @@ func downloadMaterialSymbolsWoff2(p MaterialSymbolsParams) ([]byte, error) {
 
 	return data, nil
 }
-
-var materialSymbolsCache *cmap.MapOf[string, []byte]
 
 func getMaterialSymbols(p MaterialSymbolsParams) ([]byte, error) {
 	cacheDir, err := getCacheDir()
