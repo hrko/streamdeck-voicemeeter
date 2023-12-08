@@ -564,17 +564,17 @@ func getMaterialSymbols(p MaterialSymbolsParams) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	fontCachePath := filepath.Join(cacheDir, "materialSymbolsCache.json")
+	fontsCachePath := filepath.Join(cacheDir, "materialSymbolsCache.json")
 
 	if materialSymbolsCache == nil {
 		materialSymbolsCache = cmap.NewOf[string, []byte]()
 
-		if isFileExist(fontCachePath) {
-			data, err := os.ReadFile(fontCachePath)
+		if isFileExist(fontsCachePath) {
+			fontsCacheJson, err := os.ReadFile(fontsCachePath)
 			if err != nil {
 				return nil, err
 			}
-			materialSymbolsCache.UnmarshalJSON(data)
+			materialSymbolsCache.UnmarshalJSON(fontsCacheJson)
 		}
 	}
 
@@ -584,28 +584,28 @@ func getMaterialSymbols(p MaterialSymbolsParams) ([]byte, error) {
 	p.setDefaultsForEmptyParam()
 
 	key := p.String()
-	data, ok := materialSymbolsCache.Get(key)
+	fontData, ok := materialSymbolsCache.Get(key)
 	if ok {
-		return data, nil
+		return fontData, nil
 	}
 
-	data, err = downloadMaterialSymbolsWoff2(p)
+	fontData, err = downloadMaterialSymbolsWoff2(p)
 	if err != nil {
 		return nil, err
 	}
 
-	materialSymbolsCache.Set(key, data)
+	materialSymbolsCache.Set(key, fontData)
 
-	data, err = materialSymbolsCache.MarshalJSON()
+	fontsCacheJson, err := materialSymbolsCache.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
-	err = os.WriteFile(fontCachePath, data, 0644)
+	err = os.WriteFile(fontsCachePath, fontsCacheJson, 0644)
 	if err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	return fontData, nil
 }
 
 func isFileExist(p string) bool {
