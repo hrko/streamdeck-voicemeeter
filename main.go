@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -32,7 +35,9 @@ type GlobalSettings struct {
 }
 
 type ActionInstanceSettings struct {
-	ShowText bool `json:"showText,omitempty"`
+	ShowText       bool                  `json:"showText,omitempty"`
+	IconCodePoint  string                `json:"iconCodePoint,omitempty"`
+	IconFontParams MaterialSymbolsParams `json:"iconFontParams,omitempty"`
 }
 
 type ActionInstanceCoordinates struct {
@@ -234,6 +239,9 @@ func registerActionHandlers(client *streamdeck.Client) {
 
 func actionLoop(client *streamdeck.Client, vm *voicemeeter.Remote) {
 	const refreshInterval = time.Second / 30
+	encoderLastIconFontParams := cmap.NewOf[string, MaterialSymbolsParams]()
+	encoderLastIconCodePoint := cmap.NewOf[string, string]()
+	encoderIconBase64Cache := cmap.NewOf[string, string]()
 	for range time.Tick(refreshInterval) {
 		for item := range actionInstanceMap.IterBuffered() {
 			const busIndex = 5
@@ -281,15 +289,46 @@ func actionLoop(client *streamdeck.Client, vm *voicemeeter.Remote) {
 				}
 
 			case "Encoder":
-				imgIcon, err := getMaterialIcon("e050")
-				if err != nil {
-					log.Printf("error creating image: %v\n", err)
-					continue
+				lastFontParams, ok := encoderLastIconFontParams.Get(ctxStr)
+				if !ok {
+					lastFontParams = MaterialSymbolsParams{}
 				}
-				imgIconBase64, err := streamdeck.Image(imgIcon)
-				if err != nil {
-					log.Printf("error creating image: %v\n", err)
-					continue
+				encoderLastIconFontParams.Set(ctxStr, item.Val.Settings.IconFontParams)
+
+				lastIconCodePoint, ok := encoderLastIconCodePoint.Get(ctxStr)
+				if !ok {
+					lastIconCodePoint = ""
+				}
+				encoderLastIconCodePoint.Set(ctxStr, item.Val.Settings.IconCodePoint)
+
+				var imgIconBase64 string
+				if lastFontParams != item.Val.Settings.IconFontParams || lastIconCodePoint != item.Val.Settings.IconCodePoint {
+					fontParams := item.Val.Settings.IconFontParams
+					fontParams.setDefaultsForEmptyParam()
+					if err := fontParams.assert(); err != nil {
+						log.Printf("invalid iconFontParams: %v\n", err)
+						fontParams = MaterialSymbolsParams{}
+						fontParams.setDefaultsForEmptyParam()
+					}
+					iconCodePoint := item.Val.Settings.IconCodePoint
+					if iconCodePoint == "" {
+						iconCodePoint = "e050" // volume_up
+					}
+					imgIcon, err := getMaterialSymbolsIcon(fontParams, iconCodePoint)
+					if err != nil {
+						log.Printf("error creating image: %v\n", err)
+						continue
+					}
+					imgIconBase64, err = streamdeck.Image(imgIcon)
+					if err != nil {
+						log.Printf("error creating image: %v\n", err)
+					}
+					encoderIconBase64Cache.Set(ctxStr, imgIconBase64)
+				} else {
+					imgIconBase64, ok = encoderIconBase64Cache.Get(ctxStr)
+					if !ok {
+						log.Printf("iconBase64 not found in cache\n")
+					}
 				}
 
 				imgLevelMeter := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, 108, 8, 1, 1, 1)
@@ -327,14 +366,13 @@ func mmToPoints(mm float64) float64 {
 	return mm * 2.834645669291339
 }
 
-func getMaterialIcon(codePoint string) (image.Image, error) {
-	exe, err := os.Executable()
+func getMaterialSymbolsIcon(fontParams MaterialSymbolsParams, codePoint string) (image.Image, error) {
+	fontMaterial := canvas.NewFontFamily("Material Symbols")
+	fontData, err := getMaterialSymbols(fontParams)
 	if err != nil {
 		return nil, err
 	}
-	exeDir := filepath.Dir(exe)
-	fontMaterial := canvas.NewFontFamily("Material Symbols Outlined")
-	err = fontMaterial.LoadFontFile(filepath.Join(exeDir, "MaterialSymbolsOutlined.woff2"), canvas.FontRegular)
+	err = fontMaterial.LoadFont(fontData, 0, canvas.FontRegular)
 	if err != nil {
 		return nil, err
 	}
@@ -412,4 +450,192 @@ func levelMeterHorizontal(dB []float64, dBMin float64, dBGood float64, dBMax flo
 	}
 
 	return img
+}
+
+type MaterialSymbolsParams struct {
+	Style string `json:"style"`
+	Opsz  string `json:"opsz"`
+	Wght  string `json:"wght"`
+	Fill  string `json:"fill"`
+	Grad  string `json:"grad"`
+}
+
+func (p *MaterialSymbolsParams) String() string {
+	return fmt.Sprintf("%s-%s-%s-%s-%s", p.Style, p.Opsz, p.Wght, p.Fill, p.Grad)
+}
+
+func (p *MaterialSymbolsParams) setDefaultsForEmptyParam() {
+	if p.Style == "" {
+		p.Style = "Outlined"
+	}
+	if p.Opsz == "" {
+		p.Opsz = "48"
+	}
+	if p.Wght == "" {
+		p.Wght = "400"
+	}
+	if p.Fill == "" {
+		p.Fill = "0"
+	}
+	if p.Grad == "" {
+		p.Grad = "0"
+	}
+}
+
+func (p *MaterialSymbolsParams) assert() error {
+	// style: "Outlined" | "Rounded" | "Sharp"
+	// opsz: "20" | "24" | "40" | "48"
+	// wght: "100" | "200" | "300" | "400" | "500" | "600" | "700"
+	// fill: "0" | "1"
+	// grad: "-25" | "-0" | "200"
+	switch p.Style {
+	case "Outlined", "Rounded", "Sharp":
+	default:
+		return fmt.Errorf("style must be one of 'Outlined', 'Rounded', 'Sharp'")
+	}
+	switch p.Opsz {
+	case "20", "24", "40", "48":
+	default:
+		return fmt.Errorf("opsz must be one of '20', '24', '40', '48'")
+	}
+	switch p.Wght {
+	case "100", "200", "300", "400", "500", "600", "700":
+	default:
+		return fmt.Errorf("wght must be one of '100', '200', '300', '400', '500', '600', '700'")
+	}
+	switch p.Fill {
+	case "0", "1":
+	default:
+		return fmt.Errorf("fill must be one of '0', '1'")
+	}
+	switch p.Grad {
+	case "-25", "0", "200":
+	default:
+		return fmt.Errorf("grad must be one of '-25', '0', '200'")
+	}
+	return nil
+}
+
+func downloadMaterialSymbolsWoff2(p MaterialSymbolsParams) ([]byte, error) {
+	if err := p.assert(); err != nil {
+		return nil, err
+	}
+
+	cssURL := fmt.Sprintf("https://fonts.googleapis.com/css2?family=Material+Symbols+%s:opsz,wght,FILL,GRAD@%s,%s,%s,%s", p.Style, p.Opsz, p.Wght, p.Fill, p.Grad)
+	log.Println(cssURL)
+
+	const userAgent = "	Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+	req, err := http.NewRequest("GET", cssURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", userAgent)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	cssContent, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	re := regexp.MustCompile(`url\((https://[^)]+\.woff2)\)`)
+	log.Println(string(cssContent))
+	matches := re.FindStringSubmatch(string(cssContent))
+	if len(matches) < 2 {
+		return nil, fmt.Errorf("no woff2 file found in css")
+	}
+
+	woff2URL := matches[1]
+
+	resp, err = http.Get(woff2URL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+var materialSymbolsCache *cmap.MapOf[string, []byte]
+
+func getMaterialSymbols(p MaterialSymbolsParams) ([]byte, error) {
+	cacheDir, err := getCacheDir()
+	if err != nil {
+		return nil, err
+	}
+	fontCachePath := filepath.Join(cacheDir, "materialSymbolsCache.json")
+
+	if materialSymbolsCache == nil {
+		materialSymbolsCache = cmap.NewOf[string, []byte]()
+
+		if isFileExist(fontCachePath) {
+			data, err := os.ReadFile(fontCachePath)
+			if err != nil {
+				return nil, err
+			}
+			materialSymbolsCache.UnmarshalJSON(data)
+		}
+	}
+
+	if err := p.assert(); err != nil {
+		return nil, err
+	}
+	p.setDefaultsForEmptyParam()
+
+	key := p.String()
+	data, ok := materialSymbolsCache.Get(key)
+	if ok {
+		return data, nil
+	}
+
+	data, err = downloadMaterialSymbolsWoff2(p)
+	if err != nil {
+		return nil, err
+	}
+
+	materialSymbolsCache.Set(key, data)
+
+	data, err = materialSymbolsCache.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	err = os.WriteFile(fontCachePath, data, 0644)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func isFileExist(p string) bool {
+	info, err := os.Stat(p)
+	return err == nil && !info.IsDir()
+}
+
+func isDirExist(p string) bool {
+	info, err := os.Stat(p)
+	return err == nil && info.IsDir()
+}
+
+func getCacheDir() (string, error) {
+	userCacheDir, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+	cacheDir := filepath.Join(userCacheDir, "voicemeeter-streamdeck-plugin")
+	if !isDirExist(cacheDir) {
+		err = os.MkdirAll(cacheDir, 0755)
+		if err != nil {
+			return "", err
+		}
+	}
+	return cacheDir, nil
 }
