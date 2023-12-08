@@ -241,7 +241,6 @@ func actionLoop(client *streamdeck.Client, vm *voicemeeter.Remote) {
 	const refreshInterval = time.Second / 30
 	encoderLastIconFontParams := cmap.NewOf[string, MaterialSymbolsParams]()
 	encoderLastIconCodePoint := cmap.NewOf[string, string]()
-	encoderIconBase64Cache := cmap.NewOf[string, string]()
 	for range time.Tick(refreshInterval) {
 		for item := range actionInstanceMap.IterBuffered() {
 			const busIndex = 5
@@ -323,12 +322,6 @@ func actionLoop(client *streamdeck.Client, vm *voicemeeter.Remote) {
 					if err != nil {
 						log.Printf("error creating image: %v\n", err)
 					}
-					encoderIconBase64Cache.Set(ctxStr, imgIconBase64)
-				} else {
-					imgIconBase64, ok = encoderIconBase64Cache.Get(ctxStr)
-					if !ok {
-						log.Printf("iconBase64 not found in cache\n")
-					}
 				}
 
 				imgLevelMeter := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, 108, 8, 1, 1, 1)
@@ -338,10 +331,10 @@ func actionLoop(client *streamdeck.Client, vm *voicemeeter.Remote) {
 					continue
 				}
 				payload := struct {
-					Title      string `json:"title"`
-					Icon       string `json:"icon"`
-					LevelMeter string `json:"levelMeter"`
-					GainValue  string `json:"gainValue"`
+					Title      string `json:"title,omitempty"`
+					Icon       string `json:"icon,omitempty"`
+					LevelMeter string `json:"levelMeter,omitempty"`
+					GainValue  string `json:"gainValue,omitempty"`
 				}{
 					Title:      vm.Bus[busIndex].Label(),
 					Icon:       imgIconBase64,
