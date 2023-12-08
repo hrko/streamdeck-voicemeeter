@@ -30,7 +30,6 @@ install: kill-streamdeck build layouts
 	mkdir $(INSTALLDIR)
 	cp *.json $(INSTALLDIR)
 	cp *.html $(INSTALLDIR)
-	cp *.woff2 $(INSTALLDIR)
 	cp *.exe $(INSTALLDIR)
 	cp -r layouts $(INSTALLDIR)
 	# ldd $(BINNAME) | sed 's/^.*=> \([^ ]\+\).*/\1/' | grep -v /c/ | xargs -i{} cp {} $(INSTALLDIR)
