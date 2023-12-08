@@ -34,22 +34,24 @@ type GlobalSettings struct {
 	VoiceMeeterKind string `json:"voiceMeeterKind"`
 }
 
-type ActionInstanceSettings struct {
+type ActionInstanceCommonProperty struct {
+	Controller  string `json:"controller,omitempty"` // "Keypad" | "Encoder"
+	Coordinates struct {
+		Column int `json:"column,omitempty"`
+		Row    int `json:"row,omitempty"`
+	} `json:"coordinates,omitempty"`
+	IsInMultiAction bool `json:"isInMultiAction,omitempty"`
+}
+
+type Action1InstanceProperty struct {
+	ActionInstanceCommonProperty
+	Settings Action1InstanceSettings `json:"settings,omitempty"`
+}
+
+type Action1InstanceSettings struct {
 	ShowText       bool                  `json:"showText,omitempty"`
 	IconCodePoint  string                `json:"iconCodePoint,omitempty"`
 	IconFontParams MaterialSymbolsParams `json:"iconFontParams,omitempty"`
-}
-
-type ActionInstanceCoordinates struct {
-	Column int `json:"column,omitempty"`
-	Row    int `json:"row,omitempty"`
-}
-
-type ActionInstanceProperty struct {
-	Controller      string                    `json:"controller,omitempty"` // "Keypad" | "Encoder"
-	Coordinates     ActionInstanceCoordinates `json:"coordinates,omitempty"`
-	IsInMultiAction bool                      `json:"isInMultiAction,omitempty"`
-	Settings        ActionInstanceSettings    `json:"settings,omitempty"`
 }
 
 func main() {
@@ -179,16 +181,16 @@ func waitClientConnected(client *streamdeck.Client) error {
 	return nil
 }
 
-var actionInstanceMap *cmap.MapOf[string, ActionInstanceProperty]
+var actionInstanceMap *cmap.MapOf[string, Action1InstanceProperty]
 
 func registerActionHandlers(client *streamdeck.Client) {
 	action := client.Action("jp.hrko.voicemeeter.action")
-	actionInstanceMap = cmap.NewOf[string, ActionInstanceProperty]() // key: context of action instance
+	actionInstanceMap = cmap.NewOf[string, Action1InstanceProperty]() // key: context of action instance
 
 	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		var prop ActionInstanceProperty
+		var prop Action1InstanceProperty
 		err := json.Unmarshal(event.Payload, &prop)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -219,7 +221,7 @@ func registerActionHandlers(client *streamdeck.Client) {
 	action.RegisterHandler(streamdeck.WillAppear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		var prop ActionInstanceProperty
+		var prop Action1InstanceProperty
 		err := json.Unmarshal(event.Payload, &prop)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -243,7 +245,7 @@ func actionLoop(client *streamdeck.Client, vm *voicemeeter.Remote) {
 	encoderLastIconCodePoint := cmap.NewOf[string, string]()
 	for range time.Tick(refreshInterval) {
 		for item := range actionInstanceMap.IterBuffered() {
-			go func(item cmap.TupleOf[string, ActionInstanceProperty]) {
+			go func(item cmap.TupleOf[string, Action1InstanceProperty]) {
 				const busIndex = 5
 				const levelMaxDb = 12.0
 				const levelGoodDb = -24.0
