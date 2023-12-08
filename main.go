@@ -238,7 +238,7 @@ func registerActionHandlers(client *streamdeck.Client) {
 }
 
 func actionLoop(client *streamdeck.Client, vm *voicemeeter.Remote) {
-	const refreshInterval = time.Second / 30
+	const refreshInterval = time.Second / 15
 	encoderLastIconFontParams := cmap.NewOf[string, MaterialSymbolsParams]()
 	encoderLastIconCodePoint := cmap.NewOf[string, string]()
 	for range time.Tick(refreshInterval) {
