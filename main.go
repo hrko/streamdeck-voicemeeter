@@ -32,7 +32,7 @@ const (
 
 var (
 	chGlobalSettings     chan *GlobalSettings
-	actionInstanceMap    *cmap.MapOf[string, Action1InstanceProperty]
+	action1InstanceMap   *cmap.MapOf[string, Action1InstanceProperty]
 	materialSymbolsCache *cmap.MapOf[string, []byte]
 )
 
@@ -83,7 +83,7 @@ func run(ctx context.Context) error {
 	log.Println("Client created")
 
 	registerNoActionHandlers(client)
-	registerActionHandlers(client)
+	registerAction1Handlers(client)
 
 	chErr := make(chan error)
 	go func() {
@@ -105,7 +105,7 @@ func run(ctx context.Context) error {
 	defer vm.Logout()
 	vm.EventAdd("ldirty")
 
-	go actionLoop(client, vm)
+	go action1Loop(client, vm)
 
 	return <-chErr
 }
@@ -185,9 +185,9 @@ func waitClientConnected(client *streamdeck.Client) error {
 	return nil
 }
 
-func registerActionHandlers(client *streamdeck.Client) {
+func registerAction1Handlers(client *streamdeck.Client) {
 	action := client.Action("jp.hrko.voicemeeter.action")
-	actionInstanceMap = cmap.NewOf[string, Action1InstanceProperty]() // key: context of action instance
+	action1InstanceMap = cmap.NewOf[string, Action1InstanceProperty]() // key: context of action instance
 
 	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
@@ -198,7 +198,7 @@ func registerActionHandlers(client *streamdeck.Client) {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
-		actionInstanceMap.Set(event.Context, prop)
+		action1InstanceMap.Set(event.Context, prop)
 		return nil
 	})
 
@@ -229,24 +229,24 @@ func registerActionHandlers(client *streamdeck.Client) {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
-		actionInstanceMap.Set(event.Context, prop)
+		action1InstanceMap.Set(event.Context, prop)
 		return nil
 	})
 
 	action.RegisterHandler(streamdeck.WillDisappear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		actionInstanceMap.Remove(event.Context)
+		action1InstanceMap.Remove(event.Context)
 		return nil
 	})
 }
 
-func actionLoop(client *streamdeck.Client, vm *voicemeeter.Remote) {
+func action1Loop(client *streamdeck.Client, vm *voicemeeter.Remote) {
 	const refreshInterval = time.Second / 15
 	encoderLastIconFontParams := cmap.NewOf[string, MaterialSymbolsParams]()
 	encoderLastIconCodePoint := cmap.NewOf[string, string]()
 	for range time.Tick(refreshInterval) {
-		for item := range actionInstanceMap.IterBuffered() {
+		for item := range action1InstanceMap.IterBuffered() {
 			go func(item cmap.TupleOf[string, Action1InstanceProperty]) {
 				const busIndex = 5
 				const levelMaxDb = 12.0
