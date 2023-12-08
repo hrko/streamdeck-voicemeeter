@@ -1,6 +1,18 @@
 # streamdeck-voicemeeter
 *Work in progress.*
 
+## Actions
+### Key
+- [ ] Toggle Mute
+- [ ] Gain Control (Set, Increment, Decrement)
+- [ ] VoiceMeeter Macro
+- [ ] Restart VoiceMeeter
+
+### Dial and Touchpad
+- [ ] Gain Control
+- [ ] Gain Control Combo
+- [ ] Strip/Bus Parameter Control
+
 ## Build Requirements
 - Go 1.21.4 or later
 - MSYS2
