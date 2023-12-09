@@ -33,6 +33,7 @@ const (
 var (
 	chGlobalSettings     chan *GlobalSettings
 	action1InstanceMap   *cmap.MapOf[string, Action1InstanceProperty]
+	action1RenderCh      chan *Action1RenderParams
 	materialSymbolsCache *cmap.MapOf[string, []byte]
 )
 
@@ -60,6 +61,14 @@ type Action1InstanceSettings struct {
 	IconFontParams MaterialSymbolsParams `json:"iconFontParams,omitempty"`
 }
 
+type Action1RenderParams struct {
+	TargetContext string
+	Title         *string
+	Settings      *Action1InstanceSettings
+	Levels        *[]float64
+	Gain          *float64
+}
+
 func main() {
 	log.SetPrefix("package main: ")
 	streamdeck.Log().SetOutput(os.Stderr)
@@ -83,7 +92,7 @@ func run(ctx context.Context) error {
 	log.Println("Client created")
 
 	registerNoActionHandlers(client)
-	registerAction1Handlers(client)
+	action1SetupPreClientRun(client)
 
 	chErr := make(chan error)
 	go func() {
@@ -105,7 +114,7 @@ func run(ctx context.Context) error {
 	defer vm.Logout()
 	vm.EventAdd("ldirty")
 
-	go action1Loop(client, vm)
+	go action1SetupPostClientRun(client, vm)
 
 	return <-chErr
 }
@@ -185,9 +194,10 @@ func waitClientConnected(client *streamdeck.Client) error {
 	return nil
 }
 
-func registerAction1Handlers(client *streamdeck.Client) {
+func action1SetupPreClientRun(client *streamdeck.Client) {
 	action := client.Action("jp.hrko.voicemeeter.action")
 	action1InstanceMap = cmap.NewOf[string, Action1InstanceProperty]() // key: context of action instance
+	action1RenderCh = make(chan *Action1RenderParams, 32)
 
 	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
@@ -199,6 +209,10 @@ func registerAction1Handlers(client *streamdeck.Client) {
 			return err
 		}
 		action1InstanceMap.Set(event.Context, prop)
+		action1RenderCh <- &Action1RenderParams{
+			TargetContext: event.Context,
+			Settings:      &prop.Settings,
+		}
 		return nil
 	})
 
@@ -230,6 +244,10 @@ func registerAction1Handlers(client *streamdeck.Client) {
 			return err
 		}
 		action1InstanceMap.Set(event.Context, prop)
+		action1RenderCh <- &Action1RenderParams{
+			TargetContext: event.Context,
+			Settings:      &prop.Settings,
+		}
 		return nil
 	})
 
@@ -241,124 +259,147 @@ func registerAction1Handlers(client *streamdeck.Client) {
 	})
 }
 
-func action1Loop(client *streamdeck.Client, vm *voicemeeter.Remote) {
-	const refreshInterval = time.Second / 15
-	encoderLastIconFontParams := cmap.NewOf[string, MaterialSymbolsParams]()
-	encoderLastIconCodePoint := cmap.NewOf[string, string]()
-	for range time.Tick(refreshInterval) {
-		for item := range action1InstanceMap.IterBuffered() {
-			go func(item cmap.TupleOf[string, Action1InstanceProperty]) {
-				const busIndex = 5
-				const levelMaxDb = 12.0
-				const levelGoodDb = -24.0
-				const levelMinDb = -60.0
-				busCount := len(vm.Bus)
-				if busIndex >= busCount {
-					log.Printf("busIndex %v is out of range\n", busIndex)
-					return
-				}
-				levels := vm.Bus[busIndex].Levels().All()
-				levels = levels[:2]
-
-				ctxStr := item.Key
-				ctx := context.Background()
-				ctx = sdcontext.WithContext(ctx, ctxStr)
-
-				switch item.Val.Controller {
-				case "Keypad":
-					img := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, imgX, imgY, 2, 1, 1)
-					imgBase64, err := streamdeck.Image(img)
-					if err != nil {
-						log.Printf("error creating image: %v\n", err)
-						return
-					}
-					err = client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware)
-					if err != nil {
-						log.Printf("error setting image: %v\n", err)
-						return
-					}
-					title := ""
-					levelAvgDb := 0.0
-					for _, lvDb := range levels {
-						levelAvgDb += lvDb
-					}
-					levelAvgDb /= float64(len(levels))
-					if item.Val.Settings.ShowText {
-						title = fmt.Sprintf("%.1f dB", levelAvgDb)
-					}
-
-					if err := client.SetTitle(ctx, title, streamdeck.HardwareAndSoftware); err != nil {
-						log.Printf("error setting title: %v\n", err)
-						return
-					}
-
-				case "Encoder":
-					lastFontParams, ok := encoderLastIconFontParams.Get(ctxStr)
-					if !ok {
-						lastFontParams = MaterialSymbolsParams{}
-					}
-					encoderLastIconFontParams.Set(ctxStr, item.Val.Settings.IconFontParams)
-
-					lastIconCodePoint, ok := encoderLastIconCodePoint.Get(ctxStr)
-					if !ok {
-						lastIconCodePoint = ""
-					}
-					encoderLastIconCodePoint.Set(ctxStr, item.Val.Settings.IconCodePoint)
-
-					var imgIconBase64 string
-					if lastFontParams != item.Val.Settings.IconFontParams || lastIconCodePoint != item.Val.Settings.IconCodePoint {
-						fontParams := item.Val.Settings.IconFontParams
-						fontParams.setDefaultsForEmptyParam()
-						if err := fontParams.assert(); err != nil {
-							log.Printf("invalid iconFontParams: %v\n", err)
-							fontParams = MaterialSymbolsParams{}
-							fontParams.setDefaultsForEmptyParam()
-						}
-						iconCodePoint := item.Val.Settings.IconCodePoint
-						if iconCodePoint == "" {
-							iconCodePoint = "e050" // volume_up
-						}
-						imgIcon, err := getMaterialSymbolsIcon(fontParams, iconCodePoint)
-						if err != nil {
-							log.Printf("error creating image: %v\n", err)
-							return
-						}
-						imgIconBase64, err = streamdeck.Image(imgIcon)
-						if err != nil {
-							log.Printf("error creating image: %v\n", err)
-						}
-					}
-
-					imgLevelMeter := levelMeterHorizontal(levels, levelMinDb, levelGoodDb, levelMaxDb, 108, 8, 1, 1, 1)
-					imgLevelMeterBase64, err := streamdeck.Image(imgLevelMeter)
-					if err != nil {
-						log.Printf("error creating image: %v\n", err)
-						return
-					}
-					payload := struct {
-						Title      string `json:"title,omitempty"`
-						Icon       string `json:"icon,omitempty"`
-						LevelMeter string `json:"levelMeter,omitempty"`
-						GainValue  string `json:"gainValue,omitempty"`
-					}{
-						Title:      vm.Bus[busIndex].Label(),
-						Icon:       imgIconBase64,
-						LevelMeter: imgLevelMeterBase64,
-						GainValue:  fmt.Sprintf("%.1f dB", vm.Bus[busIndex].Gain()),
-					}
-					err = client.SetFeedback(ctx, payload)
-					if err != nil {
-						log.Printf("error setting feedback: %v\n", err)
-						return
-					}
-
-				default:
-					log.Printf("unknown controller: %v\n", item.Val.Controller)
-					return
-				}
-			}(item)
+func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error {
+	go func() {
+		for renderParam := range action1RenderCh {
+			action1Render(client, renderParam)
 		}
+	}()
+
+	go func() {
+		const refreshInterval = time.Second / 15
+		for range time.Tick(refreshInterval) {
+			for item := range action1InstanceMap.IterBuffered() {
+				actionContext := item.Key
+				go func() {
+					const busIndex = 5
+					busCount := len(vm.Bus)
+					if busIndex >= busCount {
+						log.Printf("busIndex %v is out of range\n", busIndex)
+						return
+					}
+					levels := vm.Bus[busIndex].Levels().All()
+					levels = levels[:2]
+
+					title := vm.Bus[busIndex].Label()
+					gain := vm.Bus[busIndex].Gain()
+					renderParam := &Action1RenderParams{
+						TargetContext: actionContext,
+						Title:         &title,
+						Levels:        &levels,
+						Gain:          &gain,
+					}
+					action1RenderCh <- renderParam
+				}()
+			}
+		}
+	}()
+
+	return nil
+}
+
+func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) error {
+	const levelMaxDb = 12.0
+	const levelGoodDb = -24.0
+	const levelMinDb = -60.0
+
+	ctx := context.Background()
+	ctx = sdcontext.WithContext(ctx, renderParam.TargetContext)
+
+	instProps, ok := action1InstanceMap.Get(renderParam.TargetContext)
+	if !ok {
+		return fmt.Errorf("action1InstanceMap has no key '%v'", renderParam.TargetContext)
 	}
+
+	switch instProps.Controller {
+	case "Keypad":
+		if renderParam.Levels != nil {
+			img := levelMeterHorizontal(*renderParam.Levels, levelMinDb, levelGoodDb, levelMaxDb, imgX, imgY, 2, 1, 1)
+			imgBase64, err := streamdeck.Image(img)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
+			if err := client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware); err != nil {
+				log.Printf("error setting image: %v\n", err)
+				return err
+			}
+
+			title := ""
+			levelAvgDb := 0.0
+			for _, lvDb := range *renderParam.Levels {
+				levelAvgDb += lvDb
+			}
+			levelAvgDb /= float64(len(*renderParam.Levels))
+			if instProps.Settings.ShowText {
+				title = fmt.Sprintf("%.1f dB", levelAvgDb)
+			}
+			if err := client.SetTitle(ctx, title, streamdeck.HardwareAndSoftware); err != nil {
+				log.Printf("error setting title: %v\n", err)
+				return err
+			}
+		}
+
+	case "Encoder":
+		payload := struct {
+			Title      *string `json:"title,omitempty"`
+			Icon       *string `json:"icon,omitempty"`
+			LevelMeter *string `json:"levelMeter,omitempty"`
+			GainValue  *string `json:"gainValue,omitempty"`
+		}{}
+
+		if renderParam.Title != nil {
+			payload.Title = renderParam.Title
+		}
+		if renderParam.Settings != nil {
+			const defaultIconCodePoint = "e050" // volume_up
+			fontParams := renderParam.Settings.IconFontParams
+			fontParams.setDefaultsForEmptyParam()
+			if err := fontParams.assert(); err != nil {
+				log.Printf("invalid iconFontParams: %v\n", err)
+				fontParams = MaterialSymbolsParams{}
+				fontParams.setDefaultsForEmptyParam()
+			}
+			iconCodePoint := renderParam.Settings.IconCodePoint
+			if iconCodePoint == "" {
+				iconCodePoint = defaultIconCodePoint
+			}
+			img, err := getMaterialSymbolsIcon(fontParams, iconCodePoint)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
+			imgBase64, err := streamdeck.Image(img)
+			if err != nil {
+				log.Printf("error converting image to base64: %v\n", err)
+			}
+			payload.Icon = &imgBase64
+		}
+		if renderParam.Levels != nil {
+			img := levelMeterHorizontal(*renderParam.Levels, levelMinDb, levelGoodDb, levelMaxDb, 108, 8, 1, 1, 1)
+			imgBase64, err := streamdeck.Image(img)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
+			payload.LevelMeter = &imgBase64
+		}
+		if renderParam.Gain != nil {
+			str := fmt.Sprintf("%.1f dB", *renderParam.Gain)
+			payload.GainValue = &str
+		}
+
+		if err := client.SetFeedback(ctx, payload); err != nil {
+			log.Printf("error setting feedback: %v\n", err)
+			return err
+		}
+
+	default:
+		log.Printf("unknown controller: %v\n", instProps.Controller)
+		return fmt.Errorf("unknown controller: %v", instProps.Controller)
+	}
+
+	return nil
 }
 
 func mmToPoints(mm float64) float64 {
