@@ -25,9 +25,9 @@ import (
 )
 
 const (
-	imgX   = 72
-	imgY   = 72
-	kindId = "potato"
+	streamDeckKeyResolutionX = 72
+	streamDeckKeyResolutionY = 72
+	kindId                   = "potato"
 )
 
 var (
@@ -314,7 +314,7 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 	switch instProps.Controller {
 	case "Keypad":
 		if renderParam.Levels != nil {
-			img := levelMeterHorizontal(*renderParam.Levels, levelMinDb, levelGoodDb, levelMaxDb, imgX, imgY, 2, 1, 1)
+			img := levelMeterHorizontal(*renderParam.Levels, levelMinDb, levelGoodDb, levelMaxDb, streamDeckKeyResolutionX, streamDeckKeyResolutionY, 2, 1, 1)
 			imgBase64, err := streamdeck.Image(img)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
