@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -133,7 +132,6 @@ func (p *MaterialSymbolsFontParams) fetchWoff2() ([]byte, error) {
 	}
 
 	re := regexp.MustCompile(`url\((https://[^)]+\.woff2)\)`)
-	log.Println(string(cssContent))
 	matches := re.FindStringSubmatch(string(cssContent))
 	if len(matches) < 2 {
 		return nil, fmt.Errorf("no woff2 file found in css")
