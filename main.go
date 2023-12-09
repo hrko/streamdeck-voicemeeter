@@ -49,9 +49,9 @@ type Action1InstanceProperty struct {
 }
 
 type Action1InstanceSettings struct {
-	ShowText       bool                       `json:"showText,omitempty"`
-	IconCodePoint  string                     `json:"iconCodePoint,omitempty"`
-	IconFontParams icon.MaterialSymbolsParams `json:"iconFontParams,omitempty"`
+	ShowText       bool                           `json:"showText,omitempty"`
+	IconCodePoint  string                         `json:"iconCodePoint,omitempty"`
+	IconFontParams icon.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
 }
 
 type Action1RenderParams struct {
@@ -350,7 +350,7 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			fontParams.SetDefaultsForEmptyParam()
 			if err := fontParams.Assert(); err != nil {
 				log.Printf("invalid iconFontParams: %v\n", err)
-				fontParams = icon.MaterialSymbolsParams{}
+				fontParams = icon.MaterialSymbolsFontParams{}
 				fontParams.SetDefaultsForEmptyParam()
 			}
 			iconCodePoint := renderParam.Settings.IconCodePoint

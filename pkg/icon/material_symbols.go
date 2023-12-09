@@ -19,7 +19,7 @@ import (
 
 var materialSymbolsFonts *cmap.MapOf[string, []byte] // key: params.String()
 
-type MaterialSymbolsParams struct {
+type MaterialSymbolsFontParams struct {
 	Style string `json:"style"`
 	Opsz  string `json:"opsz"`
 	Wght  string `json:"wght"`
@@ -27,17 +27,17 @@ type MaterialSymbolsParams struct {
 	Grad  string `json:"grad"`
 }
 
-func GetMaterialSymbolsIcon(fontParams MaterialSymbolsParams, codePoint string) (image.Image, error) {
-	fontMaterial := canvas.NewFontFamily("Material Symbols")
-	fontData, err := getMaterialSymbols(fontParams)
+func GetMaterialSymbolsIcon(fontParams MaterialSymbolsFontParams, codePoint string) (image.Image, error) {
+	font := canvas.NewFontFamily("Material Symbols")
+	rawFont, err := getMaterialSymbolsFont(fontParams)
 	if err != nil {
 		return nil, err
 	}
-	err = fontMaterial.LoadFont(fontData, 0, canvas.FontRegular)
+	err = font.LoadFont(rawFont, 0, canvas.FontRegular)
 	if err != nil {
 		return nil, err
 	}
-	face := fontMaterial.Face(mmToPoints(48), color.White, canvas.FontRegular, canvas.FontNormal)
+	face := font.Face(mmToPoints(48), color.White, canvas.FontRegular, canvas.FontNormal)
 
 	c := canvas.New(48, 48)
 	ctx := canvas.NewContext(c)
@@ -51,11 +51,11 @@ func GetMaterialSymbolsIcon(fontParams MaterialSymbolsParams, codePoint string) 
 	return rasterizer.Draw(c, canvas.DPMM(1.0), canvas.DefaultColorSpace), nil
 }
 
-func (p *MaterialSymbolsParams) String() string {
+func (p *MaterialSymbolsFontParams) String() string {
 	return fmt.Sprintf("%s-%s-%s-%s-%s", p.Style, p.Opsz, p.Wght, p.Fill, p.Grad)
 }
 
-func (p *MaterialSymbolsParams) SetDefaultsForEmptyParam() {
+func (p *MaterialSymbolsFontParams) SetDefaultsForEmptyParam() {
 	if p.Style == "" {
 		p.Style = "Outlined"
 	}
@@ -73,7 +73,7 @@ func (p *MaterialSymbolsParams) SetDefaultsForEmptyParam() {
 	}
 }
 
-func (p *MaterialSymbolsParams) Assert() error {
+func (p *MaterialSymbolsFontParams) Assert() error {
 	// style: "Outlined" | "Rounded" | "Sharp"
 	// opsz: "20" | "24" | "40" | "48"
 	// wght: "100" | "200" | "300" | "400" | "500" | "600" | "700"
@@ -107,7 +107,7 @@ func (p *MaterialSymbolsParams) Assert() error {
 	return nil
 }
 
-func downloadMaterialSymbolsWoff2(p MaterialSymbolsParams) ([]byte, error) {
+func downloadMaterialSymbolsWoff2(p MaterialSymbolsFontParams) ([]byte, error) {
 	if err := p.Assert(); err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func downloadMaterialSymbolsWoff2(p MaterialSymbolsParams) ([]byte, error) {
 	return data, nil
 }
 
-func getMaterialSymbols(p MaterialSymbolsParams) ([]byte, error) {
+func getMaterialSymbolsFont(p MaterialSymbolsFontParams) ([]byte, error) {
 	cacheDir, err := getCacheDir()
 	if err != nil {
 		return nil, err
