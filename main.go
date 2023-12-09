@@ -27,7 +27,6 @@ import (
 const (
 	streamDeckKeyResolutionX = 72
 	streamDeckKeyResolutionY = 72
-	kindId                   = "potato"
 )
 
 var (
