@@ -27,9 +27,9 @@ type MaterialSymbolsFontParams struct {
 	Grad  string `json:"grad"`
 }
 
-func GetMaterialSymbolsIcon(fontParams MaterialSymbolsFontParams, codePoint string) (image.Image, error) {
+func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int) (image.Image, error) {
 	font := canvas.NewFontFamily("Material Symbols")
-	rawFont, err := getMaterialSymbolsFont(fontParams)
+	rawFont, err := p.getFont()
 	if err != nil {
 		return nil, err
 	}
@@ -37,9 +37,10 @@ func GetMaterialSymbolsIcon(fontParams MaterialSymbolsFontParams, codePoint stri
 	if err != nil {
 		return nil, err
 	}
-	face := font.Face(mmToPoints(48), color.White, canvas.FontRegular, canvas.FontNormal)
+	sizeFloat := float64(size)
+	face := font.Face(mmToPoints(sizeFloat), color.White, canvas.FontRegular, canvas.FontNormal)
 
-	c := canvas.New(48, 48)
+	c := canvas.New(sizeFloat, sizeFloat)
 	ctx := canvas.NewContext(c)
 	codeInt, err := strconv.ParseInt(codePoint, 16, 32)
 	if err != nil {
@@ -55,7 +56,7 @@ func (p *MaterialSymbolsFontParams) String() string {
 	return fmt.Sprintf("%s-%s-%s-%s-%s", p.Style, p.Opsz, p.Wght, p.Fill, p.Grad)
 }
 
-func (p *MaterialSymbolsFontParams) SetDefaultsForEmptyParam() {
+func (p *MaterialSymbolsFontParams) FillEmptyWithDefault() {
 	if p.Style == "" {
 		p.Style = "Outlined"
 	}
@@ -107,7 +108,7 @@ func (p *MaterialSymbolsFontParams) Assert() error {
 	return nil
 }
 
-func downloadMaterialSymbolsWoff2(p MaterialSymbolsFontParams) ([]byte, error) {
+func (p *MaterialSymbolsFontParams) fetchWoff2() ([]byte, error) {
 	if err := p.Assert(); err != nil {
 		return nil, err
 	}
@@ -154,7 +155,7 @@ func downloadMaterialSymbolsWoff2(p MaterialSymbolsFontParams) ([]byte, error) {
 	return data, nil
 }
 
-func getMaterialSymbolsFont(p MaterialSymbolsFontParams) ([]byte, error) {
+func (p *MaterialSymbolsFontParams) getFont() ([]byte, error) {
 	cacheDir, err := getCacheDir()
 	if err != nil {
 		return nil, err
@@ -176,7 +177,7 @@ func getMaterialSymbolsFont(p MaterialSymbolsFontParams) ([]byte, error) {
 	if err := p.Assert(); err != nil {
 		return nil, err
 	}
-	p.SetDefaultsForEmptyParam()
+	p.FillEmptyWithDefault()
 
 	key := p.String()
 	fontData, ok := materialSymbolsFonts.Get(key)
@@ -184,7 +185,7 @@ func getMaterialSymbolsFont(p MaterialSymbolsFontParams) ([]byte, error) {
 		return fontData, nil
 	}
 
-	fontData, err = downloadMaterialSymbolsWoff2(p)
+	fontData, err = p.fetchWoff2()
 	if err != nil {
 		return nil, err
 	}

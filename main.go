@@ -347,17 +347,17 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 		if renderParam.Settings != nil {
 			const defaultIconCodePoint = "e050" // volume_up
 			fontParams := renderParam.Settings.IconFontParams
-			fontParams.SetDefaultsForEmptyParam()
+			fontParams.FillEmptyWithDefault()
 			if err := fontParams.Assert(); err != nil {
 				log.Printf("invalid iconFontParams: %v\n", err)
 				fontParams = icon.MaterialSymbolsFontParams{}
-				fontParams.SetDefaultsForEmptyParam()
+				fontParams.FillEmptyWithDefault()
 			}
 			iconCodePoint := renderParam.Settings.IconCodePoint
 			if iconCodePoint == "" {
 				iconCodePoint = defaultIconCodePoint
 			}
-			img, err := icon.GetMaterialSymbolsIcon(fontParams, iconCodePoint)
+			img, err := fontParams.RenderIcon(iconCodePoint, 48)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err
