@@ -10,7 +10,7 @@
       ],
       "Controllers": ["Encoder"],
       "Encoder": {
-        "layout": "layouts/customLayout.json"
+        "layout": "layouts/action1.json"
       },
       "PropertyInspectorPath": "property_inspector.html",
       "SupportedInMultiActions": false,
