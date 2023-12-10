@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/FlowingSPDG/streamdeck"
@@ -67,11 +68,28 @@ func main() {
 	streamdeck.Log().SetOutput(os.Stderr)
 	streamdeck.Log().SetPrefix("package streamdeck: ")
 
+	cacheDir := setupPluginCacheDir()
+	icon.SetMaterialSymbolsCacheDir(cacheDir)
+
 	ctx := context.Background()
 	log.Println("Starting voicemeeter-streamdeck-plugin")
 	if err := run(ctx); err != nil {
 		panic(err)
 	}
+}
+
+func setupPluginCacheDir() string {
+	userCacheDir := ""
+	userCacheDir, err := os.UserCacheDir()
+	if err != nil {
+		log.Printf("error getting user cache dir: %v, fallback to temp dir\n", err)
+		userCacheDir = os.TempDir()
+	}
+	cacheDir := filepath.Join(userCacheDir, "streamdeck-voicemeeter")
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		log.Printf("error creating cache dir: %v\n", err)
+	}
+	return cacheDir
 }
 
 func run(ctx context.Context) error {

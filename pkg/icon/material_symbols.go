@@ -16,7 +16,10 @@ import (
 	"github.com/tdewolff/canvas/renderers/rasterizer"
 )
 
-var materialSymbolsFonts *cmap.MapOf[string, []byte] // key: params.String()
+var (
+	materialSymbolsFonts    *cmap.MapOf[string, []byte] // key: params.String()
+	materialSymbolsCacheDir string
+)
 
 type MaterialSymbolsFontParams struct {
 	Style string `json:"style"`
@@ -24,6 +27,13 @@ type MaterialSymbolsFontParams struct {
 	Wght  string `json:"wght"`
 	Fill  string `json:"fill"`
 	Grad  string `json:"grad"`
+}
+
+// SetMaterialSymbolsCacheDir set the cache directory for Material Symbols fonts.
+// If not set, the system temporary directory will be used.
+// The fonts cache file is named "materialSymbolsCache.json".
+func SetMaterialSymbolsCacheDir(dir string) {
+	materialSymbolsCacheDir = dir
 }
 
 func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int) (image.Image, error) {
@@ -154,10 +164,7 @@ func (p *MaterialSymbolsFontParams) fetchWoff2() ([]byte, error) {
 }
 
 func (p *MaterialSymbolsFontParams) getFont() ([]byte, error) {
-	cacheDir, err := getCacheDir()
-	if err != nil {
-		return nil, err
-	}
+	cacheDir := getCacheDir()
 	fontsCachePath := filepath.Join(cacheDir, "materialSymbolsCache.json")
 
 	if materialSymbolsFonts == nil {
@@ -183,7 +190,7 @@ func (p *MaterialSymbolsFontParams) getFont() ([]byte, error) {
 		return fontData, nil
 	}
 
-	fontData, err = p.fetchWoff2()
+	fontData, err := p.fetchWoff2()
 	if err != nil {
 		return nil, err
 	}
@@ -207,24 +214,12 @@ func isFileExist(p string) bool {
 	return err == nil && !info.IsDir()
 }
 
-func isDirExist(p string) bool {
-	info, err := os.Stat(p)
-	return err == nil && info.IsDir()
-}
-
-func getCacheDir() (string, error) {
-	userCacheDir, err := os.UserCacheDir()
-	if err != nil {
-		return "", err
+func getCacheDir() string {
+	if materialSymbolsCacheDir != "" {
+		return materialSymbolsCacheDir
+	} else {
+		return os.TempDir()
 	}
-	cacheDir := filepath.Join(userCacheDir, "voicemeeter-streamdeck-plugin")
-	if !isDirExist(cacheDir) {
-		err = os.MkdirAll(cacheDir, 0755)
-		if err != nil {
-			return "", err
-		}
-	}
-	return cacheDir, nil
 }
 
 func mmToPoints(mm float64) float64 {
