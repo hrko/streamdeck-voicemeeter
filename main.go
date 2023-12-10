@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"image"
-	"image/color"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,7 +11,6 @@ import (
 
 	"github.com/FlowingSPDG/streamdeck"
 	sdcontext "github.com/FlowingSPDG/streamdeck/context"
-	"github.com/fogleman/gg"
 	"github.com/fufuok/cmap"
 	"github.com/onyx-and-iris/voicemeeter/v2"
 
@@ -310,10 +307,6 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 }
 
 func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) error {
-	const levelMaxDb = 12.0
-	const levelGoodDb = -24.0
-	const levelMinDb = -60.0
-
 	ctx := context.Background()
 	ctx = sdcontext.WithContext(ctx, renderParam.TargetContext)
 
@@ -325,7 +318,14 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 	switch instProps.Controller {
 	case "Keypad":
 		if renderParam.Levels != nil {
-			img := levelMeterHorizontal(*renderParam.Levels, levelMinDb, levelGoodDb, levelMaxDb, streamDeckKeyResolutionX, streamDeckKeyResolutionY, 2, 1, 1)
+			var levelMeterParams graphics.LevelMeterParams
+			levelMeterParams.SetDefault(streamDeckKeyResolutionX, streamDeckKeyResolutionY)
+			levelMeterParams.Cell.Length = 2
+			img, err := levelMeterParams.RenderHorizontal(*renderParam.Levels)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
 			imgBase64, err := streamdeck.Image(img)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
@@ -387,7 +387,13 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			payload.Icon = &imgBase64
 		}
 		if renderParam.Levels != nil {
-			img := levelMeterHorizontal(*renderParam.Levels, levelMinDb, levelGoodDb, levelMaxDb, 108, 8, 1, 1, 1)
+			var levelMeterParams graphics.LevelMeterParams
+			levelMeterParams.SetDefault(108, 8)
+			img, err := levelMeterParams.RenderHorizontal(*renderParam.Levels)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
 			imgBase64, err := streamdeck.Image(img)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
@@ -411,66 +417,4 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 	}
 
 	return nil
-}
-
-func levelMeterHorizontal(dB []float64, dBMin float64, dBGood float64, dBMax float64, width int, height int, cellWidth int, cellMarginX int, cellMarginY int) image.Image {
-	channelCount := len(dB)
-	cellHeight := (height - cellMarginY*(channelCount-1)) / channelCount
-	cellCount := (width + cellMarginX) / (cellWidth + cellMarginX)
-	minGoodCellIndex := int((dBGood - dBMin) / (dBMax - dBMin) * float64(cellCount))
-	minClipCellIndex := int((0.0 - dBMin) / (dBMax - dBMin) * float64(cellCount))
-
-	backgroundColor := color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
-	cellOnNormalColor := color.RGBA{R: 133, G: 173, B: 185, A: 0xff}
-	cellOnGoodColor := color.RGBA{R: 30, G: 254, B: 91, A: 0xff}
-	cellOnClipColor := color.RGBA{R: 250, G: 0, B: 0, A: 0xff}
-	cellOffNormalColor := color.RGBA{R: 25, G: 27, B: 27, A: 0xff}
-	cellOffGoodColor := color.RGBA{R: 25, G: 27, B: 27, A: 0xff}
-	cellOffClipColor := color.RGBA{R: 31, G: 23, B: 21, A: 0xff}
-
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	dc := gg.NewContextForRGBA(img)
-
-	dc.SetColor(backgroundColor)
-	dc.DrawRectangle(0, 0, float64(width), float64(height))
-	dc.Fill()
-
-	for ch, lvDb := range dB {
-		lv := 0.0
-		if lvDb > dBMax {
-			lv = 1.0
-		} else if lvDb > dBMin {
-			lv = (lvDb - dBMin) / (dBMax - dBMin)
-		} else {
-			lv = 0.0
-		}
-		minOffCellIndex := int(lv * float64(cellCount))
-		for i := 0; i < cellCount; i++ {
-			x := i * (cellWidth + cellMarginX)
-			y := ch * (cellHeight + cellMarginY)
-			w := cellWidth
-			h := cellHeight
-			if i < minOffCellIndex {
-				if i < minGoodCellIndex {
-					dc.SetColor(cellOnNormalColor)
-				} else if i < minClipCellIndex {
-					dc.SetColor(cellOnGoodColor)
-				} else {
-					dc.SetColor(cellOnClipColor)
-				}
-			} else {
-				if i < minGoodCellIndex {
-					dc.SetColor(cellOffNormalColor)
-				} else if i < minClipCellIndex {
-					dc.SetColor(cellOffGoodColor)
-				} else {
-					dc.SetColor(cellOffClipColor)
-				}
-			}
-			dc.DrawRectangle(float64(x), float64(y), float64(w), float64(h))
-			dc.Fill()
-		}
-	}
-
-	return img
 }
