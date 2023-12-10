@@ -48,9 +48,11 @@ type Action1InstanceProperty struct {
 }
 
 type Action1InstanceSettings struct {
-	ShowText       bool                               `json:"showText,omitempty"`
-	IconCodePoint  string                             `json:"iconCodePoint,omitempty"`
-	IconFontParams graphics.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
+	ShowText        bool                               `json:"showText,omitempty"`
+	IconCodePoint   string                             `json:"iconCodePoint,omitempty"`
+	IconFontParams  graphics.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
+	StripOrBusKind  string                             `json:"stripOrBusKind,omitempty"` // "Strip" | "Bus"
+	StripOrBusIndex int                                `json:"stripOrBusIndex,omitempty"`
 }
 
 type Action1RenderParams struct {
@@ -282,24 +284,58 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		for range time.Tick(refreshInterval) {
 			for item := range action1InstanceMap.IterBuffered() {
 				actionContext := item.Key
+				actionProps := item.Val
 				go func() {
-					const busIndex = 5
-					busCount := len(vm.Bus)
-					if busIndex >= busCount {
-						log.Printf("busIndex %v is out of range\n", busIndex)
+					renderParam := &Action1RenderParams{}
+					renderParam.TargetContext = actionContext
+
+					stripOrBusKind := actionProps.Settings.StripOrBusKind
+					if stripOrBusKind == "" {
+						stripOrBusKind = "Strip"
+					}
+
+					switch stripOrBusKind {
+					case "Strip":
+						stripIndex := actionProps.Settings.StripOrBusIndex
+						stripCount := len(vm.Strip)
+						if stripIndex >= stripCount || stripIndex < 0 {
+							log.Printf("stripIndex %v is out of range\n", stripIndex)
+							return
+						}
+						levels := vm.Strip[stripIndex].Levels().PostFader()
+						levels = levels[:2]
+						title := vm.Strip[stripIndex].Label()
+						if title == "" {
+							title = fmt.Sprintf("Strip %v", stripIndex+1)
+						}
+						gain := vm.Strip[stripIndex].Gain()
+						renderParam.Levels = &levels
+						renderParam.Title = &title
+						renderParam.Gain = &gain
+
+					case "Bus":
+						busIndex := actionProps.Settings.StripOrBusIndex
+						busCount := len(vm.Bus)
+						if busIndex >= busCount || busIndex < 0 {
+							log.Printf("busIndex %v is out of range\n", busIndex)
+							return
+						}
+						levels := vm.Bus[busIndex].Levels().All()
+						levels = levels[:2]
+						title := vm.Bus[busIndex].Label()
+						if title == "" {
+							title = fmt.Sprintf("Bus %v", busIndex+1)
+						}
+						gain := vm.Bus[busIndex].Gain()
+						renderParam.Levels = &levels
+						renderParam.Title = &title
+						renderParam.Gain = &gain
+
+					default:
+						log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
 						return
 					}
-					levels := vm.Bus[busIndex].Levels().All()
-					levels = levels[:2]
 
-					title := vm.Bus[busIndex].Label()
-					gain := vm.Bus[busIndex].Gain()
-					renderParam := &Action1RenderParams{
-						TargetContext: actionContext,
-						Title:         &title,
-						Levels:        &levels,
-						Gain:          &gain,
-					}
 					action1RenderCh <- renderParam
 				}()
 			}

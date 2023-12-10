@@ -22,6 +22,10 @@
     <script>
       SDPIComponents.i18n.locales = {
         en: {
+          radio_stripOrBusKind_label: "Strip/Bus",
+          radio_stripOrBusKind_Strip: "Strip",
+          radio_stripOrBusKind_Bus: "Bus",
+          radio_stripOrBusIndex_label: "Strip/Bus Index",
           showText: "Show Text",
           header_globalSettings: "Global Settings",
           select_voiceMeeterKind_label: "VoiceMeeter Kind",
@@ -41,6 +45,10 @@
           radio_iconFontParams_opsz: "Optical Size",
         },
         ja: {
+          radio_stripOrBusKind_label: "Strip/Bus",
+          radio_stripOrBusKind_Strip: "Strip",
+          radio_stripOrBusKind_Bus: "Bus",
+          radio_stripOrBusIndex_label: "Strip/Bus 番号",
           showText: "テキストを表示",
           header_globalSettings: "グローバル設定",
           select_voiceMeeterKind_label: "VoiceMeeter 種別",
@@ -66,6 +74,31 @@
         await SDPIComponents.streamDeckClient.send("openUrl", payload);
       };
     </script>
+
+    <sdpi-item label="__MSG_radio_stripOrBusKind_label__">
+      <sdpi-radio setting="stripOrBusKind" default="Strip" columns="2">
+        <option value="Strip">Strip</option>
+        <option value="Bus">Bus</option>
+      </sdpi-radio>
+    </sdpi-item>
+
+    <sdpi-item label="__MSG_radio_stripOrBusIndex_label__">
+      <sdpi-radio
+        setting="stripOrBusIndex"
+        default="0"
+        columns="4"
+        value-type="number"
+      >
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+      </sdpi-radio>
+    </sdpi-item>
 
     <sdpi-item>
       <h2><sdpi-i18n key="header_globalSettings"></sdpi-i18n></h2>
