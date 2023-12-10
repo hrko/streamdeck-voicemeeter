@@ -17,11 +17,6 @@ import (
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
 
-const (
-	streamDeckKeyResolutionX = 72
-	streamDeckKeyResolutionY = 72
-)
-
 var (
 	chGlobalSettings     chan *GlobalSettings
 	action1InstanceMap   *cmap.MapOf[string, Action1InstanceProperty]
@@ -48,7 +43,6 @@ type Action1InstanceProperty struct {
 }
 
 type Action1InstanceSettings struct {
-	ShowText        bool                               `json:"showText,omitempty"`
 	IconCodePoint   string                             `json:"iconCodePoint,omitempty"`
 	IconFontParams  graphics.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
 	StripOrBusKind  string                             `json:"stripOrBusKind,omitempty"` // "Strip" | "Bus"
@@ -361,42 +355,6 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 	}
 
 	switch instProps.Controller {
-	case "Keypad":
-		if renderParam.Levels != nil {
-			levelMeter.Image.Width = streamDeckKeyResolutionX
-			levelMeter.Image.Height = streamDeckKeyResolutionY
-			levelMeter.Cell.Length = 2
-			levelMeter.PeakHold = graphics.LevelMeterPeakHoldShowPeak
-			img, err := levelMeter.RenderHorizontal(*renderParam.Levels)
-			if err != nil {
-				log.Printf("error creating image: %v\n", err)
-				return err
-			}
-			imgBase64, err := streamdeck.Image(img)
-			if err != nil {
-				log.Printf("error creating image: %v\n", err)
-				return err
-			}
-			if err := client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware); err != nil {
-				log.Printf("error setting image: %v\n", err)
-				return err
-			}
-
-			title := ""
-			levelAvgDb := 0.0
-			for _, lvDb := range *renderParam.Levels {
-				levelAvgDb += lvDb
-			}
-			levelAvgDb /= float64(len(*renderParam.Levels))
-			if instProps.Settings.ShowText {
-				title = fmt.Sprintf("%.1f dB", levelAvgDb)
-			}
-			if err := client.SetTitle(ctx, title, streamdeck.HardwareAndSoftware); err != nil {
-				log.Printf("error setting title: %v\n", err)
-				return err
-			}
-		}
-
 	case "Encoder":
 		payload := struct {
 			Title      *string `json:"title,omitempty"`

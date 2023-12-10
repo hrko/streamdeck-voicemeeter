@@ -8,7 +8,7 @@
           "FontSize": "16"
         }
       ],
-      "Controllers": ["Keypad", "Encoder"],
+      "Controllers": ["Encoder"],
       "Encoder": {
         "layout": "layouts/customLayout.json"
       },
