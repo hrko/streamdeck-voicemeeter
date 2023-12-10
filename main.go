@@ -17,7 +17,7 @@ import (
 	"github.com/fufuok/cmap"
 	"github.com/onyx-and-iris/voicemeeter/v2"
 
-	"github.com/hrko/streamdeck-voicemeeter/pkg/icon"
+	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
 
 const (
@@ -50,9 +50,9 @@ type Action1InstanceProperty struct {
 }
 
 type Action1InstanceSettings struct {
-	ShowText       bool                           `json:"showText,omitempty"`
-	IconCodePoint  string                         `json:"iconCodePoint,omitempty"`
-	IconFontParams icon.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
+	ShowText       bool                               `json:"showText,omitempty"`
+	IconCodePoint  string                             `json:"iconCodePoint,omitempty"`
+	IconFontParams graphics.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
 }
 
 type Action1RenderParams struct {
@@ -69,7 +69,7 @@ func main() {
 	streamdeck.Log().SetPrefix("package streamdeck: ")
 
 	cacheDir := setupPluginCacheDir()
-	icon.SetMaterialSymbolsCacheDir(cacheDir)
+	graphics.SetMaterialSymbolsCacheDir(cacheDir)
 
 	ctx := context.Background()
 	log.Println("Starting voicemeeter-streamdeck-plugin")
@@ -368,7 +368,7 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			fontParams.FillEmptyWithDefault()
 			if err := fontParams.Assert(); err != nil {
 				log.Printf("invalid iconFontParams: %v\n", err)
-				fontParams = icon.MaterialSymbolsFontParams{}
+				fontParams = graphics.MaterialSymbolsFontParams{}
 				fontParams.FillEmptyWithDefault()
 			}
 			iconCodePoint := renderParam.Settings.IconCodePoint

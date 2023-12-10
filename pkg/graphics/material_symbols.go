@@ -1,4 +1,4 @@
-package icon
+package graphics
 
 import (
 	"fmt"
