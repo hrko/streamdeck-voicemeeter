@@ -23,9 +23,10 @@ const (
 )
 
 var (
-	chGlobalSettings   chan *GlobalSettings
-	action1InstanceMap *cmap.MapOf[string, Action1InstanceProperty]
-	action1RenderCh    chan *Action1RenderParams
+	chGlobalSettings     chan *GlobalSettings
+	action1InstanceMap   *cmap.MapOf[string, Action1InstanceProperty]
+	action1RenderCh      chan *Action1RenderParams
+	action1LevelMeterMap *cmap.MapOf[string, *graphics.LevelMeter]
 )
 
 type GlobalSettings struct {
@@ -268,6 +269,8 @@ func action1SetupPreClientRun(client *streamdeck.Client) {
 }
 
 func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error {
+	action1LevelMeterMap = cmap.NewOf[string, *graphics.LevelMeter]() // key: context of action instance
+
 	go func() {
 		for renderParam := range action1RenderCh {
 			action1Render(client, renderParam)
@@ -315,13 +318,21 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 		return fmt.Errorf("action1InstanceMap has no key '%v'", renderParam.TargetContext)
 	}
 
+	levelMeter, ok := action1LevelMeterMap.Get(renderParam.TargetContext)
+	if !ok {
+		levelMeter = new(graphics.LevelMeter)
+		levelMeter.SetDefault()
+		action1LevelMeterMap.Set(renderParam.TargetContext, levelMeter)
+	}
+
 	switch instProps.Controller {
 	case "Keypad":
 		if renderParam.Levels != nil {
-			var levelMeterParams graphics.LevelMeterParams
-			levelMeterParams.SetDefault(streamDeckKeyResolutionX, streamDeckKeyResolutionY)
-			levelMeterParams.Cell.Length = 2
-			img, err := levelMeterParams.RenderHorizontal(*renderParam.Levels)
+			levelMeter.Image.Width = streamDeckKeyResolutionX
+			levelMeter.Image.Height = streamDeckKeyResolutionY
+			levelMeter.Cell.Length = 2
+			levelMeter.PeakHold = graphics.LevelMeterPeakHoldShowPeak
+			img, err := levelMeter.RenderHorizontal(*renderParam.Levels)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err
@@ -387,9 +398,11 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			payload.Icon = &imgBase64
 		}
 		if renderParam.Levels != nil {
-			var levelMeterParams graphics.LevelMeterParams
-			levelMeterParams.SetDefault(108, 8)
-			img, err := levelMeterParams.RenderHorizontal(*renderParam.Levels)
+			levelMeter.Image.Width = 108
+			levelMeter.Image.Height = 8
+			levelMeter.Cell.Length = 1
+			levelMeter.PeakHold = graphics.LevelMeterPeakHoldFillPeakShowCurrent
+			img, err := levelMeter.RenderHorizontal(*renderParam.Levels)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err
