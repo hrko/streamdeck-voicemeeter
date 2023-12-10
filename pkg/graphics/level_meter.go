@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"math"
 	"time"
 
 	"github.com/fogleman/gg"
@@ -19,6 +20,7 @@ const (
 type LevelMeterPeakHold int
 
 type LevelMeter struct {
+	ChannelCount      int
 	DbMin             float64
 	DbGood            float64
 	DbMax             float64
@@ -78,38 +80,26 @@ func (p *LevelMeter) SetDefault() {
 	p.Cell.Color.ClippedOff = color.RGBA{R: 31, G: 23, B: 21, A: 0xff}
 	p.PeakHold = LevelMeterPeakHoldNone
 	p.PeakDecayDbPerSec = 12.0
-	p.lastPeak.db = make([]float64, 0)
+	p.lastPeak.db = make([]float64, p.ChannelCount)
+	for i := range p.lastPeak.db {
+		p.lastPeak.db[i] = -200.0
+	}
 	p.lastPeak.time = time.Now()
 }
 
 func (p *LevelMeter) RenderHorizontal(db []float64) (image.Image, error) {
-	if p.DbMin >= p.DbMax {
-		return nil, fmt.Errorf("DbMin must be less than DbMax")
-	}
-	if p.DbGood < p.DbMin || p.DbGood > p.DbMax {
-		return nil, fmt.Errorf("DbGood must be between DbMin and DbMax")
-	}
-	if p.Image.Width <= 0 || p.Image.Height <= 0 {
-		return nil, fmt.Errorf("Image.Width and Image.Height must be greater than 0")
-	}
-	if p.Image.Padding.Top < 0 || p.Image.Padding.Right < 0 || p.Image.Padding.Bottom < 0 || p.Image.Padding.Left < 0 {
-		return nil, fmt.Errorf("Image.Padding values must be greater than or equal to 0")
-	}
-	if p.Cell.Length <= 0 {
-		return nil, fmt.Errorf("Cell.Length must be greater than 0")
-	}
-	if p.Cell.Margin.X < 0 || p.Cell.Margin.Y < 0 {
-		return nil, fmt.Errorf("Cell.Margin values must be greater than or equal to 0")
+	if len(db) < p.ChannelCount {
+		return nil, fmt.Errorf("db length is less than ChannelCount")
 	}
 
-	heightNoPadding := p.Image.Height - p.Image.Padding.Top - p.Image.Padding.Bottom
-	widthNoPadding := p.Image.Width - p.Image.Padding.Left - p.Image.Padding.Right
-	channelCount := len(db)
+	err := p.validateConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	cellWidth := p.Cell.Length
-	cellHeight := (heightNoPadding - p.Cell.Margin.Y*(channelCount-1)) / channelCount
-	cellCount := (widthNoPadding + p.Cell.Margin.X) / (cellWidth + p.Cell.Margin.X)
-	minGoodCellIndex := int((p.DbGood - p.DbMin) / (p.DbMax - p.DbMin) * float64(cellCount))
-	minClipCellIndex := int((0.0 - p.DbMin) / (p.DbMax - p.DbMin) * float64(cellCount))
+	cellHeight := p.calculateCellHeight()
+	cellCount := p.calculateCellCount()
 	if cellHeight == 0 {
 		return nil, fmt.Errorf("calculated cellHeight is 0")
 	}
@@ -117,119 +107,148 @@ func (p *LevelMeter) RenderHorizontal(db []float64) (image.Image, error) {
 		return nil, fmt.Errorf("calculated cellCount is 0")
 	}
 
-	peak := p.lastPeak.db
-	if len(peak) != channelCount {
-		peak = make([]float64, channelCount)
-		for i := 0; i < channelCount; i++ {
-			peak[i] = -200.0
-		}
-	}
-	peakDecay := p.PeakDecayDbPerSec * time.Since(p.lastPeak.time).Seconds()
-	for i := 0; i < channelCount; i++ {
-		if db[i] > peak[i] {
-			peak[i] = db[i]
-		} else {
-			peak[i] -= peakDecay
-		}
-	}
-	p.lastPeak.db = peak
-	p.lastPeak.time = time.Now()
-	cellIndexPeak := make([]int, channelCount)
-	for i := 0; i < channelCount; i++ {
-		cellIndexPeak[i] = int((peak[i] - p.DbMin) / (p.DbMax - p.DbMin) * float64(cellCount))
-	}
+	peak := p.updatePeak(db)
 
 	img := image.NewRGBA(image.Rect(0, 0, p.Image.Width, p.Image.Height))
 	dc := gg.NewContextForRGBA(img)
-
 	dc.SetColor(p.Image.BackgroundColor)
-	dc.DrawRectangle(0, 0, float64(p.Image.Width), float64(p.Image.Height))
+	bgWidth := p.Image.Padding.Left + p.Image.Padding.Right + cellCount*(cellWidth+p.Cell.Margin.X) - p.Cell.Margin.X
+	bgHeight := p.Image.Padding.Top + p.Image.Padding.Bottom + p.ChannelCount*(cellHeight+p.Cell.Margin.Y) - p.Cell.Margin.Y
+	dc.DrawRectangle(0, 0, float64(bgWidth), float64(bgHeight))
 	dc.Fill()
 
-	for ch, lvDb := range db {
-		// normalize lvDb to 0.0-1.0
-		lv := 0.0
-		if lvDb > p.DbMax {
-			lv = 1.0
-		} else if lvDb > p.DbMin {
-			lv = (lvDb - p.DbMin) / (p.DbMax - p.DbMin)
-		} else {
-			lv = 0.0
-		}
-		cellIndexCurrent := int(lv * float64(cellCount))
+	for ch, currentLv := range db {
+		cellIndexCurrent := p.calculateCellIndex(currentLv)
+		cellIndexPeak := p.calculateCellIndex(peak[ch])
 
-		// calculate minOffCellIndex
 		var minOffCellIndex int
 		switch p.PeakHold {
 		case LevelMeterPeakHoldNone, LevelMeterPeakHoldShowPeak:
 			minOffCellIndex = cellIndexCurrent
 		case LevelMeterPeakHoldFillPeak, LevelMeterPeakHoldFillPeakShowCurrent:
-			minOffCellIndex = cellIndexPeak[ch]
+			minOffCellIndex = cellIndexPeak
 		}
 
 		// draw cells
 		for i := 0; i < cellCount; i++ {
-			x := i*(cellWidth+p.Cell.Margin.X) + p.Image.Padding.Left
-			y := ch*(cellHeight+p.Cell.Margin.Y) + p.Image.Padding.Top
-			w := cellWidth
-			h := cellHeight
 			if i < minOffCellIndex {
-				if i < minGoodCellIndex {
-					dc.SetColor(p.Cell.Color.Normal)
-				} else if i < minClipCellIndex {
-					dc.SetColor(p.Cell.Color.Good)
-				} else {
-					dc.SetColor(p.Cell.Color.Clipped)
-				}
+				dc.SetColor(p.getCellColor(i))
 			} else {
-				if i < minGoodCellIndex {
-					dc.SetColor(p.Cell.Color.NormalOff)
-				} else if i < minClipCellIndex {
-					dc.SetColor(p.Cell.Color.GoodOff)
-				} else {
-					dc.SetColor(p.Cell.Color.ClippedOff)
-				}
+				dc.SetColor(p.getCellColorOff(i))
 			}
-			dc.DrawRectangle(float64(x), float64(y), float64(w), float64(h))
-			dc.Fill()
+			p.drawAndFillCell(dc, ch, i, cellWidth, cellHeight)
 		}
 
-		// draw peak or current level indicator
+		// draw peak or current level indicator cell
 		switch p.PeakHold {
 		case LevelMeterPeakHoldShowPeak:
-			index := cellIndexPeak[ch]
-			if index < minGoodCellIndex {
-				dc.SetColor(p.Cell.Color.Normal)
-			} else if index < minClipCellIndex {
-				dc.SetColor(p.Cell.Color.Good)
-			} else {
-				dc.SetColor(p.Cell.Color.Clipped)
-			}
-			x := index*(cellWidth+p.Cell.Margin.X) + p.Image.Padding.Left
-			y := ch*(cellHeight+p.Cell.Margin.Y) + p.Image.Padding.Top
-			w := cellWidth
-			h := cellHeight
-			dc.DrawRectangle(float64(x), float64(y), float64(w), float64(h))
-			dc.Fill()
+			i := cellIndexPeak
+			dc.SetColor(p.getCellColor(i))
+			p.drawAndFillCell(dc, ch, i, cellWidth, cellHeight)
 		case LevelMeterPeakHoldFillPeakShowCurrent:
-			index := cellIndexCurrent
-			if index != cellIndexPeak[ch] {
-				if index < minGoodCellIndex {
-					dc.SetColor(p.Cell.Color.NormalOff)
-				} else if index < minClipCellIndex {
-					dc.SetColor(p.Cell.Color.GoodOff)
-				} else {
-					dc.SetColor(p.Cell.Color.ClippedOff)
-				}
-				x := index*(cellWidth+p.Cell.Margin.X) + p.Image.Padding.Left
-				y := ch*(cellHeight+p.Cell.Margin.Y) + p.Image.Padding.Top
-				w := cellWidth
-				h := cellHeight
-				dc.DrawRectangle(float64(x), float64(y), float64(w), float64(h))
-				dc.Fill()
+			i := cellIndexCurrent
+			if i != cellIndexPeak {
+				dc.SetColor(p.getCellColorOff(i))
+				p.drawAndFillCell(dc, ch, i, cellWidth, cellHeight)
 			}
 		}
 	}
 
 	return img, nil
+}
+
+func (p *LevelMeter) validateConfig() error {
+	if p.DbMin >= p.DbMax {
+		return fmt.Errorf("DbMin must be less than DbMax")
+	}
+	if p.DbGood < p.DbMin || p.DbGood > p.DbMax {
+		return fmt.Errorf("DbGood must be between DbMin and DbMax")
+	}
+	if p.DbMax < 0.0 {
+		return fmt.Errorf("DbMax must be greater than 0.0")
+	}
+	if p.Image.Width <= 0 || p.Image.Height <= 0 {
+		return fmt.Errorf("Image.Width and Image.Height must be greater than 0")
+	}
+	if p.Image.Padding.Top < 0 || p.Image.Padding.Right < 0 || p.Image.Padding.Bottom < 0 || p.Image.Padding.Left < 0 {
+		return fmt.Errorf("Image.Padding values must be greater than or equal to 0")
+	}
+	if p.Cell.Length <= 0 {
+		return fmt.Errorf("Cell.Length must be greater than 0")
+	}
+	if p.Cell.Margin.X < 0 || p.Cell.Margin.Y < 0 {
+		return fmt.Errorf("Cell.Margin values must be greater than or equal to 0")
+	}
+	return nil
+}
+
+func (p *LevelMeter) calculateCellCount() int {
+	widthNoPadding := p.Image.Width - p.Image.Padding.Left - p.Image.Padding.Right
+	cellCount := (widthNoPadding + p.Cell.Margin.X) / (p.Cell.Length + p.Cell.Margin.X)
+	return cellCount
+}
+
+func (p *LevelMeter) calculateCellHeight() int {
+	heightNoPadding := p.Image.Height - p.Image.Padding.Top - p.Image.Padding.Bottom
+	cellHeight := (heightNoPadding - p.Cell.Margin.Y*(p.ChannelCount-1)) / p.ChannelCount
+	return cellHeight
+}
+
+func (p *LevelMeter) updatePeak(db []float64) []float64 {
+	elapsed := time.Since(p.lastPeak.time)
+	decay := p.PeakDecayDbPerSec * elapsed.Seconds()
+	for ch, currentLv := range db {
+		if currentLv > p.lastPeak.db[ch] {
+			p.lastPeak.db[ch] = currentLv
+		} else {
+			p.lastPeak.db[ch] -= decay
+		}
+	}
+	p.lastPeak.time = time.Now()
+	return p.lastPeak.db
+}
+
+func (p *LevelMeter) calculateCellIndex(lvDb float64) int {
+	cellCount := p.calculateCellCount()
+	cellIndex := int(math.Round((lvDb - p.DbMin) / (p.DbMax - p.DbMin) * float64(cellCount)))
+	return cellIndex
+}
+
+func (p *LevelMeter) getCellColor(cellIndex int) color.Color {
+	minGoodCellIndex := p.calculateCellIndex(p.DbGood)
+	minClipCellIndex := p.calculateCellIndex(0.0)
+	if cellIndex < minGoodCellIndex {
+		return p.Cell.Color.Normal
+	} else if cellIndex < minClipCellIndex {
+		return p.Cell.Color.Good
+	} else {
+		return p.Cell.Color.Clipped
+	}
+}
+
+func (p *LevelMeter) getCellColorOff(cellIndex int) color.Color {
+	minGoodCellIndex := p.calculateCellIndex(p.DbGood)
+	minClipCellIndex := p.calculateCellIndex(0.0)
+	if cellIndex < minGoodCellIndex {
+		return p.Cell.Color.NormalOff
+	} else if cellIndex < minClipCellIndex {
+		return p.Cell.Color.GoodOff
+	} else {
+		return p.Cell.Color.ClippedOff
+	}
+}
+
+func (p *LevelMeter) drawAndFillCell(dc *gg.Context, ch, cellIndex, cellWidth, cellHeight int) {
+	if ch >= p.ChannelCount || ch < 0 {
+		return
+	}
+	if cellIndex >= p.calculateCellCount() || cellIndex < 0 {
+		return
+	}
+	x := cellIndex*(cellWidth+p.Cell.Margin.X) + p.Image.Padding.Left
+	y := ch*(cellHeight+p.Cell.Margin.Y) + p.Image.Padding.Top
+	w := cellWidth
+	h := cellHeight
+	dc.DrawRectangle(float64(x), float64(y), float64(w), float64(h))
+	dc.Fill()
 }
