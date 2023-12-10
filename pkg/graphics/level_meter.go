@@ -71,7 +71,7 @@ func NewLevelMeter(channelCount int) *LevelMeter {
 	p.Image.Padding.Right = 1
 	p.Image.Padding.Bottom = 1
 	p.Image.Padding.Left = 1
-	p.Image.BackgroundColor = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x00}
+	p.Image.BackgroundColor = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xff}
 	p.Cell.Length = 1
 	p.Cell.Margin.X = 1
 	p.Cell.Margin.Y = 1
