@@ -21,7 +21,7 @@ const (
 type LevelMeterPeakHold int
 
 type LevelMeter struct {
-	ChannelCount      int
+	channelCount      int
 	DbMin             float64
 	DbGood            float64
 	DbMax             float64
@@ -59,7 +59,9 @@ type LevelMeter struct {
 	}
 }
 
-func (p *LevelMeter) SetDefault() {
+func NewLevelMeter(channelCount int) *LevelMeter {
+	p := &LevelMeter{}
+	p.channelCount = channelCount
 	p.DbMin = -60.0
 	p.DbGood = -24.0
 	p.DbMax = 12.0
@@ -81,15 +83,16 @@ func (p *LevelMeter) SetDefault() {
 	p.Cell.Color.ClippedOff = color.RGBA{R: 31, G: 23, B: 21, A: 0xff}
 	p.PeakHold = LevelMeterPeakHoldNone
 	p.PeakDecayDbPerSec = 12.0
-	p.lastPeak.db = make([]float64, p.ChannelCount)
+	p.lastPeak.db = make([]float64, p.channelCount)
 	for i := range p.lastPeak.db {
 		p.lastPeak.db[i] = -200.0
 	}
 	p.lastPeak.time = time.Now()
+	return p
 }
 
 func (p *LevelMeter) RenderHorizontal(db []float64) (image.Image, error) {
-	if len(db) < p.ChannelCount {
+	if len(db) < p.channelCount {
 		return nil, fmt.Errorf("db length is less than ChannelCount")
 	}
 
@@ -114,7 +117,7 @@ func (p *LevelMeter) RenderHorizontal(db []float64) (image.Image, error) {
 	dc := gg.NewContextForRGBA(img)
 	dc.SetColor(p.Image.BackgroundColor)
 	bgWidth := p.Image.Padding.Left + p.Image.Padding.Right + cellCount*(cellWidth+p.Cell.Margin.X) - p.Cell.Margin.X
-	bgHeight := p.Image.Padding.Top + p.Image.Padding.Bottom + p.ChannelCount*(cellHeight+p.Cell.Margin.Y) - p.Cell.Margin.Y
+	bgHeight := p.Image.Padding.Top + p.Image.Padding.Bottom + p.channelCount*(cellHeight+p.Cell.Margin.Y) - p.Cell.Margin.Y
 	dc.DrawRectangle(0, 0, float64(bgWidth), float64(bgHeight))
 	dc.Fill()
 
@@ -213,7 +216,7 @@ func (p *LevelMeter) calculateCellCount() int {
 
 func (p *LevelMeter) calculateCellHeight() int {
 	heightNoPadding := p.Image.Height - p.Image.Padding.Top - p.Image.Padding.Bottom
-	cellHeight := (heightNoPadding - p.Cell.Margin.Y*(p.ChannelCount-1)) / p.ChannelCount
+	cellHeight := (heightNoPadding - p.Cell.Margin.Y*(p.channelCount-1)) / p.channelCount
 	return cellHeight
 }
 
@@ -262,7 +265,7 @@ func (p *LevelMeter) getCellColorOff(cellIndex int) color.Color {
 }
 
 func (p *LevelMeter) drawAndFillCell(dc *gg.Context, ch, cellIndex, cellWidth, cellHeight int) {
-	if ch >= p.ChannelCount || ch < 0 {
+	if ch >= p.channelCount || ch < 0 {
 		return
 	}
 	if cellIndex >= p.calculateCellCount() || cellIndex < 0 {

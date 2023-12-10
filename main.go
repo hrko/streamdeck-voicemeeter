@@ -320,9 +320,7 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 
 	levelMeter, ok := action1LevelMeterMap.Get(renderParam.TargetContext)
 	if !ok {
-		levelMeter = new(graphics.LevelMeter)
-		levelMeter.ChannelCount = 2
-		levelMeter.SetDefault()
+		levelMeter = graphics.NewLevelMeter(2)
 		action1LevelMeterMap.Set(renderParam.TargetContext, levelMeter)
 	}
 
