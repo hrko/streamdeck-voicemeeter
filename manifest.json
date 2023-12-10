@@ -2,7 +2,6 @@
   "Actions": [
     {
       "Name": "Action1",
-      "Category": "VoiceMeeter",
       "States": [
         {
           "TitleAlignment": "middle",
@@ -23,6 +22,8 @@
   "Author": "hrko",
   "CodePath": "streamdeck-voicemeeter-wrapper.exe",
   "Description": "Another VoiceMeeter integration for Stream Deck",
+  "Category": "VoiceMeeter",
+  "CategoryIcon": "voicemeeter.png",
   "Name": "VoiceMeeter",
   "URL": "https://hrko.jp",
   "Version": "0.1",

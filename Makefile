@@ -32,6 +32,7 @@ install: kill-streamdeck build layouts
 	cp *.html $(INSTALLDIR)
 	cp *.exe $(INSTALLDIR)
 	cp -r layouts $(INSTALLDIR)
+	cp *.png $(INSTALLDIR)
 	# ldd $(BINNAME) | sed 's/^.*=> \([^ ]\+\).*/\1/' | grep -v /c/ | xargs -i{} cp {} $(INSTALLDIR)
 
 logs:
