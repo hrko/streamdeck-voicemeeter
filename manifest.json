@@ -1,7 +1,7 @@
 {
   "Actions": [
     {
-      "Name": "VoiceMeeter Action",
+      "Name": "Action1",
       "States": [
         {
           "TitleAlignment": "middle",
@@ -14,8 +14,8 @@
       },
       "PropertyInspectorPath": "property_inspector.html",
       "SupportedInMultiActions": false,
-      "Tooltip": "VoiceMeeter Action Tooltip",
-      "UUID": "jp.hrko.voicemeeter.action"
+      "Tooltip": "VoiceMeeter Action 1 Tooltip",
+      "UUID": "jp.hrko.voicemeeter.action1"
     }
   ],
   "SDKVersion": 2,

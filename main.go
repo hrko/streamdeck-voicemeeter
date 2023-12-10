@@ -206,7 +206,7 @@ func waitClientConnected(client *streamdeck.Client) error {
 }
 
 func action1SetupPreClientRun(client *streamdeck.Client) {
-	action := client.Action("jp.hrko.voicemeeter.action")
+	action := client.Action("jp.hrko.voicemeeter.action1")
 	action1InstanceMap = cmap.NewOf[string, Action1InstanceProperty]() // key: context of action instance
 	action1RenderCh = make(chan *Action1RenderParams, 32)
 
