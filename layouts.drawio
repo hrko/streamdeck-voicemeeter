@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="gRC5p6lSlWNpRSB2eHs0" name="customLayout">
-        <mxGraphModel dx="114" dy="117" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="200" pageHeight="100" math="0" shadow="0">
+        <mxGraphModel dx="118" dy="203" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="200" pageHeight="100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -10,24 +10,24 @@
                 <mxCell id="7" value="{&quot;key&quot;:&quot;gainValue&quot;, &quot;type&quot;:&quot;text&quot;, &quot;font&quot;:{&quot;size&quot;:16, &quot;weight&quot;:600}, &quot;alignment&quot;:&quot;right&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=4;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" parent="1" vertex="1">
                     <mxGeometry x="76" y="40" width="108" height="24" as="geometry"/>
                 </mxCell>
-                <mxCell id="8" value="{&quot;key&quot;:&quot;levelMeter&quot;, &quot;type&quot;:&quot;pixmap&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=4;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" parent="1" vertex="1">
-                    <mxGeometry x="76" y="68" width="108" height="8" as="geometry"/>
+                <mxCell id="8" value="{&quot;key&quot;:&quot;levelMeter&quot;, &quot;type&quot;:&quot;pixmap&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=2;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=middle;align=left;spacing=0;spacingLeft=6;" parent="1" vertex="1">
+                    <mxGeometry x="76" y="66" width="108" height="5" as="geometry"/>
                 </mxCell>
                 <mxCell id="9" value="{&quot;key&quot;:&quot;gainSlider&quot;, &quot;type&quot;:&quot;pixmap&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=4;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" parent="1" vertex="1">
-                    <mxGeometry x="76" y="80" width="108" height="8" as="geometry"/>
+                    <mxGeometry x="76" y="74" width="108" height="12" as="geometry"/>
                 </mxCell>
-                <mxCell id="DI9kBK8Rm9_XXlFNE4hC-9" value="{&quot;key&quot;:&quot;title&quot;, &quot;type&quot;:&quot;text&quot;, &quot;font&quot;:{&quot;size&quot;:16, &quot;weight&quot;:600}, &quot;alignment&quot;:&quot;left&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=4;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" vertex="1" parent="1">
+                <mxCell id="DI9kBK8Rm9_XXlFNE4hC-9" value="{&quot;key&quot;:&quot;title&quot;, &quot;type&quot;:&quot;text&quot;, &quot;font&quot;:{&quot;size&quot;:16, &quot;weight&quot;:600}, &quot;alignment&quot;:&quot;left&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=4;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" parent="1" vertex="1">
                     <mxGeometry x="16" y="10" width="136" height="24" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
     <diagram name="indicatorLayout" id="8Op-dqdAiXIAyYBQg95h">
-        <mxGraphModel dx="138" dy="141" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="200" pageHeight="100" math="0" shadow="0">
+        <mxGraphModel dx="120" dy="81" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="200" pageHeight="100" math="0" shadow="0">
             <root>
                 <mxCell id="zf-_htT1ZFLxrwi-bp1Y-0"/>
                 <mxCell id="zf-_htT1ZFLxrwi-bp1Y-1" parent="zf-_htT1ZFLxrwi-bp1Y-0"/>
-                <mxCell id="bUAzu6Rc4y3xahkR9zPU-0" value="{&quot;key&quot;:&quot;title&quot;, &quot;type&quot;:&quot;text&quot;, &quot;font&quot;:{&quot;size&quot;:16, &quot;weight&quot;:600}, &quot;alignment&quot;:&quot;left&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=4;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" vertex="1" parent="zf-_htT1ZFLxrwi-bp1Y-1">
+                <mxCell id="bUAzu6Rc4y3xahkR9zPU-0" value="{&quot;key&quot;:&quot;title&quot;, &quot;type&quot;:&quot;text&quot;, &quot;font&quot;:{&quot;size&quot;:16, &quot;weight&quot;:600}, &quot;alignment&quot;:&quot;left&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=4;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" parent="zf-_htT1ZFLxrwi-bp1Y-1" vertex="1">
                     <mxGeometry x="16" y="10" width="136" height="24" as="geometry"/>
                 </mxCell>
                 <mxCell id="zf-_htT1ZFLxrwi-bp1Y-4" value="{&quot;key&quot;:&quot;icon&quot;, &quot;type&quot;:&quot;pixmap&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=4;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" parent="zf-_htT1ZFLxrwi-bp1Y-1" vertex="1">

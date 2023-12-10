@@ -398,7 +398,9 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 		}
 		if renderParam.Levels != nil {
 			levelMeter.Image.Width = 108
-			levelMeter.Image.Height = 8
+			levelMeter.Image.Height = 5
+			levelMeter.Image.Padding.Left = 2
+			levelMeter.Image.Padding.Right = 3
 			levelMeter.Cell.Length = 1
 			levelMeter.PeakHold = graphics.LevelMeterPeakHoldFillPeakShowCurrent
 			img, err := levelMeter.RenderHorizontal(*renderParam.Levels)

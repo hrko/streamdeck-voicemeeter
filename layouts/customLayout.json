@@ -18,12 +18,12 @@
     },
     {
       "key": "levelMeter",
-      "rect": [76, 68, 108, 8],
+      "rect": [76, 66, 108, 5],
       "type": "pixmap"
     },
     {
       "key": "gainSlider",
-      "rect": [76, 80, 108, 8],
+      "rect": [76, 74, 108, 12],
       "type": "pixmap"
     },
     {
