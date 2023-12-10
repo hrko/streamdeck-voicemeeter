@@ -2,6 +2,7 @@
   "Actions": [
     {
       "Name": "Action1",
+      "Category": "VoiceMeeter",
       "States": [
         {
           "TitleAlignment": "middle",
