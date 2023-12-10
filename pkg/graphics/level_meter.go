@@ -7,6 +7,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/disintegration/imaging"
 	"github.com/fogleman/gg"
 )
 
@@ -155,6 +156,28 @@ func (p *LevelMeter) RenderHorizontal(db []float64) (image.Image, error) {
 	}
 
 	return img, nil
+}
+
+// render with RenderHorizontal and rotate 90 degrees
+func (p *LevelMeter) RenderVertical(db []float64) (image.Image, error) {
+	copy := *p
+	copy.Image.Width = p.Image.Height
+	copy.Image.Height = p.Image.Width
+	copy.Image.Padding.Top = p.Image.Padding.Right
+	copy.Image.Padding.Right = p.Image.Padding.Bottom
+	copy.Image.Padding.Bottom = p.Image.Padding.Left
+	copy.Image.Padding.Left = p.Image.Padding.Top
+	copy.Cell.Margin.X = p.Cell.Margin.Y
+	copy.Cell.Margin.Y = p.Cell.Margin.X
+
+	img, err := copy.RenderHorizontal(db)
+	if err != nil {
+		return nil, err
+	}
+
+	p.lastPeak = copy.lastPeak
+
+	return imaging.Rotate90(img), nil
 }
 
 func (p *LevelMeter) validateConfig() error {
