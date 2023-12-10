@@ -367,6 +367,7 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			Icon       *string `json:"icon,omitempty"`
 			LevelMeter *string `json:"levelMeter,omitempty"`
 			GainValue  *string `json:"gainValue,omitempty"`
+			GainSlider *string `json:"gainSlider,omitempty"`
 		}{}
 
 		if renderParam.Title != nil {
@@ -418,6 +419,17 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 		if renderParam.Gain != nil {
 			str := fmt.Sprintf("%.1f dB", *renderParam.Gain)
 			payload.GainValue = &str
+
+			gainFader := graphics.NewGainFader()
+			gainFader.Width = 108
+			gainFader.Height = 12
+			img := gainFader.RenderHorizontal(*renderParam.Gain)
+			imgBase64, err := streamdeck.Image(img)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
+			payload.GainSlider = &imgBase64
 		}
 
 		if err := client.SetFeedback(ctx, payload); err != nil {
