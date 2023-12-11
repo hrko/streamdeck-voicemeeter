@@ -16,7 +16,7 @@ restart-streamdeck: kill-streamdeck start-streamdeck
 
 build:
 	$(GO) build $(GOFLAGS) -o streamdeck-voicemeeter-wrapper.exe ./cmd/wrapper/main.go
-	$(GO) build $(GOFLAGS) -o $(BINNAME) main.go
+	$(GO) build $(GOFLAGS) -o $(BINNAME) .
 
 layouts:
 	rm -f layouts/*.json

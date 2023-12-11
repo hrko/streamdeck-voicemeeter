@@ -13,7 +13,7 @@
         "weight": 600
       },
       "key": "gainValue",
-      "rect": [76, 40, 108, 24],
+      "rect": [112, 40, 72, 24],
       "type": "text"
     },
     {
@@ -35,6 +35,11 @@
       "key": "title",
       "rect": [16, 10, 136, 24],
       "type": "text"
+    },
+    {
+      "key": "status",
+      "rect": [76, 40, 36, 24],
+      "type": "pixmap"
     }
   ]
 }

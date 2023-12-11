@@ -55,6 +55,7 @@ type Action1RenderParams struct {
 	Settings      *Action1InstanceSettings
 	Levels        *[]float64
 	Gain          *float64
+	Status        *StripOrBusStatus
 }
 
 func main() {
@@ -303,9 +304,17 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 							title = fmt.Sprintf("Strip %v", stripIndex+1)
 						}
 						gain := vm.Strip[stripIndex].Gain()
+						status := &StripOrBusStatus{}
+						status.IsStrip = true
+						stripStatus, err := getStripStatus(vm, stripIndex)
+						if err != nil {
+							log.Printf("error getting strip status: %v\n", err)
+						}
+						status.StripStatus = stripStatus
 						renderParam.Levels = &levels
 						renderParam.Title = &title
 						renderParam.Gain = &gain
+						renderParam.Status = status
 
 					case "Bus":
 						busIndex := actionProps.Settings.StripOrBusIndex
@@ -321,9 +330,17 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 							title = fmt.Sprintf("Bus %v", busIndex+1)
 						}
 						gain := vm.Bus[busIndex].Gain()
+						status := &StripOrBusStatus{}
+						status.IsStrip = false
+						busStatus, err := getBusStatus(vm, busIndex)
+						if err != nil {
+							log.Printf("error getting bus status: %v\n", err)
+						}
+						status.BusStatus = busStatus
 						renderParam.Levels = &levels
 						renderParam.Title = &title
 						renderParam.Gain = &gain
+						renderParam.Status = status
 
 					default:
 						log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
@@ -362,6 +379,7 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			LevelMeter *string `json:"levelMeter,omitempty"`
 			GainValue  *string `json:"gainValue,omitempty"`
 			GainSlider *string `json:"gainSlider,omitempty"`
+			Status     *string `json:"status,omitempty"`
 		}{}
 
 		if renderParam.Title != nil {
@@ -424,6 +442,18 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 				return err
 			}
 			payload.GainSlider = &imgBase64
+		}
+		if renderParam.Status != nil {
+			s := renderParam.Status
+			img, err := s.RenderIndicator()
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+			}
+			imgBase64, err := streamdeck.Image(img)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+			}
+			payload.Status = &imgBase64
 		}
 
 		if err := client.SetFeedback(ctx, payload); err != nil {
