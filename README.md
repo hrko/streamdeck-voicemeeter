@@ -9,7 +9,7 @@
 - [ ] Restart VoiceMeeter
 
 ### Dial and Touchpad
-- [ ] Gain Control
+- [x] Gain Control
 - [ ] Gain Control Combo
 - [ ] Strip/Bus Parameter Control
 
