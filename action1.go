@@ -218,71 +218,18 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 				actionContext := item.Key
 				actionProps := item.Val
 				go func() {
-					renderParam := &Action1RenderParams{}
-					renderParam.TargetContext = actionContext
+					renderParam := newAction1RenderParams(actionContext)
 
 					stripOrBusKind := actionProps.Settings.StripOrBusKind
 					if stripOrBusKind == "" {
 						stripOrBusKind = "Strip"
 					}
+					stripOrBusIndex := actionProps.Settings.StripOrBusIndex
 
-					switch stripOrBusKind {
-					case "Strip":
-						stripIndex := actionProps.Settings.StripOrBusIndex
-						stripCount := len(vm.Strip)
-						if stripIndex >= stripCount || stripIndex < 0 {
-							log.Printf("stripIndex %v is out of range\n", stripIndex)
-							return
-						}
-						levels := vm.Strip[stripIndex].Levels().PostFader()
-						levels = levels[:2]
-						title := vm.Strip[stripIndex].Label()
-						if title == "" {
-							title = fmt.Sprintf("Strip %v", stripIndex+1)
-						}
-						gain := vm.Strip[stripIndex].Gain()
-						status := &StripOrBusStatus{}
-						status.IsStrip = true
-						stripStatus, err := getStripStatus(vm, stripIndex)
-						if err != nil {
-							log.Printf("error getting strip status: %v\n", err)
-						}
-						status.StripStatus = stripStatus
-						renderParam.Levels = &levels
-						renderParam.Title = &title
-						renderParam.Gain = &gain
-						renderParam.Status = status
-
-					case "Bus":
-						busIndex := actionProps.Settings.StripOrBusIndex
-						busCount := len(vm.Bus)
-						if busIndex >= busCount || busIndex < 0 {
-							log.Printf("busIndex %v is out of range\n", busIndex)
-							return
-						}
-						levels := vm.Bus[busIndex].Levels().All()
-						levels = levels[:2]
-						title := vm.Bus[busIndex].Label()
-						if title == "" {
-							title = fmt.Sprintf("Bus %v", busIndex+1)
-						}
-						gain := vm.Bus[busIndex].Gain()
-						status := &StripOrBusStatus{}
-						status.IsStrip = false
-						busStatus, err := getBusStatus(vm, busIndex)
-						if err != nil {
-							log.Printf("error getting bus status: %v\n", err)
-						}
-						status.BusStatus = busStatus
-						renderParam.Levels = &levels
-						renderParam.Title = &title
-						renderParam.Gain = &gain
-						renderParam.Status = status
-
-					default:
-						log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
-						return
-					}
+					renderParam.SetTitle(vm, stripOrBusKind, stripOrBusIndex)
+					renderParam.SetLevels(vm, stripOrBusKind, stripOrBusIndex)
+					renderParam.SetGain(vm, stripOrBusKind, stripOrBusIndex)
+					renderParam.SetStatus(vm, stripOrBusKind, stripOrBusIndex)
 
 					action1RenderCh <- renderParam
 				}()
@@ -291,6 +238,136 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 	}()
 
 	return nil
+}
+
+func newAction1RenderParams(actionContext string) *Action1RenderParams {
+	return &Action1RenderParams{
+		TargetContext: actionContext,
+	}
+}
+
+func (p *Action1RenderParams) SetLevels(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	switch stripOrBusKind {
+	case "Strip":
+		stripCount := len(vm.Strip)
+		if stripOrBusIndex >= stripCount || stripOrBusIndex < 0 {
+			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
+			return
+		}
+		levels := vm.Strip[stripOrBusIndex].Levels().PostFader()
+		levels = levels[:2]
+		p.Levels = &levels
+
+	case "Bus":
+		busCount := len(vm.Bus)
+		if stripOrBusIndex >= busCount || stripOrBusIndex < 0 {
+			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
+			return
+		}
+		levels := vm.Bus[stripOrBusIndex].Levels().All()
+		levels = levels[:2]
+		p.Levels = &levels
+
+	default:
+		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
+		return
+	}
+}
+
+func (p *Action1RenderParams) SetTitle(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	switch stripOrBusKind {
+	case "Strip":
+		stripCount := len(vm.Strip)
+		if stripOrBusIndex >= stripCount || stripOrBusIndex < 0 {
+			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
+			return
+		}
+		title := vm.Strip[stripOrBusIndex].Label()
+		if title == "" {
+			title = fmt.Sprintf("Strip %v", stripOrBusIndex+1)
+		}
+		p.Title = &title
+
+	case "Bus":
+		busCount := len(vm.Bus)
+		if stripOrBusIndex >= busCount || stripOrBusIndex < 0 {
+			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
+			return
+		}
+		title := vm.Bus[stripOrBusIndex].Label()
+		if title == "" {
+			title = fmt.Sprintf("Bus %v", stripOrBusIndex+1)
+		}
+		p.Title = &title
+
+	default:
+		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
+		return
+	}
+}
+
+func (p *Action1RenderParams) SetGain(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	switch stripOrBusKind {
+	case "Strip":
+		stripCount := len(vm.Strip)
+		if stripOrBusIndex >= stripCount || stripOrBusIndex < 0 {
+			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
+			return
+		}
+		gain := vm.Strip[stripOrBusIndex].Gain()
+		p.Gain = &gain
+
+	case "Bus":
+		busCount := len(vm.Bus)
+		if stripOrBusIndex >= busCount || stripOrBusIndex < 0 {
+			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
+			return
+		}
+		gain := vm.Bus[stripOrBusIndex].Gain()
+		p.Gain = &gain
+
+	default:
+		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
+		return
+	}
+}
+
+func (p *Action1RenderParams) SetStatus(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	switch stripOrBusKind {
+	case "Strip":
+		stripCount := len(vm.Strip)
+		if stripOrBusIndex >= stripCount || stripOrBusIndex < 0 {
+			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
+			return
+		}
+		status := &StripOrBusStatus{}
+		status.IsStrip = true
+		stripStatus, err := getStripStatus(vm, stripOrBusIndex)
+		if err != nil {
+			log.Printf("error getting strip status: %v\n", err)
+		}
+		status.StripStatus = stripStatus
+		p.Status = status
+
+	case "Bus":
+		busCount := len(vm.Bus)
+		if stripOrBusIndex >= busCount || stripOrBusIndex < 0 {
+			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
+			return
+		}
+		status := &StripOrBusStatus{}
+		status.IsStrip = false
+		busStatus, err := getBusStatus(vm, stripOrBusIndex)
+		if err != nil {
+			log.Printf("error getting bus status: %v\n", err)
+		}
+		status.BusStatus = busStatus
+		p.Status = status
+
+	default:
+		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
+		return
+	}
 }
 
 func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) error {
