@@ -44,7 +44,7 @@ type Action1RenderParams struct {
 	Status        *StripOrBusStatus
 }
 
-type Action1DialRotateCommonPayload struct {
+type Action1DialRotatePayload struct {
 	DialRotateCommonPayload
 	Settings Action1InstanceSettings `json:"settings,omitempty"`
 }
@@ -104,7 +104,7 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
 
-		var p Action1DialRotateCommonPayload
+		var p Action1DialRotatePayload
 		p.Settings.StripOrBusKind = "Strip"
 		p.Settings.StripOrBusIndex = 0
 		p.Settings.GainDelta = "3.0"
