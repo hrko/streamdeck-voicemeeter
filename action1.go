@@ -42,6 +42,11 @@ type Action1RenderParams struct {
 	Status        *StripOrBusStatus
 }
 
+type Action1DialRotateCommonPayload struct {
+	DialRotateCommonPayload
+	Settings Action1InstanceSettings `json:"settings,omitempty"`
+}
+
 func action1SetupPreClientRun(client *streamdeck.Client) {
 	action := client.Action("jp.hrko.voicemeeter.action1")
 	action1InstanceMap = cmap.NewOf[string, Action1InstanceProperty]() // key: context of action instance
@@ -90,7 +95,36 @@ func action1SetupPreClientRun(client *streamdeck.Client) {
 }
 
 func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error {
+	action := client.Action("jp.hrko.voicemeeter.action1")
 	action1LevelMeterMap = cmap.NewOf[string, *graphics.LevelMeter]() // key: context of action instance
+
+	action.RegisterHandler(streamdeck.DialRotate, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
+		b, _ := json.MarshalIndent(event, "", "	")
+		log.Printf("event:%s\n", b)
+
+		var p Action1DialRotateCommonPayload
+		p.Settings.StripOrBusKind = "Strip"
+		p.Settings.StripOrBusIndex = 0
+		err := json.Unmarshal(event.Payload, &p)
+		if err != nil {
+			log.Printf("error unmarshaling payload: %v\n", err)
+			return err
+		}
+
+		gainDelta := float64(p.Ticks) * 3.0
+		switch p.Settings.StripOrBusKind {
+		case "Strip":
+			adjustStripGain(vm, p.Settings.StripOrBusIndex, gainDelta)
+
+		case "Bus":
+			adjustBusGain(vm, p.Settings.StripOrBusIndex, gainDelta)
+
+		default:
+			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
+		}
+
+		return nil
+	})
 
 	go func() {
 		for renderParam := range action1RenderCh {
@@ -289,6 +323,56 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 		log.Printf("unknown controller: %v\n", instProps.Controller)
 		return fmt.Errorf("unknown controller: %v", instProps.Controller)
 	}
+
+	return nil
+}
+
+func adjustStripGain(vm *voicemeeter.Remote, stripIndex int, delta float64) error {
+	if vm == nil {
+		log.Printf("vm is nil\n")
+		return fmt.Errorf("vm is nil")
+	}
+
+	if stripIndex >= len(vm.Strip) || stripIndex < 0 {
+		log.Printf("stripIndex %v is out of range\n", stripIndex)
+		return fmt.Errorf("stripIndex %v is out of range", stripIndex)
+	}
+
+	strip := vm.Strip[stripIndex]
+	gain := strip.Gain()
+	gain += delta
+	if gain > 12.0 {
+		gain = 12.0
+	}
+	if gain < -60.0 {
+		gain = -60.0
+	}
+	strip.SetGain(gain)
+
+	return nil
+}
+
+func adjustBusGain(vm *voicemeeter.Remote, busIndex int, delta float64) error {
+	if vm == nil {
+		log.Printf("vm is nil\n")
+		return fmt.Errorf("vm is nil")
+	}
+
+	if busIndex >= len(vm.Bus) || busIndex < 0 {
+		log.Printf("busIndex %v is out of range\n", busIndex)
+		return fmt.Errorf("busIndex %v is out of range", busIndex)
+	}
+
+	bus := vm.Bus[busIndex]
+	gain := bus.Gain()
+	gain += delta
+	if gain > 12.0 {
+		gain = 12.0
+	}
+	if gain < -60.0 {
+		gain = -60.0
+	}
+	bus.SetGain(gain)
 
 	return nil
 }

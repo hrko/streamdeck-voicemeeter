@@ -24,6 +24,15 @@ type GlobalSettings struct {
 	VoiceMeeterKind string `json:"voiceMeeterKind"`
 }
 
+type DialRotateCommonPayload struct {
+	Coordinates struct {
+		Column int `json:"column"`
+		Row    int `json:"row"`
+	} `json:"coordinates"`
+	Ticks   int  `json:"ticks"`
+	Pressed bool `json:"pressed"`
+}
+
 type ActionInstanceCommonProperty struct {
 	Controller  string `json:"controller,omitempty"` // "Keypad" | "Encoder"
 	Coordinates struct {
