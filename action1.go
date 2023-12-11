@@ -140,6 +140,10 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
 
+		renderParams := newAction1RenderParams(event.Context)
+		renderParams.SetGain(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
+		action1RenderCh <- renderParams
+
 		return nil
 	})
 
@@ -171,6 +175,10 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
 
+		renderParams := newAction1RenderParams(event.Context)
+		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
+		action1RenderCh <- renderParams
+
 		return nil
 	})
 
@@ -201,6 +209,10 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		default:
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
+
+		renderParams := newAction1RenderParams(event.Context)
+		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
+		action1RenderCh <- renderParams
 
 		return nil
 	})
