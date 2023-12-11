@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/FlowingSPDG/streamdeck"
@@ -31,6 +32,7 @@ type Action1InstanceSettings struct {
 	IconFontParams  graphics.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
 	StripOrBusKind  string                             `json:"stripOrBusKind,omitempty"` // "Strip" | "Bus"
 	StripOrBusIndex int                                `json:"stripOrBusIndex,omitempty"`
+	GainDelta       string                             `json:"gainDelta,omitempty"`
 }
 
 type Action1RenderParams struct {
@@ -105,19 +107,24 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		var p Action1DialRotateCommonPayload
 		p.Settings.StripOrBusKind = "Strip"
 		p.Settings.StripOrBusIndex = 0
+		p.Settings.GainDelta = "3.0"
 		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
 
-		gainDelta := float64(p.Ticks) * 3.0
+		gainDelta, err := strconv.ParseFloat(p.Settings.GainDelta, 64)
+		if err != nil {
+			log.Printf("error parsing gainDelta: %v\n", err)
+			gainDelta = 3.0 // default
+		}
 		switch p.Settings.StripOrBusKind {
 		case "Strip":
-			adjustStripGain(vm, p.Settings.StripOrBusIndex, gainDelta)
+			adjustStripGain(vm, p.Settings.StripOrBusIndex, gainDelta*float64(p.Ticks))
 
 		case "Bus":
-			adjustBusGain(vm, p.Settings.StripOrBusIndex, gainDelta)
+			adjustBusGain(vm, p.Settings.StripOrBusIndex, gainDelta*float64(p.Ticks))
 
 		default:
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)

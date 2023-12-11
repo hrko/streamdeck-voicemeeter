@@ -42,6 +42,8 @@
           radio_iconFontParams_wght: "Wight",
           radio_iconFontParams_grad: "Grade",
           radio_iconFontParams_opsz: "Optical Size",
+          textfield_gainDelta_label: "Gain Delta",
+          textfield_gainDelta_placeholder: "Enter a positive number in dB",
         },
         ja: {
           radio_stripOrBusKind_label: "Strip/Bus",
@@ -64,6 +66,8 @@
           radio_iconFontParams_wght: "Wight",
           radio_iconFontParams_grad: "Grade",
           radio_iconFontParams_opsz: "Optical Size",
+          textfield_gainDelta_label: "ゲイン調整量",
+          textfield_gainDelta_placeholder: "dB 単位で正の数値を入力",
         },
       };
 
@@ -96,6 +100,15 @@
         <option value="6">6</option>
         <option value="7">7</option>
       </sdpi-radio>
+    </sdpi-item>
+
+    <sdpi-item label="__MSG_textfield_gainDelta_label__">
+      <sdpi-textfield
+        setting="gainDelta"
+        pattern="/^[+]?\d+(?:\.\d+)?$/"
+        placeholder="__MSG_textfield_gainDelta_placeholder__"
+      >
+      </sdpi-textfield>
     </sdpi-item>
 
     <sdpi-item>
