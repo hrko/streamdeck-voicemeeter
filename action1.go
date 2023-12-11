@@ -64,24 +64,6 @@ func action1SetupPreClientRun(client *streamdeck.Client) {
 		return nil
 	})
 
-	action.RegisterHandler(streamdeck.SendToPlugin, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
-		return nil
-	})
-
-	action.RegisterHandler(streamdeck.KeyDown, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
-		return nil
-	})
-
-	action.RegisterHandler(streamdeck.KeyUp, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
-		return nil
-	})
-
 	action.RegisterHandler(streamdeck.WillAppear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
