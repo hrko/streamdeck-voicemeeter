@@ -244,7 +244,6 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			payload.Title = renderParam.Title
 		}
 		if renderParam.Settings != nil {
-			const defaultIconCodePoint = "e050" // volume_up
 			fontParams := renderParam.Settings.IconFontParams
 			fontParams.FillEmptyWithDefault()
 			if err := fontParams.Assert(); err != nil {
@@ -254,7 +253,12 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			}
 			iconCodePoint := renderParam.Settings.IconCodePoint
 			if iconCodePoint == "" {
-				iconCodePoint = defaultIconCodePoint
+				switch renderParam.Settings.StripOrBusKind {
+				case "Strip", "":
+					iconCodePoint = "f71a" // input_circle
+				case "Bus":
+					iconCodePoint = "f70e" // output_circle
+				}
 			}
 			img, err := fontParams.RenderIcon(iconCodePoint, 48)
 			if err != nil {
