@@ -59,6 +59,22 @@ type Action1TouchTapPayload struct {
 	Settings Action1InstanceSettings `json:"settings,omitempty"`
 }
 
+func action1DefaultInstanceSettings() Action1InstanceSettings {
+	return Action1InstanceSettings{
+		IconCodePoint: "",
+		IconFontParams: graphics.MaterialSymbolsFontParams{
+			Style: "Rounded",
+			Opsz:  "48",
+			Wght:  "400",
+			Fill:  "0",
+			Grad:  "0",
+		},
+		StripOrBusKind:  "Strip",
+		StripOrBusIndex: 0,
+		GainDelta:       "3.0",
+	}
+}
+
 func action1SetupPreClientRun(client *streamdeck.Client) {
 	action := client.Action("jp.hrko.voicemeeter.action1")
 	action1InstanceMap = cmap.NewOf[string, Action1InstanceProperty]() // key: context of action instance
@@ -68,6 +84,7 @@ func action1SetupPreClientRun(client *streamdeck.Client) {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
 		var prop Action1InstanceProperty
+		prop.Settings = action1DefaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &prop)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -85,6 +102,7 @@ func action1SetupPreClientRun(client *streamdeck.Client) {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
 		var prop Action1InstanceProperty
+		prop.Settings = action1DefaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &prop)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -115,9 +133,7 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		log.Printf("event:%s\n", b)
 
 		var p Action1DialRotatePayload
-		p.Settings.StripOrBusKind = "Strip"
-		p.Settings.StripOrBusIndex = 0
-		p.Settings.GainDelta = "3.0"
+		p.Settings = action1DefaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -152,8 +168,7 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		log.Printf("event:%s\n", b)
 
 		var p Action1DialDownPayload
-		p.Settings.StripOrBusKind = "Strip"
-		p.Settings.StripOrBusIndex = 0
+		p.Settings = action1DefaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -187,8 +202,7 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		log.Printf("event:%s\n", b)
 
 		var p Action1TouchTapPayload
-		p.Settings.StripOrBusKind = "Strip"
-		p.Settings.StripOrBusIndex = 0
+		p.Settings = action1DefaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -413,7 +427,6 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 		}
 		if renderParam.Settings != nil {
 			fontParams := renderParam.Settings.IconFontParams
-			fontParams.FillEmptyWithDefault()
 			if err := fontParams.Assert(); err != nil {
 				log.Printf("invalid iconFontParams: %v\n", err)
 				fontParams = graphics.MaterialSymbolsFontParams{}
