@@ -49,6 +49,16 @@ type Action1DialRotatePayload struct {
 	Settings Action1InstanceSettings `json:"settings,omitempty"`
 }
 
+type Action1DialDownPayload struct {
+	DialDownCommonPayload
+	Settings Action1InstanceSettings `json:"settings,omitempty"`
+}
+
+type Action1TouchTapPayload struct {
+	TouchTapCommonPayload
+	Settings Action1InstanceSettings `json:"settings,omitempty"`
+}
+
 func action1SetupPreClientRun(client *streamdeck.Client) {
 	action := client.Action("jp.hrko.voicemeeter.action1")
 	action1InstanceMap = cmap.NewOf[string, Action1InstanceProperty]() // key: context of action instance
@@ -126,6 +136,68 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		case "Bus":
 			adjustBusGain(vm, p.Settings.StripOrBusIndex, gainDelta*float64(p.Ticks))
 
+		default:
+			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
+		}
+
+		return nil
+	})
+
+	action.RegisterHandler(streamdeck.DialDown, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
+		b, _ := json.MarshalIndent(event, "", "	")
+		log.Printf("event:%s\n", b)
+
+		var p Action1DialDownPayload
+		p.Settings.StripOrBusKind = "Strip"
+		p.Settings.StripOrBusIndex = 0
+		err := json.Unmarshal(event.Payload, &p)
+		if err != nil {
+			log.Printf("error unmarshaling payload: %v\n", err)
+			return err
+		}
+
+		switch p.Settings.StripOrBusKind {
+		case "Strip":
+			toggleMuteStrip(vm, p.Settings.StripOrBusIndex)
+			if err != nil {
+				log.Printf("error toggling mute: %v\n", err)
+			}
+		case "Bus":
+			toggleMuteBus(vm, p.Settings.StripOrBusIndex)
+			if err != nil {
+				log.Printf("error toggling mute: %v\n", err)
+			}
+		default:
+			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
+		}
+
+		return nil
+	})
+
+	action.RegisterHandler(streamdeck.TouchTap, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
+		b, _ := json.MarshalIndent(event, "", "	")
+		log.Printf("event:%s\n", b)
+
+		var p Action1TouchTapPayload
+		p.Settings.StripOrBusKind = "Strip"
+		p.Settings.StripOrBusIndex = 0
+		err := json.Unmarshal(event.Payload, &p)
+		if err != nil {
+			log.Printf("error unmarshaling payload: %v\n", err)
+			return err
+		}
+
+		switch p.Settings.StripOrBusKind {
+		case "Strip":
+			toggleMuteStrip(vm, p.Settings.StripOrBusIndex)
+			if err != nil {
+				log.Printf("error toggling mute: %v\n", err)
+			}
+		case "Bus":
+			toggleMuteBus(vm, p.Settings.StripOrBusIndex)
+			if err != nil {
+				log.Printf("error toggling mute: %v\n", err)
+			}
 		default:
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
@@ -384,6 +456,42 @@ func adjustBusGain(vm *voicemeeter.Remote, busIndex int, delta float64) error {
 		gain = -60.0
 	}
 	bus.SetGain(gain)
+
+	return nil
+}
+
+func toggleMuteStrip(vm *voicemeeter.Remote, stripIndex int) error {
+	if vm == nil {
+		log.Printf("vm is nil\n")
+		return fmt.Errorf("vm is nil")
+	}
+
+	if stripIndex >= len(vm.Strip) || stripIndex < 0 {
+		log.Printf("stripIndex %v is out of range\n", stripIndex)
+		return fmt.Errorf("stripIndex %v is out of range", stripIndex)
+	}
+
+	strip := vm.Strip[stripIndex]
+	mute := strip.Mute()
+	strip.SetMute(!mute)
+
+	return nil
+}
+
+func toggleMuteBus(vm *voicemeeter.Remote, busIndex int) error {
+	if vm == nil {
+		log.Printf("vm is nil\n")
+		return fmt.Errorf("vm is nil")
+	}
+
+	if busIndex >= len(vm.Bus) || busIndex < 0 {
+		log.Printf("busIndex %v is out of range\n", busIndex)
+		return fmt.Errorf("busIndex %v is out of range", busIndex)
+	}
+
+	bus := vm.Bus[busIndex]
+	mute := bus.Mute()
+	bus.SetMute(!mute)
 
 	return nil
 }
