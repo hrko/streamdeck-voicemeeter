@@ -21,15 +21,6 @@ var (
 	action1LevelMeterMap *cmap.MapOf[string, *graphics.LevelMeter]
 )
 
-type ActionInstanceCommonProperty struct {
-	Controller  string `json:"controller,omitempty"` // "Keypad" | "Encoder"
-	Coordinates struct {
-		Column int `json:"column,omitempty"`
-		Row    int `json:"row,omitempty"`
-	} `json:"coordinates,omitempty"`
-	IsInMultiAction bool `json:"isInMultiAction,omitempty"`
-}
-
 type Action1InstanceProperty struct {
 	ActionInstanceCommonProperty
 	Settings Action1InstanceSettings `json:"settings,omitempty"`

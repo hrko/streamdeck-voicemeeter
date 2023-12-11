@@ -24,6 +24,15 @@ type GlobalSettings struct {
 	VoiceMeeterKind string `json:"voiceMeeterKind"`
 }
 
+type ActionInstanceCommonProperty struct {
+	Controller  string `json:"controller,omitempty"` // "Keypad" | "Encoder"
+	Coordinates struct {
+		Column int `json:"column,omitempty"`
+		Row    int `json:"row,omitempty"`
+	} `json:"coordinates,omitempty"`
+	IsInMultiAction bool `json:"isInMultiAction,omitempty"`
+}
+
 func main() {
 	log.SetPrefix("package main: ")
 	streamdeck.Log().SetOutput(os.Stderr)
