@@ -310,7 +310,7 @@ func (p *Action1RenderParams) SetTitle(vm *voicemeeter.Remote, stripOrBusKind st
 		}
 		title := vm.Strip[stripOrBusIndex].Label()
 		if title == "" {
-			title = fmt.Sprintf("Strip %v", stripOrBusIndex+1)
+			title = fmt.Sprintf("Strip %v", stripOrBusIndex)
 		}
 		p.Title = &title
 
@@ -322,7 +322,7 @@ func (p *Action1RenderParams) SetTitle(vm *voicemeeter.Remote, stripOrBusKind st
 		}
 		title := vm.Bus[stripOrBusIndex].Label()
 		if title == "" {
-			title = fmt.Sprintf("Bus %v", stripOrBusIndex+1)
+			title = fmt.Sprintf("Bus %v", stripOrBusIndex)
 		}
 		p.Title = &title
 
