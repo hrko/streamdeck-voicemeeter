@@ -22,11 +22,11 @@ var (
 )
 
 type MaterialSymbolsFontParams struct {
-	Style string `json:"style"`
-	Opsz  string `json:"opsz"`
-	Wght  string `json:"wght"`
-	Fill  string `json:"fill"`
-	Grad  string `json:"grad"`
+	Style string `json:"style"` // "Outlined" | "Rounded" | "Sharp"
+	Opsz  string `json:"opsz"`  // "20" | "24" | "40" | "48"
+	Wght  string `json:"wght"`  // "100" | "200" | "300" | "400" | "500" | "600" | "700"
+	Fill  string `json:"fill"`  // "0" | "1"
+	Grad  string `json:"grad"`  // "-25" | "-0" | "200"
 }
 
 // SetMaterialSymbolsCacheDir set the cache directory for Material Symbols fonts.
