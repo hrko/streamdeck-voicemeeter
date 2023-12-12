@@ -16,6 +16,23 @@
       "SupportedInMultiActions": false,
       "Tooltip": "VoiceMeeter Action 1 Tooltip",
       "UUID": "jp.hrko.voicemeeter.action1"
+    },
+    {
+      "Name": "Gain Control Combo",
+      "States": [
+        {
+          "TitleAlignment": "middle",
+          "FontSize": "16"
+        }
+      ],
+      "Controllers": ["Encoder"],
+      "Encoder": {
+        "layout": "layouts/gain_controll_combo.json"
+      },
+      "PropertyInspectorPath": "property_inspector/gain_controll_combo.html",
+      "SupportedInMultiActions": false,
+      "Tooltip": "VoiceMeeter Action 1 Tooltip",
+      "UUID": "jp.hrko.streamdeck.voicemeeter.gain-controll-combo"
     }
   ],
   "SDKVersion": 2,

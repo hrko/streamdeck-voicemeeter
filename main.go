@@ -14,6 +14,7 @@ import (
 	"github.com/onyx-and-iris/voicemeeter/v2"
 
 	"github.com/hrko/streamdeck-voicemeeter/internal/action/action1"
+	"github.com/hrko/streamdeck-voicemeeter/internal/action/gain_controll_combo"
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
 
@@ -66,6 +67,7 @@ func run(ctx context.Context) error {
 
 	registerNoActionHandlers(client)
 	action1.SetupPreClientRun(client)
+	gain_controll_combo.SetupPreClientRun(client)
 
 	chErr := make(chan error)
 	go func() {
@@ -88,6 +90,7 @@ func run(ctx context.Context) error {
 	vm.EventAdd("ldirty")
 
 	go action1.SetupPostClientRun(client, vm)
+	go gain_controll_combo.SetupPostClientRun(client, vm)
 
 	return <-chErr
 }

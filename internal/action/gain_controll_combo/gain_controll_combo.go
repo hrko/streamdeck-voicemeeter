@@ -1,5 +1,12 @@
 package gain_controll_combo
 
+// TODO:
+// - [ ] Delete handling when DialDown event occurs.
+// - [ ] Change the behavior of the TouchTop action depending on the touch position.
+// - [ ] Adjust the second gain when the dial is rotated while holding it down.
+// - [ ] Separate the code common to "action1" into a separate package.
+// - [ ] Refactor render() since it's too long.
+
 import (
 	"context"
 	"encoding/json"
@@ -18,10 +25,15 @@ import (
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
 
+const (
+	ActionUUID = "jp.hrko.streamdeck.voicemeeter.gain-controll-combo"
+)
+
 var (
-	instanceMap   *cmap.MapOf[string, instanceProperty]
-	renderCh      chan *renderParams
-	levelMeterMap *cmap.MapOf[string, *graphics.LevelMeter]
+	instanceMap    *cmap.MapOf[string, instanceProperty]
+	renderCh       chan *renderParams
+	levelMeterMap  *cmap.MapOf[string, *graphics.LevelMeter]
+	levelMeter1Map *cmap.MapOf[string, *graphics.LevelMeter]
 )
 
 type instanceProperty struct {
@@ -30,11 +42,16 @@ type instanceProperty struct {
 }
 
 type instanceSettings struct {
-	IconCodePoint   string                             `json:"iconCodePoint,omitempty"`
-	IconFontParams  graphics.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
-	StripOrBusKind  string                             `json:"stripOrBusKind,omitempty"` // "Strip" | "Bus"
-	StripOrBusIndex int                                `json:"stripOrBusIndex,omitempty"`
-	GainDelta       string                             `json:"gainDelta,omitempty"`
+	IconCodePoint    string                             `json:"iconCodePoint,omitempty"`
+	IconFontParams   graphics.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
+	StripOrBusKind   string                             `json:"stripOrBusKind,omitempty"` // "Strip" | "Bus"
+	StripOrBusIndex  int                                `json:"stripOrBusIndex,omitempty"`
+	GainDelta        string                             `json:"gainDelta,omitempty"`
+	IconCodePoint1   string                             `json:"iconCodePoint1,omitempty"`
+	IconFontParams1  graphics.MaterialSymbolsFontParams `json:"iconFontParams1,omitempty"`
+	StripOrBusKind1  string                             `json:"stripOrBusKind1,omitempty"` // "Strip" | "Bus"
+	StripOrBusIndex1 int                                `json:"stripOrBusIndex1,omitempty"`
+	GainDelta1       string                             `json:"gainDelta1,omitempty"`
 }
 
 type renderParams struct {
@@ -44,6 +61,10 @@ type renderParams struct {
 	levels        *[]float64
 	gain          *float64
 	status        stripbus.IStripOrBusStatus
+	title1        *string
+	levels1       *[]float64
+	gain1         *float64
+	status1       stripbus.IStripOrBusStatus
 }
 
 type dialRotatePayload struct {
@@ -66,7 +87,7 @@ func defaultInstanceSettings() instanceSettings {
 		IconCodePoint: "",
 		IconFontParams: graphics.MaterialSymbolsFontParams{
 			Style: "Rounded",
-			Opsz:  "48",
+			Opsz:  "20",
 			Wght:  "400",
 			Fill:  "0",
 			Grad:  "0",
@@ -74,11 +95,22 @@ func defaultInstanceSettings() instanceSettings {
 		StripOrBusKind:  "Strip",
 		StripOrBusIndex: 0,
 		GainDelta:       "3.0",
+		IconCodePoint1:  "",
+		IconFontParams1: graphics.MaterialSymbolsFontParams{
+			Style: "Rounded",
+			Opsz:  "20",
+			Wght:  "400",
+			Fill:  "0",
+			Grad:  "0",
+		},
+		StripOrBusKind1:  "Bus",
+		StripOrBusIndex1: 0,
+		GainDelta1:       "3.0",
 	}
 }
 
 func SetupPreClientRun(client *streamdeck.Client) {
-	action := client.Action("jp.hrko.voicemeeter.action1")
+	action := client.Action(ActionUUID)
 	instanceMap = cmap.NewOf[string, instanceProperty]() // key: context of action instance
 	renderCh = make(chan *renderParams, 32)
 
@@ -127,8 +159,9 @@ func SetupPreClientRun(client *streamdeck.Client) {
 }
 
 func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error {
-	action := client.Action("jp.hrko.voicemeeter.action1")
-	levelMeterMap = cmap.NewOf[string, *graphics.LevelMeter]() // key: context of action instance
+	action := client.Action(ActionUUID)
+	levelMeterMap = cmap.NewOf[string, *graphics.LevelMeter]()  // key: context of action instance
+	levelMeter1Map = cmap.NewOf[string, *graphics.LevelMeter]() // key: context of action instance
 
 	action.RegisterHandler(streamdeck.DialRotate, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
@@ -158,7 +191,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
 
-		renderParams := newAction1RenderParams(event.Context)
+		renderParams := newRenderParams(event.Context)
 		renderParams.SetGain(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
 		renderCh <- renderParams
 
@@ -192,7 +225,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
 
-		renderParams := newAction1RenderParams(event.Context)
+		renderParams := newRenderParams(event.Context)
 		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
 		renderCh <- renderParams
 
@@ -226,7 +259,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
 
-		renderParams := newAction1RenderParams(event.Context)
+		renderParams := newRenderParams(event.Context)
 		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
 		renderCh <- renderParams
 
@@ -235,7 +268,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 
 	go func() {
 		for renderParam := range renderCh {
-			action1Render(client, renderParam)
+			render(client, renderParam)
 		}
 	}()
 
@@ -246,18 +279,21 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 				actionContext := item.Key
 				actionProps := item.Val
 				go func() {
-					renderParam := newAction1RenderParams(actionContext)
+					renderParam := newRenderParams(actionContext)
 
 					stripOrBusKind := actionProps.Settings.StripOrBusKind
-					if stripOrBusKind == "" {
-						stripOrBusKind = "Strip"
-					}
 					stripOrBusIndex := actionProps.Settings.StripOrBusIndex
+					stripOrBusKind1 := actionProps.Settings.StripOrBusKind1
+					stripOrBusIndex1 := actionProps.Settings.StripOrBusIndex1
 
 					renderParam.SetTitle(vm, stripOrBusKind, stripOrBusIndex)
 					renderParam.SetLevels(vm, stripOrBusKind, stripOrBusIndex)
 					renderParam.SetGain(vm, stripOrBusKind, stripOrBusIndex)
 					renderParam.SetStatus(vm, stripOrBusKind, stripOrBusIndex)
+					renderParam.SetTitle1(vm, stripOrBusKind1, stripOrBusIndex1)
+					renderParam.SetLevels1(vm, stripOrBusKind1, stripOrBusIndex1)
+					renderParam.SetGain1(vm, stripOrBusKind1, stripOrBusIndex1)
+					renderParam.SetStatus1(vm, stripOrBusKind1, stripOrBusIndex1)
 
 					renderCh <- renderParam
 				}()
@@ -268,95 +304,149 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 	return nil
 }
 
-func newAction1RenderParams(actionContext string) *renderParams {
+func newRenderParams(actionContext string) *renderParams {
 	return &renderParams{
 		targetContext: actionContext,
 	}
 }
 
 func (p *renderParams) SetLevels(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	l, err := getLevels(vm, stripOrBusKind, stripOrBusIndex)
+	if err != nil {
+		log.Printf("error getting levels: %v\n", err)
+		return
+	}
+	p.levels = &l
+}
+
+func (p *renderParams) SetLevels1(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	l, err := getLevels(vm, stripOrBusKind, stripOrBusIndex)
+	if err != nil {
+		log.Printf("error getting levels: %v\n", err)
+		return
+	}
+	p.levels1 = &l
+}
+
+func getLevels(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) ([]float64, error) {
 	switch stripOrBusKind {
 	case "Strip":
 		stripCount := len(vm.Strip)
 		if stripOrBusIndex >= stripCount || stripOrBusIndex < 0 {
 			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
-			return
+			return nil, fmt.Errorf("stripOrBusIndex %v is out of range", stripOrBusIndex)
 		}
 		levels := vm.Strip[stripOrBusIndex].Levels().PostFader()
 		levels = levels[:2]
-		p.levels = &levels
+		return levels, nil
 
 	case "Bus":
 		busCount := len(vm.Bus)
 		if stripOrBusIndex >= busCount || stripOrBusIndex < 0 {
 			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
-			return
+			return nil, fmt.Errorf("stripOrBusIndex %v is out of range", stripOrBusIndex)
 		}
 		levels := vm.Bus[stripOrBusIndex].Levels().All()
 		levels = levels[:2]
-		p.levels = &levels
+		return levels, nil
 
 	default:
 		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
-		return
+		return nil, fmt.Errorf("unknown stripOrBusKind: '%v'", stripOrBusKind)
 	}
 }
 
 func (p *renderParams) SetTitle(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	title, err := getTitle(vm, stripOrBusKind, stripOrBusIndex)
+	if err != nil {
+		log.Printf("error getting title: %v\n", err)
+		return
+	}
+	p.title = &title
+}
+
+func (p *renderParams) SetTitle1(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	title, err := getTitle(vm, stripOrBusKind, stripOrBusIndex)
+	if err != nil {
+		log.Printf("error getting title: %v\n", err)
+		return
+	}
+	p.title1 = &title
+}
+
+func getTitle(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) (string, error) {
 	switch stripOrBusKind {
 	case "Strip":
 		stripCount := len(vm.Strip)
 		if stripOrBusIndex >= stripCount || stripOrBusIndex < 0 {
 			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
-			return
+			return "", fmt.Errorf("stripOrBusIndex %v is out of range", stripOrBusIndex)
 		}
 		title := vm.Strip[stripOrBusIndex].Label()
 		if title == "" {
 			title = fmt.Sprintf("Strip %v", stripOrBusIndex)
 		}
-		p.title = &title
+		return title, nil
 
 	case "Bus":
 		busCount := len(vm.Bus)
 		if stripOrBusIndex >= busCount || stripOrBusIndex < 0 {
 			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
-			return
+			return "", fmt.Errorf("stripOrBusIndex %v is out of range", stripOrBusIndex)
 		}
 		title := vm.Bus[stripOrBusIndex].Label()
 		if title == "" {
 			title = fmt.Sprintf("Bus %v", stripOrBusIndex)
 		}
-		p.title = &title
+		return title, nil
 
 	default:
 		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
-		return
+		return "", fmt.Errorf("unknown stripOrBusKind: '%v'", stripOrBusKind)
 	}
 }
 
 func (p *renderParams) SetGain(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	gain, err := getGain(vm, stripOrBusKind, stripOrBusIndex)
+	if err != nil {
+		log.Printf("error getting gain: %v\n", err)
+		return
+	}
+	p.gain = &gain
+}
+
+func (p *renderParams) SetGain1(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	gain, err := getGain(vm, stripOrBusKind, stripOrBusIndex)
+	if err != nil {
+		log.Printf("error getting gain: %v\n", err)
+		return
+	}
+	p.gain1 = &gain
+}
+
+func getGain(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) (float64, error) {
 	switch stripOrBusKind {
 	case "Strip":
 		stripCount := len(vm.Strip)
 		if stripOrBusIndex >= stripCount || stripOrBusIndex < 0 {
 			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
-			return
+			return 0, fmt.Errorf("stripOrBusIndex %v is out of range", stripOrBusIndex)
 		}
 		gain := vm.Strip[stripOrBusIndex].Gain()
-		p.gain = &gain
+		return gain, nil
 
 	case "Bus":
 		busCount := len(vm.Bus)
 		if stripOrBusIndex >= busCount || stripOrBusIndex < 0 {
 			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
-			return
+			return 0, fmt.Errorf("stripOrBusIndex %v is out of range", stripOrBusIndex)
 		}
 		gain := vm.Bus[stripOrBusIndex].Gain()
-		p.gain = &gain
+		return gain, nil
 
 	default:
 		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
-		return
+		return 0, fmt.Errorf("unknown stripOrBusKind: '%v'", stripOrBusKind)
 	}
 }
 
@@ -369,13 +459,22 @@ func (p *renderParams) SetStatus(vm *voicemeeter.Remote, stripOrBusKind string, 
 	p.status = s
 }
 
-func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
+func (p *renderParams) SetStatus1(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	s, err := stripbus.GetStripOrBusStatus(vm, stripOrBusKind, stripOrBusIndex)
+	if err != nil {
+		log.Printf("error getting strip or bus status: %v\n", err)
+		return
+	}
+	p.status1 = s
+}
+
+func render(client *streamdeck.Client, renderParam *renderParams) error {
 	ctx := context.Background()
 	ctx = sdcontext.WithContext(ctx, renderParam.targetContext)
 
 	instProps, ok := instanceMap.Get(renderParam.targetContext)
 	if !ok {
-		return fmt.Errorf("action1InstanceMap has no key '%v'", renderParam.targetContext)
+		return fmt.Errorf("instanceMap has no key '%v'", renderParam.targetContext)
 	}
 
 	levelMeter, ok := levelMeterMap.Get(renderParam.targetContext)
@@ -383,20 +482,34 @@ func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
 		levelMeter = graphics.NewLevelMeter(2)
 		levelMeterMap.Set(renderParam.targetContext, levelMeter)
 	}
+	levelMeter1, ok := levelMeter1Map.Get(renderParam.targetContext)
+	if !ok {
+		levelMeter1 = graphics.NewLevelMeter(2)
+		levelMeter1Map.Set(renderParam.targetContext, levelMeter1)
+	}
 
 	switch instProps.Controller {
 	case "Encoder":
 		payload := struct {
-			Title      *string `json:"title,omitempty"`
-			Icon       *string `json:"icon,omitempty"`
-			LevelMeter *string `json:"levelMeter,omitempty"`
-			GainValue  *string `json:"gainValue,omitempty"`
-			GainSlider *string `json:"gainSlider,omitempty"`
-			Status     *string `json:"status,omitempty"`
+			Title       *string `json:"title,omitempty"`
+			Icon        *string `json:"icon,omitempty"`
+			LevelMeter  *string `json:"levelMeter,omitempty"`
+			GainValue   *string `json:"gainValue,omitempty"`
+			GainSlider  *string `json:"gainSlider,omitempty"`
+			Status      *string `json:"status,omitempty"`
+			Title1      *string `json:"title1,omitempty"`
+			Icon1       *string `json:"icon1,omitempty"`
+			LevelMeter1 *string `json:"levelMeter1,omitempty"`
+			GainValue1  *string `json:"gainValue1,omitempty"`
+			GainSlider1 *string `json:"gainSlider1,omitempty"`
+			Status1     *string `json:"status1,omitempty"`
 		}{}
 
 		if renderParam.title != nil {
 			payload.Title = renderParam.title
+		}
+		if renderParam.title1 != nil {
+			payload.Title1 = renderParam.title1
 		}
 		if renderParam.settings != nil {
 			fontParams := renderParam.settings.IconFontParams
@@ -414,7 +527,7 @@ func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
 					iconCodePoint = "f70e" // output_circle
 				}
 			}
-			img, err := fontParams.RenderIcon(iconCodePoint, 48)
+			img, err := fontParams.RenderIcon(iconCodePoint, 20)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err
@@ -425,11 +538,38 @@ func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
 			}
 			payload.Icon = &imgBase64
 		}
+		if renderParam.settings != nil {
+			fontParams := renderParam.settings.IconFontParams1
+			if err := fontParams.Assert(); err != nil {
+				log.Printf("invalid iconFontParams: %v\n", err)
+				fontParams = graphics.MaterialSymbolsFontParams{}
+				fontParams.FillEmptyWithDefault()
+			}
+			iconCodePoint := renderParam.settings.IconCodePoint1
+			if iconCodePoint == "" {
+				switch renderParam.settings.StripOrBusKind1 {
+				case "Strip", "":
+					iconCodePoint = "f71a" // input_circle
+				case "Bus":
+					iconCodePoint = "f70e" // output_circle
+				}
+			}
+			img, err := fontParams.RenderIcon(iconCodePoint, 20)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
+			imgBase64, err := streamdeck.Image(img)
+			if err != nil {
+				log.Printf("error converting image to base64: %v\n", err)
+			}
+			payload.Icon1 = &imgBase64
+		}
 		if renderParam.levels != nil {
-			levelMeter.Image.Width = 108
+			levelMeter.Image.Width = 80
 			levelMeter.Image.Height = 5
 			levelMeter.Image.Padding.Left = 2
-			levelMeter.Image.Padding.Right = 3
+			levelMeter.Image.Padding.Right = 1
 			levelMeter.Cell.Length = 1
 			levelMeter.PeakHold = graphics.LevelMeterPeakHoldFillPeakShowCurrent
 			img, err := levelMeter.RenderHorizontal(*renderParam.levels)
@@ -444,12 +584,31 @@ func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
 			}
 			payload.LevelMeter = &imgBase64
 		}
+		if renderParam.levels1 != nil {
+			levelMeter1.Image.Width = 80
+			levelMeter1.Image.Height = 5
+			levelMeter1.Image.Padding.Left = 2
+			levelMeter1.Image.Padding.Right = 1
+			levelMeter1.Cell.Length = 1
+			levelMeter1.PeakHold = graphics.LevelMeterPeakHoldFillPeakShowCurrent
+			img, err := levelMeter1.RenderHorizontal(*renderParam.levels1)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
+			imgBase64, err := streamdeck.Image(img)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
+			payload.LevelMeter1 = &imgBase64
+		}
 		if renderParam.gain != nil {
-			str := fmt.Sprintf("%.1f dB", *renderParam.gain)
+			str := fmt.Sprintf("%.1f", *renderParam.gain)
 			payload.GainValue = &str
 
 			gainFader := graphics.NewGainFader()
-			gainFader.Width = 108
+			gainFader.Width = 80
 			gainFader.Height = 12
 			img := gainFader.RenderHorizontal(*renderParam.gain)
 			imgBase64, err := streamdeck.Image(img)
@@ -458,6 +617,21 @@ func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
 				return err
 			}
 			payload.GainSlider = &imgBase64
+		}
+		if renderParam.gain1 != nil {
+			str := fmt.Sprintf("%.1f", *renderParam.gain1)
+			payload.GainValue1 = &str
+
+			gainFader := graphics.NewGainFader()
+			gainFader.Width = 80
+			gainFader.Height = 12
+			img := gainFader.RenderHorizontal(*renderParam.gain1)
+			imgBase64, err := streamdeck.Image(img)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+				return err
+			}
+			payload.GainSlider1 = &imgBase64
 		}
 		if renderParam.status != nil {
 			s := renderParam.status
@@ -470,6 +644,18 @@ func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
 				log.Printf("error creating image: %v\n", err)
 			}
 			payload.Status = &imgBase64
+		}
+		if renderParam.status1 != nil {
+			s := renderParam.status1
+			img, err := s.RenderIndicator()
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+			}
+			imgBase64, err := streamdeck.Image(img)
+			if err != nil {
+				log.Printf("error creating image: %v\n", err)
+			}
+			payload.Status1 = &imgBase64
 		}
 
 		if err := client.SetFeedback(ctx, payload); err != nil {

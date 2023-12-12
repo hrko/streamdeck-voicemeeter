@@ -1,0 +1,85 @@
+{
+  "id": "gain_controll_combo",
+  "items": [
+    {
+      "key": "icon",
+      "rect": [8, 14, 20, 20],
+      "type": "pixmap"
+    },
+    {
+      "alignment": "right",
+      "font": {
+        "size": 16,
+        "weight": 600
+      },
+      "key": "gainValue",
+      "rect": [44, 40, 44, 24],
+      "type": "text"
+    },
+    {
+      "key": "levelMeter",
+      "rect": [8, 66, 80, 5],
+      "type": "pixmap"
+    },
+    {
+      "key": "gainSlider",
+      "rect": [8, 74, 80, 12],
+      "type": "pixmap"
+    },
+    {
+      "alignment": "left",
+      "font": {
+        "size": 16,
+        "weight": 600
+      },
+      "key": "title",
+      "rect": [30, 10, 58, 24],
+      "type": "text"
+    },
+    {
+      "key": "status",
+      "rect": [8, 40, 36, 24],
+      "type": "pixmap"
+    },
+    {
+      "key": "icon1",
+      "rect": [104, 14, 20, 20],
+      "type": "pixmap"
+    },
+    {
+      "alignment": "left",
+      "font": {
+        "size": 16,
+        "weight": 600
+      },
+      "key": "title1",
+      "rect": [126, 10, 66, 24],
+      "type": "text"
+    },
+    {
+      "alignment": "right",
+      "font": {
+        "size": 16,
+        "weight": 600
+      },
+      "key": "gainValue1",
+      "rect": [140, 40, 44, 24],
+      "type": "text"
+    },
+    {
+      "key": "levelMeter1",
+      "rect": [104, 66, 80, 5],
+      "type": "pixmap"
+    },
+    {
+      "key": "gainSlider1",
+      "rect": [104, 74, 80, 12],
+      "type": "pixmap"
+    },
+    {
+      "key": "status1",
+      "rect": [104, 40, 36, 24],
+      "type": "pixmap"
+    }
+  ]
+}
