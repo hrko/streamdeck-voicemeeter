@@ -1,9 +1,6 @@
 package gain_controll_combo
 
 // TODO:
-// - [x] Delete handling when DialDown event occurs.
-// - [ ] Change the behavior of the TouchTop action depending on the touch position.
-// - [x] Adjust the second gain when the dial is rotated while holding it down.
 // - [ ] Separate the code common to "action1" into a separate package.
 // - [ ] Refactor render() since it's too long.
 
