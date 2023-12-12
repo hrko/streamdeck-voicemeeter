@@ -216,24 +216,45 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			return err
 		}
 
-		switch p.Settings.StripOrBusKind {
-		case "Strip":
-			toggleMuteStrip(vm, p.Settings.StripOrBusIndex)
-			if err != nil {
-				log.Printf("error toggling mute: %v\n", err)
+		const touchPadWidth = 200
+		posX := p.TapPos[0]
+		if posX < touchPadWidth/2 {
+			switch p.Settings.StripOrBusKind {
+			case "Strip":
+				toggleMuteStrip(vm, p.Settings.StripOrBusIndex)
+				if err != nil {
+					log.Printf("error toggling mute: %v\n", err)
+				}
+			case "Bus":
+				toggleMuteBus(vm, p.Settings.StripOrBusIndex)
+				if err != nil {
+					log.Printf("error toggling mute: %v\n", err)
+				}
+			default:
+				log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 			}
-		case "Bus":
-			toggleMuteBus(vm, p.Settings.StripOrBusIndex)
-			if err != nil {
-				log.Printf("error toggling mute: %v\n", err)
+			renderParams := newRenderParams(event.Context)
+			renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
+			renderCh <- renderParams
+		} else {
+			switch p.Settings.StripOrBusKind1 {
+			case "Strip":
+				toggleMuteStrip(vm, p.Settings.StripOrBusIndex1)
+				if err != nil {
+					log.Printf("error toggling mute: %v\n", err)
+				}
+			case "Bus":
+				toggleMuteBus(vm, p.Settings.StripOrBusIndex1)
+				if err != nil {
+					log.Printf("error toggling mute: %v\n", err)
+				}
+			default:
+				log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind1)
 			}
-		default:
-			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
+			renderParams := newRenderParams(event.Context)
+			renderParams.SetStatus1(vm, p.Settings.StripOrBusKind1, p.Settings.StripOrBusIndex1)
+			renderCh <- renderParams
 		}
-
-		renderParams := newRenderParams(event.Context)
-		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
-		renderCh <- renderParams
 
 		return nil
 	})
