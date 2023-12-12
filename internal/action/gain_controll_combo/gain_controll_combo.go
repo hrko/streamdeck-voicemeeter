@@ -1,9 +1,9 @@
 package gain_controll_combo
 
 // TODO:
-// - [ ] Delete handling when DialDown event occurs.
+// - [x] Delete handling when DialDown event occurs.
 // - [ ] Change the behavior of the TouchTop action depending on the touch position.
-// - [ ] Adjust the second gain when the dial is rotated while holding it down.
+// - [x] Adjust the second gain when the dial is rotated while holding it down.
 // - [ ] Separate the code common to "action1" into a separate package.
 // - [ ] Refactor render() since it's too long.
 
@@ -69,11 +69,6 @@ type renderParams struct {
 
 type dialRotatePayload struct {
 	action.DialRotateCommonPayload
-	Settings instanceSettings `json:"settings,omitempty"`
-}
-
-type dialDownPayload struct {
-	action.DialDownCommonPayload
 	Settings instanceSettings `json:"settings,omitempty"`
 }
 
@@ -180,54 +175,31 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			log.Printf("error parsing gainDelta: %v\n", err)
 			gainDelta = 3.0 // default
 		}
-		switch p.Settings.StripOrBusKind {
-		case "Strip":
-			adjustStripGain(vm, p.Settings.StripOrBusIndex, gainDelta*float64(p.Ticks))
-
-		case "Bus":
-			adjustBusGain(vm, p.Settings.StripOrBusIndex, gainDelta*float64(p.Ticks))
-
-		default:
-			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
-		}
-
-		renderParams := newRenderParams(event.Context)
-		renderParams.SetGain(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
-		renderCh <- renderParams
-
-		return nil
-	})
-
-	action.RegisterHandler(streamdeck.DialDown, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
-
-		var p dialDownPayload
-		p.Settings = defaultInstanceSettings()
-		err := json.Unmarshal(event.Payload, &p)
-		if err != nil {
-			log.Printf("error unmarshaling payload: %v\n", err)
-			return err
-		}
-
-		switch p.Settings.StripOrBusKind {
-		case "Strip":
-			toggleMuteStrip(vm, p.Settings.StripOrBusIndex)
-			if err != nil {
-				log.Printf("error toggling mute: %v\n", err)
+		if p.Pressed {
+			switch p.Settings.StripOrBusKind1 {
+			case "Strip":
+				adjustStripGain(vm, p.Settings.StripOrBusIndex1, gainDelta*float64(p.Ticks))
+			case "Bus":
+				adjustBusGain(vm, p.Settings.StripOrBusIndex1, gainDelta*float64(p.Ticks))
+			default:
+				log.Printf("unknown stripOrBusKind1: '%v'\n", p.Settings.StripOrBusKind1)
 			}
-		case "Bus":
-			toggleMuteBus(vm, p.Settings.StripOrBusIndex)
-			if err != nil {
-				log.Printf("error toggling mute: %v\n", err)
+			renderParams := newRenderParams(event.Context)
+			renderParams.SetGain1(vm, p.Settings.StripOrBusKind1, p.Settings.StripOrBusIndex1)
+			renderCh <- renderParams
+		} else {
+			switch p.Settings.StripOrBusKind {
+			case "Strip":
+				adjustStripGain(vm, p.Settings.StripOrBusIndex, gainDelta*float64(p.Ticks))
+			case "Bus":
+				adjustBusGain(vm, p.Settings.StripOrBusIndex, gainDelta*float64(p.Ticks))
+			default:
+				log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 			}
-		default:
-			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
+			renderParams := newRenderParams(event.Context)
+			renderParams.SetGain(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
+			renderCh <- renderParams
 		}
-
-		renderParams := newRenderParams(event.Context)
-		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
-		renderCh <- renderParams
 
 		return nil
 	})
