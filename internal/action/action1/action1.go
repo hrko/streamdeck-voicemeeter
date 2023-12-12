@@ -1,4 +1,4 @@
-package main
+package action1
 
 import (
 	"context"
@@ -14,21 +14,22 @@ import (
 	"github.com/onyx-and-iris/voicemeeter/v2"
 
 	"github.com/hrko/streamdeck-voicemeeter/internal/action"
+	"github.com/hrko/streamdeck-voicemeeter/internal/stripbus"
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
 
 var (
-	action1InstanceMap   *cmap.MapOf[string, Action1InstanceProperty]
-	action1RenderCh      chan *Action1RenderParams
-	action1LevelMeterMap *cmap.MapOf[string, *graphics.LevelMeter]
+	instanceMap   *cmap.MapOf[string, instanceProperty]
+	renderCh      chan *renderParams
+	levelMeterMap *cmap.MapOf[string, *graphics.LevelMeter]
 )
 
-type Action1InstanceProperty struct {
+type instanceProperty struct {
 	action.ActionInstanceCommonProperty
-	Settings Action1InstanceSettings `json:"settings,omitempty"`
+	Settings instanceSettings `json:"settings,omitempty"`
 }
 
-type Action1InstanceSettings struct {
+type instanceSettings struct {
 	IconCodePoint   string                             `json:"iconCodePoint,omitempty"`
 	IconFontParams  graphics.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
 	StripOrBusKind  string                             `json:"stripOrBusKind,omitempty"` // "Strip" | "Bus"
@@ -36,32 +37,32 @@ type Action1InstanceSettings struct {
 	GainDelta       string                             `json:"gainDelta,omitempty"`
 }
 
-type Action1RenderParams struct {
-	TargetContext string
-	Title         *string
-	Settings      *Action1InstanceSettings
-	Levels        *[]float64
-	Gain          *float64
-	Status        *StripOrBusStatus
+type renderParams struct {
+	targetContext string
+	title         *string
+	settings      *instanceSettings
+	levels        *[]float64
+	gain          *float64
+	status        stripbus.IStripOrBusStatus
 }
 
-type Action1DialRotatePayload struct {
+type dialRotatePayload struct {
 	action.DialRotateCommonPayload
-	Settings Action1InstanceSettings `json:"settings,omitempty"`
+	Settings instanceSettings `json:"settings,omitempty"`
 }
 
-type Action1DialDownPayload struct {
+type dialDownPayload struct {
 	action.DialDownCommonPayload
-	Settings Action1InstanceSettings `json:"settings,omitempty"`
+	Settings instanceSettings `json:"settings,omitempty"`
 }
 
-type Action1TouchTapPayload struct {
+type touchTapPayload struct {
 	action.TouchTapCommonPayload
-	Settings Action1InstanceSettings `json:"settings,omitempty"`
+	Settings instanceSettings `json:"settings,omitempty"`
 }
 
-func action1DefaultInstanceSettings() Action1InstanceSettings {
-	return Action1InstanceSettings{
+func defaultInstanceSettings() instanceSettings {
+	return instanceSettings{
 		IconCodePoint: "",
 		IconFontParams: graphics.MaterialSymbolsFontParams{
 			Style: "Rounded",
@@ -76,25 +77,25 @@ func action1DefaultInstanceSettings() Action1InstanceSettings {
 	}
 }
 
-func action1SetupPreClientRun(client *streamdeck.Client) {
+func SetupPreClientRun(client *streamdeck.Client) {
 	action := client.Action("jp.hrko.voicemeeter.action1")
-	action1InstanceMap = cmap.NewOf[string, Action1InstanceProperty]() // key: context of action instance
-	action1RenderCh = make(chan *Action1RenderParams, 32)
+	instanceMap = cmap.NewOf[string, instanceProperty]() // key: context of action instance
+	renderCh = make(chan *renderParams, 32)
 
 	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		var prop Action1InstanceProperty
-		prop.Settings = action1DefaultInstanceSettings()
+		var prop instanceProperty
+		prop.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &prop)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
-		action1InstanceMap.Set(event.Context, prop)
-		action1RenderCh <- &Action1RenderParams{
-			TargetContext: event.Context,
-			Settings:      &prop.Settings,
+		instanceMap.Set(event.Context, prop)
+		renderCh <- &renderParams{
+			targetContext: event.Context,
+			settings:      &prop.Settings,
 		}
 		return nil
 	})
@@ -102,17 +103,17 @@ func action1SetupPreClientRun(client *streamdeck.Client) {
 	action.RegisterHandler(streamdeck.WillAppear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		var prop Action1InstanceProperty
-		prop.Settings = action1DefaultInstanceSettings()
+		var prop instanceProperty
+		prop.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &prop)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
-		action1InstanceMap.Set(event.Context, prop)
-		action1RenderCh <- &Action1RenderParams{
-			TargetContext: event.Context,
-			Settings:      &prop.Settings,
+		instanceMap.Set(event.Context, prop)
+		renderCh <- &renderParams{
+			targetContext: event.Context,
+			settings:      &prop.Settings,
 		}
 		return nil
 	})
@@ -120,21 +121,21 @@ func action1SetupPreClientRun(client *streamdeck.Client) {
 	action.RegisterHandler(streamdeck.WillDisappear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		action1InstanceMap.Remove(event.Context)
+		instanceMap.Remove(event.Context)
 		return nil
 	})
 }
 
-func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error {
+func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error {
 	action := client.Action("jp.hrko.voicemeeter.action1")
-	action1LevelMeterMap = cmap.NewOf[string, *graphics.LevelMeter]() // key: context of action instance
+	levelMeterMap = cmap.NewOf[string, *graphics.LevelMeter]() // key: context of action instance
 
 	action.RegisterHandler(streamdeck.DialRotate, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
 
-		var p Action1DialRotatePayload
-		p.Settings = action1DefaultInstanceSettings()
+		var p dialRotatePayload
+		p.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -159,7 +160,7 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 
 		renderParams := newAction1RenderParams(event.Context)
 		renderParams.SetGain(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
-		action1RenderCh <- renderParams
+		renderCh <- renderParams
 
 		return nil
 	})
@@ -168,8 +169,8 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
 
-		var p Action1DialDownPayload
-		p.Settings = action1DefaultInstanceSettings()
+		var p dialDownPayload
+		p.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -193,7 +194,7 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 
 		renderParams := newAction1RenderParams(event.Context)
 		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
-		action1RenderCh <- renderParams
+		renderCh <- renderParams
 
 		return nil
 	})
@@ -202,8 +203,8 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
 
-		var p Action1TouchTapPayload
-		p.Settings = action1DefaultInstanceSettings()
+		var p touchTapPayload
+		p.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
@@ -227,13 +228,13 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 
 		renderParams := newAction1RenderParams(event.Context)
 		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
-		action1RenderCh <- renderParams
+		renderCh <- renderParams
 
 		return nil
 	})
 
 	go func() {
-		for renderParam := range action1RenderCh {
+		for renderParam := range renderCh {
 			action1Render(client, renderParam)
 		}
 	}()
@@ -241,7 +242,7 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 	go func() {
 		const refreshInterval = time.Second / 15
 		for range time.Tick(refreshInterval) {
-			for item := range action1InstanceMap.IterBuffered() {
+			for item := range instanceMap.IterBuffered() {
 				actionContext := item.Key
 				actionProps := item.Val
 				go func() {
@@ -258,7 +259,7 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 					renderParam.SetGain(vm, stripOrBusKind, stripOrBusIndex)
 					renderParam.SetStatus(vm, stripOrBusKind, stripOrBusIndex)
 
-					action1RenderCh <- renderParam
+					renderCh <- renderParam
 				}()
 			}
 		}
@@ -267,13 +268,13 @@ func action1SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote
 	return nil
 }
 
-func newAction1RenderParams(actionContext string) *Action1RenderParams {
-	return &Action1RenderParams{
-		TargetContext: actionContext,
+func newAction1RenderParams(actionContext string) *renderParams {
+	return &renderParams{
+		targetContext: actionContext,
 	}
 }
 
-func (p *Action1RenderParams) SetLevels(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+func (p *renderParams) SetLevels(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
 	switch stripOrBusKind {
 	case "Strip":
 		stripCount := len(vm.Strip)
@@ -283,7 +284,7 @@ func (p *Action1RenderParams) SetLevels(vm *voicemeeter.Remote, stripOrBusKind s
 		}
 		levels := vm.Strip[stripOrBusIndex].Levels().PostFader()
 		levels = levels[:2]
-		p.Levels = &levels
+		p.levels = &levels
 
 	case "Bus":
 		busCount := len(vm.Bus)
@@ -293,7 +294,7 @@ func (p *Action1RenderParams) SetLevels(vm *voicemeeter.Remote, stripOrBusKind s
 		}
 		levels := vm.Bus[stripOrBusIndex].Levels().All()
 		levels = levels[:2]
-		p.Levels = &levels
+		p.levels = &levels
 
 	default:
 		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
@@ -301,7 +302,7 @@ func (p *Action1RenderParams) SetLevels(vm *voicemeeter.Remote, stripOrBusKind s
 	}
 }
 
-func (p *Action1RenderParams) SetTitle(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+func (p *renderParams) SetTitle(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
 	switch stripOrBusKind {
 	case "Strip":
 		stripCount := len(vm.Strip)
@@ -313,7 +314,7 @@ func (p *Action1RenderParams) SetTitle(vm *voicemeeter.Remote, stripOrBusKind st
 		if title == "" {
 			title = fmt.Sprintf("Strip %v", stripOrBusIndex)
 		}
-		p.Title = &title
+		p.title = &title
 
 	case "Bus":
 		busCount := len(vm.Bus)
@@ -325,7 +326,7 @@ func (p *Action1RenderParams) SetTitle(vm *voicemeeter.Remote, stripOrBusKind st
 		if title == "" {
 			title = fmt.Sprintf("Bus %v", stripOrBusIndex)
 		}
-		p.Title = &title
+		p.title = &title
 
 	default:
 		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
@@ -333,7 +334,7 @@ func (p *Action1RenderParams) SetTitle(vm *voicemeeter.Remote, stripOrBusKind st
 	}
 }
 
-func (p *Action1RenderParams) SetGain(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+func (p *renderParams) SetGain(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
 	switch stripOrBusKind {
 	case "Strip":
 		stripCount := len(vm.Strip)
@@ -342,7 +343,7 @@ func (p *Action1RenderParams) SetGain(vm *voicemeeter.Remote, stripOrBusKind str
 			return
 		}
 		gain := vm.Strip[stripOrBusIndex].Gain()
-		p.Gain = &gain
+		p.gain = &gain
 
 	case "Bus":
 		busCount := len(vm.Bus)
@@ -351,7 +352,7 @@ func (p *Action1RenderParams) SetGain(vm *voicemeeter.Remote, stripOrBusKind str
 			return
 		}
 		gain := vm.Bus[stripOrBusIndex].Gain()
-		p.Gain = &gain
+		p.gain = &gain
 
 	default:
 		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
@@ -359,57 +360,28 @@ func (p *Action1RenderParams) SetGain(vm *voicemeeter.Remote, stripOrBusKind str
 	}
 }
 
-func (p *Action1RenderParams) SetStatus(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
-	switch stripOrBusKind {
-	case "Strip":
-		stripCount := len(vm.Strip)
-		if stripOrBusIndex >= stripCount || stripOrBusIndex < 0 {
-			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
-			return
-		}
-		status := &StripOrBusStatus{}
-		status.IsStrip = true
-		stripStatus, err := getStripStatus(vm, stripOrBusIndex)
-		if err != nil {
-			log.Printf("error getting strip status: %v\n", err)
-		}
-		status.StripStatus = stripStatus
-		p.Status = status
-
-	case "Bus":
-		busCount := len(vm.Bus)
-		if stripOrBusIndex >= busCount || stripOrBusIndex < 0 {
-			log.Printf("stripOrBusIndex %v is out of range\n", stripOrBusIndex)
-			return
-		}
-		status := &StripOrBusStatus{}
-		status.IsStrip = false
-		busStatus, err := getBusStatus(vm, stripOrBusIndex)
-		if err != nil {
-			log.Printf("error getting bus status: %v\n", err)
-		}
-		status.BusStatus = busStatus
-		p.Status = status
-
-	default:
-		log.Printf("unknown stripOrBusKind: '%v'\n", stripOrBusKind)
+func (p *renderParams) SetStatus(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) {
+	s, err := stripbus.GetStripOrBusStatus(vm, stripOrBusKind, stripOrBusIndex)
+	if err != nil {
+		log.Printf("error getting strip or bus status: %v\n", err)
 		return
 	}
+	p.status = s
 }
 
-func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) error {
+func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
 	ctx := context.Background()
-	ctx = sdcontext.WithContext(ctx, renderParam.TargetContext)
+	ctx = sdcontext.WithContext(ctx, renderParam.targetContext)
 
-	instProps, ok := action1InstanceMap.Get(renderParam.TargetContext)
+	instProps, ok := instanceMap.Get(renderParam.targetContext)
 	if !ok {
-		return fmt.Errorf("action1InstanceMap has no key '%v'", renderParam.TargetContext)
+		return fmt.Errorf("action1InstanceMap has no key '%v'", renderParam.targetContext)
 	}
 
-	levelMeter, ok := action1LevelMeterMap.Get(renderParam.TargetContext)
+	levelMeter, ok := levelMeterMap.Get(renderParam.targetContext)
 	if !ok {
 		levelMeter = graphics.NewLevelMeter(2)
-		action1LevelMeterMap.Set(renderParam.TargetContext, levelMeter)
+		levelMeterMap.Set(renderParam.targetContext, levelMeter)
 	}
 
 	switch instProps.Controller {
@@ -423,19 +395,19 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			Status     *string `json:"status,omitempty"`
 		}{}
 
-		if renderParam.Title != nil {
-			payload.Title = renderParam.Title
+		if renderParam.title != nil {
+			payload.Title = renderParam.title
 		}
-		if renderParam.Settings != nil {
-			fontParams := renderParam.Settings.IconFontParams
+		if renderParam.settings != nil {
+			fontParams := renderParam.settings.IconFontParams
 			if err := fontParams.Assert(); err != nil {
 				log.Printf("invalid iconFontParams: %v\n", err)
 				fontParams = graphics.MaterialSymbolsFontParams{}
 				fontParams.FillEmptyWithDefault()
 			}
-			iconCodePoint := renderParam.Settings.IconCodePoint
+			iconCodePoint := renderParam.settings.IconCodePoint
 			if iconCodePoint == "" {
-				switch renderParam.Settings.StripOrBusKind {
+				switch renderParam.settings.StripOrBusKind {
 				case "Strip", "":
 					iconCodePoint = "f71a" // input_circle
 				case "Bus":
@@ -453,14 +425,14 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			}
 			payload.Icon = &imgBase64
 		}
-		if renderParam.Levels != nil {
+		if renderParam.levels != nil {
 			levelMeter.Image.Width = 108
 			levelMeter.Image.Height = 5
 			levelMeter.Image.Padding.Left = 2
 			levelMeter.Image.Padding.Right = 3
 			levelMeter.Cell.Length = 1
 			levelMeter.PeakHold = graphics.LevelMeterPeakHoldFillPeakShowCurrent
-			img, err := levelMeter.RenderHorizontal(*renderParam.Levels)
+			img, err := levelMeter.RenderHorizontal(*renderParam.levels)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err
@@ -472,14 +444,14 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			}
 			payload.LevelMeter = &imgBase64
 		}
-		if renderParam.Gain != nil {
-			str := fmt.Sprintf("%.1f dB", *renderParam.Gain)
+		if renderParam.gain != nil {
+			str := fmt.Sprintf("%.1f dB", *renderParam.gain)
 			payload.GainValue = &str
 
 			gainFader := graphics.NewGainFader()
 			gainFader.Width = 108
 			gainFader.Height = 12
-			img := gainFader.RenderHorizontal(*renderParam.Gain)
+			img := gainFader.RenderHorizontal(*renderParam.gain)
 			imgBase64, err := streamdeck.Image(img)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
@@ -487,8 +459,8 @@ func action1Render(client *streamdeck.Client, renderParam *Action1RenderParams) 
 			}
 			payload.GainSlider = &imgBase64
 		}
-		if renderParam.Status != nil {
-			s := renderParam.Status
+		if renderParam.status != nil {
+			s := renderParam.status
 			img, err := s.RenderIndicator()
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)

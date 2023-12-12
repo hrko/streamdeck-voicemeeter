@@ -13,6 +13,7 @@ import (
 	sdcontext "github.com/FlowingSPDG/streamdeck/context"
 	"github.com/onyx-and-iris/voicemeeter/v2"
 
+	"github.com/hrko/streamdeck-voicemeeter/internal/action/action1"
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
 
@@ -64,7 +65,7 @@ func run(ctx context.Context) error {
 	log.Println("Client created")
 
 	registerNoActionHandlers(client)
-	action1SetupPreClientRun(client)
+	action1.SetupPreClientRun(client)
 
 	chErr := make(chan error)
 	go func() {
@@ -86,7 +87,7 @@ func run(ctx context.Context) error {
 	defer vm.Logout()
 	vm.EventAdd("ldirty")
 
-	go action1SetupPostClientRun(client, vm)
+	go action1.SetupPostClientRun(client, vm)
 
 	return <-chErr
 }

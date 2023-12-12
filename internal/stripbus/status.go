@@ -1,4 +1,4 @@
-package main
+package stripbus
 
 import (
 	"fmt"
@@ -10,6 +10,10 @@ import (
 
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
+
+type IStripOrBusStatus interface {
+	RenderIndicator() (image.Image, error)
+}
 
 type StripStatus struct {
 	VmKind     string
@@ -30,13 +34,18 @@ type BusStatus struct {
 	Mono   bool
 }
 
-type StripOrBusStatus struct {
-	IsStrip     bool
-	StripStatus *StripStatus
-	BusStatus   *BusStatus
+func GetStripOrBusStatus(vm *voicemeeter.Remote, stripOrBusKind string, stripOrBusIndex int) (IStripOrBusStatus, error) {
+	switch stripOrBusKind {
+	case "Strip":
+		return GetStripStatus(vm, stripOrBusIndex)
+	case "Bus":
+		return GetBusStatus(vm, stripOrBusIndex)
+	default:
+		return nil, fmt.Errorf("unknown stripOrBusKind %s", stripOrBusKind)
+	}
 }
 
-func getStripStatus(vm *voicemeeter.Remote, stripIndex int) (*StripStatus, error) {
+func GetStripStatus(vm *voicemeeter.Remote, stripIndex int) (*StripStatus, error) {
 	ss := &StripStatus{}
 
 	if stripIndex < 0 || stripIndex >= len(vm.Strip) {
@@ -96,7 +105,7 @@ func getStripStatus(vm *voicemeeter.Remote, stripIndex int) (*StripStatus, error
 	return ss, nil
 }
 
-func getBusStatus(vm *voicemeeter.Remote, busIndex int) (*BusStatus, error) {
+func GetBusStatus(vm *voicemeeter.Remote, busIndex int) (*BusStatus, error) {
 	bs := &BusStatus{}
 
 	if busIndex < 0 || busIndex >= len(vm.Bus) {
@@ -117,13 +126,6 @@ func getBusStatus(vm *voicemeeter.Remote, busIndex int) (*BusStatus, error) {
 	return bs, nil
 }
 
-func (sobs *StripOrBusStatus) RenderIndicator() (image.Image, error) {
-	if sobs.IsStrip {
-		return sobs.StripStatus.RenderIndicator()
-	}
-	return sobs.BusStatus.RenderIndicator()
-}
-
 func (ss *StripStatus) RenderIndicator() (image.Image, error) {
 	var (
 		s *graphics.StatusIndicator
@@ -132,21 +134,21 @@ func (ss *StripStatus) RenderIndicator() (image.Image, error) {
 	switch ss.VmKind {
 	case "basic":
 		if ss.IsPhysical {
-			s = NewBasicPhysStripStatusIndicator()
+			s = newBasicPhysStripStatusIndicator()
 		} else {
-			s = NewBasicVirtStripStatusIndicator()
+			s = newBasicVirtStripStatusIndicator()
 		}
 	case "banana":
 		if ss.IsPhysical {
-			s = NewBananaPhysStripStatusIndicator()
+			s = newBananaPhysStripStatusIndicator()
 		} else {
-			s = NewBananaVirtStripStatusIndicator()
+			s = newBananaVirtStripStatusIndicator()
 		}
 	case "potato":
 		if ss.IsPhysical {
-			s = NewPotatoPhysStripStatusIndicator()
+			s = newPotatoPhysStripStatusIndicator()
 		} else {
-			s = NewPotatoVirtStripStatusIndicator()
+			s = newPotatoVirtStripStatusIndicator()
 		}
 	default:
 		return nil, fmt.Errorf("unknown kind %s", ss.VmKind)
@@ -202,7 +204,7 @@ func (ss *StripStatus) RenderIndicator() (image.Image, error) {
 	return s.Render(flags)
 }
 
-func NewPotatoPhysStripStatusIndicator() *graphics.StatusIndicator {
+func newPotatoPhysStripStatusIndicator() *graphics.StatusIndicator {
 	s := &graphics.StatusIndicator{}
 
 	cInactive := color.RGBA{0x2c, 0x3d, 0x4d, 0xff}
@@ -254,8 +256,8 @@ func NewPotatoPhysStripStatusIndicator() *graphics.StatusIndicator {
 	return s
 }
 
-func NewPotatoVirtStripStatusIndicator() *graphics.StatusIndicator {
-	s := NewPotatoPhysStripStatusIndicator()
+func newPotatoVirtStripStatusIndicator() *graphics.StatusIndicator {
+	s := newPotatoPhysStripStatusIndicator()
 
 	cInactive := color.RGBA{0x2c, 0x3d, 0x4d, 0xff}
 	cMute := color.RGBA{0xf6, 0x60, 0x51, 0xff}
@@ -268,8 +270,8 @@ func NewPotatoVirtStripStatusIndicator() *graphics.StatusIndicator {
 	return s
 }
 
-func NewBananaPhysStripStatusIndicator() *graphics.StatusIndicator {
-	s := NewPotatoPhysStripStatusIndicator()
+func newBananaPhysStripStatusIndicator() *graphics.StatusIndicator {
+	s := newPotatoPhysStripStatusIndicator()
 
 	rows := append([]graphics.StatusIndicatorRowStyle{}, s.Rows[0], s.Rows[2])
 	rows[0].MarginTop += s.Rows[1].ItemSize + s.Rows[1].MarginTop
@@ -278,8 +280,8 @@ func NewBananaPhysStripStatusIndicator() *graphics.StatusIndicator {
 	return s
 }
 
-func NewBananaVirtStripStatusIndicator() *graphics.StatusIndicator {
-	s := NewPotatoVirtStripStatusIndicator()
+func newBananaVirtStripStatusIndicator() *graphics.StatusIndicator {
+	s := newPotatoVirtStripStatusIndicator()
 
 	rows := append([]graphics.StatusIndicatorRowStyle{}, s.Rows[0], s.Rows[2])
 	rows[0].MarginTop += s.Rows[1].ItemSize + s.Rows[1].MarginTop
@@ -288,12 +290,12 @@ func NewBananaVirtStripStatusIndicator() *graphics.StatusIndicator {
 	return s
 }
 
-func NewBasicPhysStripStatusIndicator() *graphics.StatusIndicator {
-	return NewBananaPhysStripStatusIndicator()
+func newBasicPhysStripStatusIndicator() *graphics.StatusIndicator {
+	return newBananaPhysStripStatusIndicator()
 }
 
-func NewBasicVirtStripStatusIndicator() *graphics.StatusIndicator {
-	return NewBananaVirtStripStatusIndicator()
+func newBasicVirtStripStatusIndicator() *graphics.StatusIndicator {
+	return newBananaVirtStripStatusIndicator()
 }
 
 func (bs *BusStatus) RenderIndicator() (image.Image, error) {
@@ -303,11 +305,11 @@ func (bs *BusStatus) RenderIndicator() (image.Image, error) {
 
 	switch bs.VmKind {
 	case "basic":
-		s = NewBasicBusStatusIndicator()
+		s = newBasicBusStatusIndicator()
 	case "banana":
-		s = NewBananaBusStatusIndicator()
+		s = newBananaBusStatusIndicator()
 	case "potato":
-		s = NewPotatoBusStatusIndicator()
+		s = newPotatoBusStatusIndicator()
 	default:
 		return nil, fmt.Errorf("unknown kind %s", bs.VmKind)
 	}
@@ -336,7 +338,7 @@ func (bs *BusStatus) RenderIndicator() (image.Image, error) {
 	return s.Render(flags)
 }
 
-func NewPotatoBusStatusIndicator() *graphics.StatusIndicator {
+func newPotatoBusStatusIndicator() *graphics.StatusIndicator {
 	s := &graphics.StatusIndicator{}
 
 	cInactive := color.RGBA{0x2c, 0x3d, 0x4d, 0xff}
@@ -364,10 +366,10 @@ func NewPotatoBusStatusIndicator() *graphics.StatusIndicator {
 	return s
 }
 
-func NewBananaBusStatusIndicator() *graphics.StatusIndicator {
-	return NewPotatoBusStatusIndicator()
+func newBananaBusStatusIndicator() *graphics.StatusIndicator {
+	return newPotatoBusStatusIndicator()
 }
 
-func NewBasicBusStatusIndicator() *graphics.StatusIndicator {
-	return NewPotatoBusStatusIndicator()
+func newBasicBusStatusIndicator() *graphics.StatusIndicator {
+	return newPotatoBusStatusIndicator()
 }
