@@ -12,7 +12,7 @@
       "Encoder": {
         "layout": "layouts/action1.json"
       },
-      "PropertyInspectorPath": "property_inspector.html",
+      "PropertyInspectorPath": "property_inspector/action1.html",
       "SupportedInMultiActions": false,
       "Tooltip": "VoiceMeeter Action 1 Tooltip",
       "UUID": "jp.hrko.voicemeeter.action1"
