@@ -15,14 +15,14 @@
 
 ## Build Requirements
 - Go 1.21.4 or later
-- MSYS2
+- [Task](https://taskfile.dev/installation/)
 
 ## Build and Run
 You can build and run the plugin using the following command:
 
 ```bash
 cd <project-root>
-make run
+task dev
 ```
 
 This command will build the plugin, kill the running Stream Deck app, install the plugin, and run the Stream Deck app.
@@ -34,7 +34,7 @@ First, create layouts using Draw.io and save it as a drawio file at `<project-ro
 Then, convert the layout to JSON files using the following command:
 ```bash
 cd <project-root>
-make layout
+task layouts
 ```
 
 Output files will be generated in `<project-root>/layouts/`.

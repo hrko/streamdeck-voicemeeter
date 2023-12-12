@@ -1,0 +1,45 @@
+version: "3"
+
+env:
+  BINNAME: streamdeck-voicemeeter.exe
+  PLUGINNAME: jp.hrko.streamdeck.voicemeeter.sdPlugin
+
+tasks:
+  build:
+    cmds:
+      - go build -o streamdeck-voicemeeter-wrapper.exe ./cmd/wrapper/main.go
+      - go build -o {{.BINNAME}} .
+
+  layouts:
+    cmds:
+      - go run ./cmd/layout-gen/ layouts.drawio layouts/
+
+  install:
+    cmds:
+      - go run ./cmd/install/ {{.PLUGINNAME}}
+
+  logs:
+    cmds:
+      - go run ./cmd/log-viewer/
+
+  clear-logs:
+    cmds:
+      - go run ./cmd/log-viewer/ clear
+
+  kill-streamdeck:
+    cmds:
+      - go run ./cmd/streamdeck/ stop
+
+  start-streamdeck:
+    cmds:
+      - go run ./cmd/streamdeck/ start
+
+  dev:
+    cmds:
+      - task: kill-streamdeck
+      - task: build
+      - task: layouts
+      - task: install
+      - task: start-streamdeck
+      - task: clear-logs
+      - task: logs
