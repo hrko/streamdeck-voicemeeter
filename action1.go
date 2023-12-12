@@ -13,6 +13,7 @@ import (
 	"github.com/fufuok/cmap"
 	"github.com/onyx-and-iris/voicemeeter/v2"
 
+	"github.com/hrko/streamdeck-voicemeeter/internal/action"
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
 
@@ -23,7 +24,7 @@ var (
 )
 
 type Action1InstanceProperty struct {
-	ActionInstanceCommonProperty
+	action.ActionInstanceCommonProperty
 	Settings Action1InstanceSettings `json:"settings,omitempty"`
 }
 
@@ -45,17 +46,17 @@ type Action1RenderParams struct {
 }
 
 type Action1DialRotatePayload struct {
-	DialRotateCommonPayload
+	action.DialRotateCommonPayload
 	Settings Action1InstanceSettings `json:"settings,omitempty"`
 }
 
 type Action1DialDownPayload struct {
-	DialDownCommonPayload
+	action.DialDownCommonPayload
 	Settings Action1InstanceSettings `json:"settings,omitempty"`
 }
 
 type Action1TouchTapPayload struct {
-	TouchTapCommonPayload
+	action.TouchTapCommonPayload
 	Settings Action1InstanceSettings `json:"settings,omitempty"`
 }
 
