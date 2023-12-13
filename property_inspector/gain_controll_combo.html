@@ -22,6 +22,8 @@
     <script>
       SDPIComponents.i18n.locales = {
         en: {
+          header_leftSide: "Left Side",
+          header_rightSide: "Right Side",
           radio_stripOrBusKind_label: "Strip/Bus",
           radio_stripOrBusKind_Strip: "Strip",
           radio_stripOrBusKind_Bus: "Bus",
@@ -31,7 +33,8 @@
           select_voiceMeeterKind_description:
             "Select the kind of VoiceMeeter you have installed. After selecting, please restart the Stream Deck app.",
           header_appearance: "Appearance",
-          textfield_iconCodePoint_label: "Icon",
+          textfield_iconCodePoint_label_left: "Icon (Left)",
+          textfield_iconCodePoint_label_right: "Icon (Right)",
           textfield_iconCodePoint_placeholder: "Enter code point",
           textfield_iconCodePoint_description:
             "You can search for icons and check code points at Google Fonts.",
@@ -46,6 +49,8 @@
           textfield_gainDelta_placeholder: "Enter a positive number in dB",
         },
         ja: {
+          header_leftSide: "左側",
+          header_rightSide: "右側",
           radio_stripOrBusKind_label: "Strip/Bus",
           radio_stripOrBusKind_Strip: "Strip",
           radio_stripOrBusKind_Bus: "Bus",
@@ -55,7 +60,8 @@
           select_voiceMeeterKind_description:
             "インストール済みの VoiceMeeter の種別を選択してください。選択後は Stream Deck アプリを再起動してください。",
           header_appearance: "外観",
-          textfield_iconCodePoint_label: "アイコン",
+          textfield_iconCodePoint_label_left: "アイコン(左)",
+          textfield_iconCodePoint_label_right: "アイコン(右)",
           textfield_iconCodePoint_placeholder: "コードポイントを入力",
           textfield_iconCodePoint_description:
             "アイコンの検索とコードポイントの確認は Google Fonts で行えます。",
@@ -76,6 +82,10 @@
         await SDPIComponents.streamDeckClient.send("openUrl", payload);
       };
     </script>
+
+    <sdpi-item>
+      <h2><sdpi-i18n key="header_leftSide"></sdpi-i18n></h2>
+    </sdpi-item>
 
     <sdpi-item label="__MSG_radio_stripOrBusKind_label__">
       <sdpi-radio setting="stripOrBusKind" default="Strip" columns="2">
@@ -112,6 +122,44 @@
     </sdpi-item>
 
     <sdpi-item>
+      <h2><sdpi-i18n key="header_rightSide"></sdpi-i18n></h2>
+    </sdpi-item>
+
+    <sdpi-item label="__MSG_radio_stripOrBusKind_label__">
+      <sdpi-radio setting="stripOrBusKind1" default="Bus" columns="2">
+        <option value="Strip">Strip</option>
+        <option value="Bus">Bus</option>
+      </sdpi-radio>
+    </sdpi-item>
+
+    <sdpi-item label="__MSG_radio_stripOrBusIndex_label__">
+      <sdpi-radio
+        setting="stripOrBusIndex1"
+        default="0"
+        columns="4"
+        value-type="number"
+      >
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+      </sdpi-radio>
+    </sdpi-item>
+
+    <sdpi-item label="__MSG_textfield_gainDelta_label__">
+      <sdpi-textfield
+        setting="gainDelta1"
+        pattern="/^[+]?\d+(?:\.\d+)?$/"
+        placeholder="__MSG_textfield_gainDelta_placeholder__"
+      >
+      </sdpi-textfield>
+    </sdpi-item>
+
+    <sdpi-item>
       <h2><sdpi-i18n key="header_globalSettings"></sdpi-i18n></h2>
     </sdpi-item>
 
@@ -128,12 +176,23 @@
       <h2><sdpi-i18n key="header_appearance"></sdpi-i18n></h2>
     </sdpi-item>
 
-    <sdpi-item label="__MSG_textfield_iconCodePoint_label__">
+    <sdpi-item label="__MSG_textfield_iconCodePoint_label_left__">
       <sdpi-textfield
         setting="iconCodePoint"
         pattern="/[0-9a-f]{4}/"
         placeholder="__MSG_textfield_iconCodePoint_placeholder__"
       ></sdpi-textfield>
+    </sdpi-item>
+
+    <sdpi-item label="__MSG_textfield_iconCodePoint_label_right__">
+      <sdpi-textfield
+        setting="iconCodePoint1"
+        pattern="/[0-9a-f]{4}/"
+        placeholder="__MSG_textfield_iconCodePoint_placeholder__"
+      ></sdpi-textfield>
+    </sdpi-item>
+
+    <sdpi-item>
       <p><sdpi-i18n key="textfield_iconCodePoint_description"></sdpi-i18n></p>
       <sdpi-button onclick="openUrl('https://fonts.google.com/icons')">
         <sdpi-i18n key="textfield_iconCodePoint_openGoogleFonts"></sdpi-i18n>
@@ -144,6 +203,10 @@
       <summary>
         <sdpi-i18n key="details_iconFontParams"></sdpi-i18n>
       </summary>
+
+      <sdpi-item>
+        <h3><sdpi-i18n key="header_leftSide"></sdpi-i18n></h3>
+      </sdpi-item>
 
       <sdpi-item label="__MSG_select_iconFontParams_style__">
         <sdpi-select setting="iconFontParams.style" default="Rounded">
@@ -181,7 +244,55 @@
       </sdpi-item>
 
       <sdpi-item label="__MSG_radio_iconFontParams_opsz__">
-        <sdpi-radio setting="iconFontParams.opsz" default="48" columns="4">
+        <sdpi-radio setting="iconFontParams.opsz" default="20" columns="4">
+          <option value="20">20</option>
+          <option value="24">24</option>
+          <option value="40">40</option>
+          <option value="48">48</option>
+        </sdpi-radio>
+      </sdpi-item>
+
+      <sdpi-item>
+        <h3><sdpi-i18n key="header_rightSide"></sdpi-i18n></h3>
+      </sdpi-item>
+
+      <sdpi-item label="__MSG_select_iconFontParams_style__">
+        <sdpi-select setting="iconFontParams1.style" default="Rounded">
+          <option value="Outlined">Outlined</option>
+          <option value="Rounded">Rounded</option>
+          <option value="Sharp">Sharp</option>
+        </sdpi-select>
+      </sdpi-item>
+
+      <sdpi-item label="__MSG_radio_iconFontParams_fill__">
+        <sdpi-radio setting="iconFontParams1.fill" default="0" columns="2">
+          <option value="0">0</option>
+          <option value="1">1</option>
+        </sdpi-radio>
+      </sdpi-item>
+
+      <sdpi-item label="__MSG_radio_iconFontParams_wght__">
+        <sdpi-radio setting="iconFontParams1.wght" default="400" columns="4">
+          <option value="100">100</option>
+          <option value="200">200</option>
+          <option value="300">300</option>
+          <option value="400">400</option>
+          <option value="500">500</option>
+          <option value="600">600</option>
+          <option value="700">700</option>
+        </sdpi-radio>
+      </sdpi-item>
+
+      <sdpi-item label="__MSG_radio_iconFontParams_grad__">
+        <sdpi-radio setting="iconFontParams1.grad" default="0" columns="3">
+          <option value="-25">-25</option>
+          <option value="0">0</option>
+          <option value="200">200</option>
+        </sdpi-radio>
+      </sdpi-item>
+
+      <sdpi-item label="__MSG_radio_iconFontParams_opsz__">
+        <sdpi-radio setting="iconFontParams1.opsz" default="20" columns="4">
           <option value="20">20</option>
           <option value="24">24</option>
           <option value="40">40</option>
