@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="gRC5p6lSlWNpRSB2eHs0" name="action1">
-        <mxGraphModel dx="180" dy="191" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="200" pageHeight="100" math="0" shadow="0">
+        <mxGraphModel dx="1134" dy="677" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="200" pageHeight="100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -26,12 +26,12 @@
         </mxGraphModel>
     </diagram>
     <diagram name="gain_controll_combo" id="sfXpSA6LynqOliSngWCN">
-        <mxGraphModel dx="183" dy="130" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="200" pageHeight="100" math="0" shadow="0">
+        <mxGraphModel dx="1134" dy="677" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="200" pageHeight="100" math="0" shadow="0">
             <root>
                 <mxCell id="_wnMWTnZTW2_0zXAMWCT-0"/>
                 <mxCell id="_wnMWTnZTW2_0zXAMWCT-1" parent="_wnMWTnZTW2_0zXAMWCT-0"/>
                 <mxCell id="_wnMWTnZTW2_0zXAMWCT-2" value="{&quot;key&quot;:&quot;icon&quot;, &quot;type&quot;:&quot;pixmap&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=2;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=0;" parent="_wnMWTnZTW2_0zXAMWCT-1" vertex="1">
-                    <mxGeometry x="8" y="14" width="20" height="20" as="geometry"/>
+                    <mxGeometry x="8" y="13" width="20" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="_wnMWTnZTW2_0zXAMWCT-3" value="{&quot;key&quot;:&quot;gainValue&quot;, &quot;type&quot;:&quot;text&quot;, &quot;font&quot;:{&quot;size&quot;:16, &quot;weight&quot;:600}, &quot;alignment&quot;:&quot;right&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=3;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" parent="_wnMWTnZTW2_0zXAMWCT-1" vertex="1">
                     <mxGeometry x="44" y="40" width="48" height="24" as="geometry"/>
@@ -49,7 +49,7 @@
                     <mxGeometry x="8" y="40" width="36" height="24" as="geometry"/>
                 </mxCell>
                 <mxCell id="7eJ8RGiBYSVYNhXBRtFE-2" value="{&quot;key&quot;:&quot;icon1&quot;, &quot;type&quot;:&quot;pixmap&quot;}" style="rounded=0;html=1;fontSize=2;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=0;whiteSpace=wrap;" parent="_wnMWTnZTW2_0zXAMWCT-1" vertex="1">
-                    <mxGeometry x="108" y="14" width="20" height="20" as="geometry"/>
+                    <mxGeometry x="108" y="13" width="20" height="20" as="geometry"/>
                 </mxCell>
                 <mxCell id="7eJ8RGiBYSVYNhXBRtFE-3" value="{&quot;key&quot;:&quot;title1&quot;, &quot;type&quot;:&quot;text&quot;, &quot;font&quot;:{&quot;size&quot;:16, &quot;weight&quot;:600}, &quot;alignment&quot;:&quot;left&quot;}" style="rounded=0;whiteSpace=wrap;html=1;fontSize=2;fontColor=#FFFFFF;fillColor=#6666FF;strokeColor=none;verticalAlign=top;align=left;spacing=0;spacingLeft=6;" parent="_wnMWTnZTW2_0zXAMWCT-1" vertex="1">
                     <mxGeometry x="130" y="10" width="62" height="24" as="geometry"/>
