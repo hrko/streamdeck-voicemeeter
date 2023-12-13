@@ -556,7 +556,7 @@ func render(client *streamdeck.Client, renderParam *renderParams) error {
 			payload.Icon1 = &imgBase64
 		}
 		if renderParam.levels != nil {
-			levelMeter.Image.Width = 80
+			levelMeter.Image.Width = 84
 			levelMeter.Image.Height = 5
 			levelMeter.Image.Padding.Left = 2
 			levelMeter.Image.Padding.Right = 1
@@ -575,7 +575,7 @@ func render(client *streamdeck.Client, renderParam *renderParams) error {
 			payload.LevelMeter = &imgBase64
 		}
 		if renderParam.levels1 != nil {
-			levelMeter1.Image.Width = 80
+			levelMeter1.Image.Width = 84
 			levelMeter1.Image.Height = 5
 			levelMeter1.Image.Padding.Left = 2
 			levelMeter1.Image.Padding.Right = 1
@@ -598,7 +598,7 @@ func render(client *streamdeck.Client, renderParam *renderParams) error {
 			payload.GainValue = &str
 
 			gainFader := graphics.NewGainFader()
-			gainFader.Width = 80
+			gainFader.Width = 84
 			gainFader.Height = 12
 			img := gainFader.RenderHorizontal(*renderParam.gain)
 			imgBase64, err := streamdeck.Image(img)
@@ -613,7 +613,7 @@ func render(client *streamdeck.Client, renderParam *renderParams) error {
 			payload.GainValue1 = &str
 
 			gainFader := graphics.NewGainFader()
-			gainFader.Width = 80
+			gainFader.Width = 84
 			gainFader.Height = 12
 			img := gainFader.RenderHorizontal(*renderParam.gain1)
 			imgBase64, err := streamdeck.Image(img)

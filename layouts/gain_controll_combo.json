@@ -13,17 +13,17 @@
         "weight": 600
       },
       "key": "gainValue",
-      "rect": [44, 40, 44, 24],
+      "rect": [44, 40, 48, 24],
       "type": "text"
     },
     {
       "key": "levelMeter",
-      "rect": [8, 66, 80, 5],
+      "rect": [8, 66, 84, 5],
       "type": "pixmap"
     },
     {
       "key": "gainSlider",
-      "rect": [8, 74, 80, 12],
+      "rect": [8, 74, 84, 12],
       "type": "pixmap"
     },
     {
@@ -33,7 +33,7 @@
         "weight": 600
       },
       "key": "title",
-      "rect": [30, 10, 58, 24],
+      "rect": [30, 10, 62, 24],
       "type": "text"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "key": "icon1",
-      "rect": [104, 14, 20, 20],
+      "rect": [108, 14, 20, 20],
       "type": "pixmap"
     },
     {
@@ -53,7 +53,7 @@
         "weight": 600
       },
       "key": "title1",
-      "rect": [126, 10, 66, 24],
+      "rect": [130, 10, 62, 24],
       "type": "text"
     },
     {
@@ -63,22 +63,22 @@
         "weight": 600
       },
       "key": "gainValue1",
-      "rect": [140, 40, 44, 24],
+      "rect": [144, 40, 48, 24],
       "type": "text"
     },
     {
       "key": "levelMeter1",
-      "rect": [104, 66, 80, 5],
+      "rect": [108, 66, 84, 5],
       "type": "pixmap"
     },
     {
       "key": "gainSlider1",
-      "rect": [104, 74, 80, 12],
+      "rect": [108, 74, 84, 12],
       "type": "pixmap"
     },
     {
       "key": "status1",
-      "rect": [104, 40, 36, 24],
+      "rect": [108, 40, 36, 24],
       "type": "pixmap"
     }
   ]
