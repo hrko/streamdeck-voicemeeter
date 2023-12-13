@@ -40,7 +40,7 @@
   "CodePath": "streamdeck-voicemeeter-wrapper.exe",
   "Description": "Another VoiceMeeter integration for Stream Deck",
   "Category": "VoiceMeeter",
-  "CategoryIcon": "voicemeeter",
+  "CategoryIcon": "voicemeeter_category",
   "Name": "VoiceMeeter",
   "URL": "https://hrko.jp",
   "Version": "0.1",
