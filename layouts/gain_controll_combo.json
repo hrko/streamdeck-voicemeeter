@@ -34,6 +34,7 @@
       },
       "key": "title",
       "rect": [30, 10, 62, 24],
+      "text-overflow": "fade",
       "type": "text"
     },
     {
@@ -54,6 +55,7 @@
       },
       "key": "title1",
       "rect": [130, 10, 62, 24],
+      "text-overflow": "fade",
       "type": "text"
     },
     {
