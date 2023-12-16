@@ -1,7 +1,7 @@
 {
   "Actions": [
     {
-      "Name": "Action1",
+      "Name": "Gain Control",
       "States": [
         {
           "TitleAlignment": "middle",
@@ -10,12 +10,12 @@
       ],
       "Controllers": ["Encoder"],
       "Encoder": {
-        "layout": "layouts/action1.json"
+        "layout": "layouts/gain_controll.json"
       },
-      "PropertyInspectorPath": "property_inspector/action1.html",
+      "PropertyInspectorPath": "property_inspector/gain_controll.html",
       "SupportedInMultiActions": false,
       "Tooltip": "VoiceMeeter Action 1 Tooltip",
-      "UUID": "jp.hrko.voicemeeter.action1"
+      "UUID": "jp.hrko.streamdeck.voicemeeter.gain-controll"
     },
     {
       "Name": "Gain Control Combo",

@@ -79,7 +79,7 @@ func defaultInstanceSettings() instanceSettings {
 }
 
 func SetupPreClientRun(client *streamdeck.Client) {
-	action := client.Action("jp.hrko.voicemeeter.action1")
+	action := client.Action("jp.hrko.streamdeck.voicemeeter.gain-controll")
 	instanceMap = cmap.NewOf[string, instanceProperty]() // key: context of action instance
 	renderCh = make(chan *renderParams, 32)
 
@@ -128,7 +128,7 @@ func SetupPreClientRun(client *streamdeck.Client) {
 }
 
 func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error {
-	action := client.Action("jp.hrko.voicemeeter.action1")
+	action := client.Action("jp.hrko.streamdeck.voicemeeter.gain-controll")
 	levelMeterMap = cmap.NewOf[string, *graphics.LevelMeter]() // key: context of action instance
 
 	action.RegisterHandler(streamdeck.DialRotate, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
@@ -159,7 +159,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
 
-		renderParams := newAction1RenderParams(event.Context)
+		renderParams := newRenderParams(event.Context)
 		renderParams.SetGain(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
 		renderCh <- renderParams
 
@@ -193,7 +193,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
 
-		renderParams := newAction1RenderParams(event.Context)
+		renderParams := newRenderParams(event.Context)
 		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
 		renderCh <- renderParams
 
@@ -227,7 +227,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			log.Printf("unknown stripOrBusKind: '%v'\n", p.Settings.StripOrBusKind)
 		}
 
-		renderParams := newAction1RenderParams(event.Context)
+		renderParams := newRenderParams(event.Context)
 		renderParams.SetStatus(vm, p.Settings.StripOrBusKind, p.Settings.StripOrBusIndex)
 		renderCh <- renderParams
 
@@ -236,7 +236,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 
 	go func() {
 		for renderParam := range renderCh {
-			action1Render(client, renderParam)
+			render(client, renderParam)
 		}
 	}()
 
@@ -247,7 +247,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 				actionContext := item.Key
 				actionProps := item.Val
 				go func() {
-					renderParam := newAction1RenderParams(actionContext)
+					renderParam := newRenderParams(actionContext)
 
 					stripOrBusKind := actionProps.Settings.StripOrBusKind
 					if stripOrBusKind == "" {
@@ -269,7 +269,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 	return nil
 }
 
-func newAction1RenderParams(actionContext string) *renderParams {
+func newRenderParams(actionContext string) *renderParams {
 	return &renderParams{
 		targetContext: actionContext,
 	}
@@ -370,13 +370,13 @@ func (p *renderParams) SetStatus(vm *voicemeeter.Remote, stripOrBusKind string, 
 	p.status = s
 }
 
-func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
+func render(client *streamdeck.Client, renderParam *renderParams) error {
 	ctx := context.Background()
 	ctx = sdcontext.WithContext(ctx, renderParam.targetContext)
 
 	instProps, ok := instanceMap.Get(renderParam.targetContext)
 	if !ok {
-		return fmt.Errorf("action1InstanceMap has no key '%v'", renderParam.targetContext)
+		return fmt.Errorf("instProps has no key '%v'", renderParam.targetContext)
 	}
 
 	levelMeter, ok := levelMeterMap.Get(renderParam.targetContext)

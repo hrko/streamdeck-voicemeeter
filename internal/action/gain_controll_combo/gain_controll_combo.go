@@ -1,7 +1,7 @@
 package gain_controll_combo
 
 // TODO:
-// - [ ] Separate the code common to "action1" into a separate package.
+// - [ ] Separate the code common to "gain_controll" into a separate package.
 // - [ ] Refactor render() since it's too long.
 
 import (
