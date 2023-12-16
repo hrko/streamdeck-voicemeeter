@@ -13,7 +13,7 @@ import (
 	sdcontext "github.com/FlowingSPDG/streamdeck/context"
 	"github.com/onyx-and-iris/voicemeeter/v2"
 
-	"github.com/hrko/streamdeck-voicemeeter/internal/action/action1"
+	"github.com/hrko/streamdeck-voicemeeter/internal/action/gain_controll"
 	"github.com/hrko/streamdeck-voicemeeter/internal/action/gain_controll_combo"
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
