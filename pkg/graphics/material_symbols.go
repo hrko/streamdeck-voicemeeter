@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	"io"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/esimov/stackblur-go"
 	"github.com/fufuok/cmap"
 	"github.com/tdewolff/canvas"
 	"github.com/tdewolff/canvas/renderers/rasterizer"
@@ -36,7 +38,7 @@ func SetMaterialSymbolsCacheDir(dir string) {
 	materialSymbolsCacheDir = dir
 }
 
-func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int) (image.Image, error) {
+func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int, iconColor color.Color) (*image.RGBA, error) {
 	font := canvas.NewFontFamily("Material Symbols")
 	rawFont, err := p.getFont()
 	if err != nil {
@@ -47,7 +49,7 @@ func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int) (imag
 		return nil, err
 	}
 	sizeFloat := float64(size)
-	face := font.Face(mmToPoints(sizeFloat), color.White, canvas.FontRegular, canvas.FontNormal)
+	face := font.Face(mmToPoints(sizeFloat), iconColor, canvas.FontRegular, canvas.FontNormal)
 
 	c := canvas.New(sizeFloat, sizeFloat)
 	ctx := canvas.NewContext(c)
@@ -59,6 +61,24 @@ func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int) (imag
 	ctx.DrawText(0, 0, canvas.NewTextLine(face, string(codeRune), canvas.Left))
 
 	return rasterizer.Draw(c, canvas.DPMM(1.0), canvas.DefaultColorSpace), nil
+}
+
+func (p *MaterialSymbolsFontParams) RenderIconWithShadow(codePoint string, size int, iconColor color.Color, shadowColor color.Color, shadowBlurRadius int) (image.Image, error) {
+	fg, err := p.RenderIcon(codePoint, size, iconColor)
+	if err != nil {
+		return nil, err
+	}
+	bg, err := p.RenderIcon(codePoint, size, shadowColor)
+	if err != nil {
+		return nil, err
+	}
+	bgBlured, err := stackblur.Process(bg, uint32(shadowBlurRadius))
+	if err != nil {
+		return nil, err
+	}
+
+	draw.Draw(bgBlured, bgBlured.Bounds(), fg, image.Point{}, draw.Over)
+	return bgBlured, nil
 }
 
 func (p *MaterialSymbolsFontParams) String() string {

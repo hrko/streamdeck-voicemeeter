@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"log"
 	"strconv"
 	"time"
@@ -414,7 +415,7 @@ func action1Render(client *streamdeck.Client, renderParam *renderParams) error {
 					iconCodePoint = "f70e" // output_circle
 				}
 			}
-			img, err := fontParams.RenderIcon(iconCodePoint, 48)
+			img, err := fontParams.RenderIconWithShadow(iconCodePoint, 48, color.White, color.Black, 2)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err

@@ -5,6 +5,7 @@ go 1.21.4
 require (
 	github.com/FlowingSPDG/streamdeck v0.0.0-20230506011737-7eb85f091e90
 	github.com/disintegration/imaging v1.6.2
+	github.com/esimov/stackblur-go v1.1.0
 	github.com/fogleman/gg v1.3.0
 	github.com/fufuok/cmap v1.19.2
 	github.com/onyx-and-iris/voicemeeter/v2 v2.0.1
