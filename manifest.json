@@ -33,6 +33,14 @@
       "SupportedInMultiActions": false,
       "Tooltip": "VoiceMeeter Action 1 Tooltip",
       "UUID": "jp.hrko.streamdeck.voicemeeter.gain-controll-combo"
+    },
+    {
+      "Name": "Macro",
+      "States": [{}],
+      "Controllers": ["Keypad"],
+      "PropertyInspectorPath": "property_inspector/macro.html",
+      "Tooltip": "VoiceMeeter Macro",
+      "UUID": "jp.hrko.streamdeck.voicemeeter.macro"
     }
   ],
   "SDKVersion": 2,

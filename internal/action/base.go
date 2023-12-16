@@ -34,3 +34,23 @@ type ActionInstanceCommonProperty struct {
 	} `json:"coordinates,omitempty"`
 	IsInMultiAction bool `json:"isInMultiAction,omitempty"`
 }
+
+type KeyDownCommonPayload struct {
+	Coordinates struct {
+		Column int `json:"column"`
+		Row    int `json:"row"`
+	} `json:"coordinates"`
+	State            int  `json:"state"`
+	UserDesiredState int  `json:"userDesiredState"`
+	IsInMultiAction  bool `json:"isInMultiAction"`
+}
+
+type KeyUpCommonPayload struct {
+	Coordinates struct {
+		Column int `json:"column"`
+		Row    int `json:"row"`
+	} `json:"coordinates"`
+	State            int  `json:"state"`
+	UserDesiredState int  `json:"userDesiredState"`
+	IsInMultiAction  bool `json:"isInMultiAction"`
+}

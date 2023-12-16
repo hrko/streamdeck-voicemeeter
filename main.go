@@ -15,6 +15,7 @@ import (
 
 	"github.com/hrko/streamdeck-voicemeeter/internal/action/gain_controll"
 	"github.com/hrko/streamdeck-voicemeeter/internal/action/gain_controll_combo"
+	"github.com/hrko/streamdeck-voicemeeter/internal/action/macro"
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
 
@@ -68,6 +69,7 @@ func run(ctx context.Context) error {
 	registerNoActionHandlers(client)
 	gain_controll.SetupPreClientRun(client)
 	gain_controll_combo.SetupPreClientRun(client)
+	macro.SetupPreClientRun(client)
 
 	chErr := make(chan error)
 	go func() {
@@ -91,6 +93,7 @@ func run(ctx context.Context) error {
 
 	go gain_controll.SetupPostClientRun(client, vm)
 	go gain_controll_combo.SetupPostClientRun(client, vm)
+	go macro.SetupPostClientRun(client, vm)
 
 	return <-chErr
 }
