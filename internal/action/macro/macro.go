@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"image/draw"
 	"log"
+	"strconv"
 
 	"github.com/fufuok/cmap"
 	"github.com/hrko/streamdeck"
@@ -33,7 +34,7 @@ type instanceProperty struct {
 }
 
 type instanceSettings struct {
-	LogicalId  int    `json:"logicalId,omitempty"`
+	LogicalId  string `json:"logicalId,omitempty"`
 	ButtonType string `json:"buttonType,omitempty"`
 }
 
@@ -54,7 +55,7 @@ type keyUpPayload struct {
 
 func defaultInstanceSettings() instanceSettings {
 	return instanceSettings{
-		LogicalId:  0,
+		LogicalId:  "0",
 		ButtonType: ButtonTypePush,
 	}
 }
@@ -106,11 +107,17 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			return err
 		}
 
-		if payload.Settings.LogicalId < 0 || payload.Settings.LogicalId > len(vm.Button) {
+		logicalId, err := strconv.Atoi(payload.Settings.LogicalId)
+		if err != nil {
+			log.Printf("error parsing logicalId: %v\n", err)
+			return err
+		}
+
+		if logicalId < 0 || logicalId > len(vm.Button) {
 			log.Printf("invalid logicalId: %v\n", payload.Settings.LogicalId)
 			return nil
 		}
-		button := vm.Button[payload.Settings.LogicalId]
+		button := vm.Button[logicalId]
 
 		if payload.Settings.ButtonType == ButtonTypeToggle {
 			currentState := button.State()
@@ -139,11 +146,17 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			return err
 		}
 
-		if payload.Settings.LogicalId < 0 || payload.Settings.LogicalId > len(vm.Button) {
+		logicalId, err := strconv.Atoi(payload.Settings.LogicalId)
+		if err != nil {
+			log.Printf("error parsing logicalId: %v\n", err)
+			return err
+		}
+
+		if logicalId < 0 || logicalId > len(vm.Button) {
 			log.Printf("invalid logicalId: %v\n", payload.Settings.LogicalId)
 			return nil
 		}
-		button := vm.Button[payload.Settings.LogicalId]
+		button := vm.Button[logicalId]
 
 		if payload.Settings.ButtonType == ButtonTypePush {
 			button.SetState(false)
@@ -173,11 +186,17 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 					actionContext := item.Key
 					actionProps := item.Val
 					go func() {
-						if actionProps.Settings.LogicalId < 0 || actionProps.Settings.LogicalId > len(vm.Button) {
+						logicalId, err := strconv.Atoi(actionProps.Settings.LogicalId)
+						if err != nil {
+							log.Printf("error parsing logicalId: %v\n", err)
+							return
+						}
+
+						if logicalId < 0 || logicalId > len(vm.Button) {
 							log.Printf("invalid logicalId: %v\n", actionProps.Settings.LogicalId)
 							return
 						}
-						button := vm.Button[actionProps.Settings.LogicalId]
+						button := vm.Button[logicalId]
 						renderParam := &renderParams{
 							targetContext: actionContext,
 							state:         button.State(),
