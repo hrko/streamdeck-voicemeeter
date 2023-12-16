@@ -66,7 +66,7 @@ func run(ctx context.Context) error {
 	log.Println("Client created")
 
 	registerNoActionHandlers(client)
-	action1.SetupPreClientRun(client)
+	gain_controll.SetupPreClientRun(client)
 	gain_controll_combo.SetupPreClientRun(client)
 
 	chErr := make(chan error)
@@ -89,7 +89,7 @@ func run(ctx context.Context) error {
 	defer vm.Logout()
 	vm.EventAdd("ldirty")
 
-	go action1.SetupPostClientRun(client, vm)
+	go gain_controll.SetupPostClientRun(client, vm)
 	go gain_controll_combo.SetupPostClientRun(client, vm)
 
 	return <-chErr

@@ -1,4 +1,4 @@
-package action1
+package gain_controll
 
 import (
 	"context"
