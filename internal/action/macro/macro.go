@@ -8,8 +8,6 @@ import (
 	"image/draw"
 	"log"
 
-	// "time"
-
 	"github.com/fufuok/cmap"
 	"github.com/hrko/streamdeck"
 	sdcontext "github.com/hrko/streamdeck/context"
@@ -190,23 +188,6 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			}
 		}
 	}()
-
-	// go func() {
-	// 	const refreshInterval = time.Second / 15
-	// 	for range time.Tick(refreshInterval) {
-	// 		for item := range shownInstances.IterBuffered() {
-	// 			actionContext := item.Key
-	// 			actionProps := item.Val
-	// 			go func() {
-	// 				renderParam := &renderParams{
-	// 					targetContext: actionContext,
-	// 				}
-
-	// 				renderCh <- renderParam
-	// 			}()
-	// 		}
-	// 	}
-	// }()
 
 	return nil
 }
