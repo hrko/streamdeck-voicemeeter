@@ -181,7 +181,6 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 		for e := range vmEvent {
 			switch e {
 			case "mdirty":
-				log.Println("macro dirty")
 				for item := range shownInstances.IterBuffered() {
 					actionContext := item.Key
 					actionProps := item.Val
