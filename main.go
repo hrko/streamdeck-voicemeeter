@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/FlowingSPDG/streamdeck"
-	sdcontext "github.com/FlowingSPDG/streamdeck/context"
+	"github.com/hrko/streamdeck"
+	sdcontext "github.com/hrko/streamdeck/context"
 	"github.com/onyx-and-iris/voicemeeter/v2"
 
 	"github.com/hrko/streamdeck-voicemeeter/internal/action/gain_controll"
