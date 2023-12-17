@@ -38,7 +38,7 @@ func SetMaterialSymbolsCacheDir(dir string) {
 	materialSymbolsCacheDir = dir
 }
 
-func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int, iconColor color.Color) (*image.RGBA, error) {
+func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int, iconColor, borderColor color.Color, borderWidth int) (*image.RGBA, error) {
 	font := canvas.NewFontFamily("Material Symbols")
 	rawFont, err := p.getFont()
 	if err != nil {
@@ -49,7 +49,7 @@ func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int, iconC
 		return nil, err
 	}
 	sizeFloat := float64(size)
-	face := font.Face(mmToPoints(sizeFloat), iconColor, canvas.FontRegular, canvas.FontNormal)
+	face := font.Face(mmToPoints(sizeFloat))
 
 	c := canvas.New(sizeFloat, sizeFloat)
 	ctx := canvas.NewContext(c)
@@ -58,17 +58,25 @@ func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int, iconC
 		return nil, err
 	}
 	codeRune := rune(codeInt)
-	ctx.DrawText(0, 0, canvas.NewTextLine(face, string(codeRune), canvas.Left))
+	path, _, err := face.ToPath(string(codeRune))
+	if err != nil {
+		return nil, err
+	}
+	strokePath := path.Stroke(float64(borderWidth*2), canvas.RoundCap, canvas.BevelJoin, canvas.PixelTolerance)
+	ctx.SetFillColor(borderColor)
+	ctx.DrawPath(0, 0, strokePath)
+	ctx.SetFillColor(iconColor)
+	ctx.DrawPath(0, 0, path)
 
 	return rasterizer.Draw(c, canvas.DPMM(1.0), canvas.DefaultColorSpace), nil
 }
 
 func (p *MaterialSymbolsFontParams) RenderIconWithShadow(codePoint string, size int, iconColor color.Color, shadowColor color.Color, shadowBlurRadius int) (image.Image, error) {
-	fg, err := p.RenderIcon(codePoint, size, iconColor)
+	fg, err := p.RenderIcon(codePoint, size, iconColor, color.RGBA{}, 0)
 	if err != nil {
 		return nil, err
 	}
-	bg, err := p.RenderIcon(codePoint, size, shadowColor)
+	bg, err := p.RenderIcon(codePoint, size, shadowColor, color.RGBA{}, 0)
 	if err != nil {
 		return nil, err
 	}

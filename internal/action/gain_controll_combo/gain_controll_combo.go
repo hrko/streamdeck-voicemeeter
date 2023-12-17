@@ -518,7 +518,7 @@ func render(client *streamdeck.Client, renderParam *renderParams) error {
 					iconCodePoint = "f70e" // output_circle
 				}
 			}
-			img, err := fontParams.RenderIconWithShadow(iconCodePoint, 20, color.White, color.Black, 1)
+			img, err := fontParams.RenderIcon(iconCodePoint, 20, color.White, color.RGBA{0, 0, 0, 120}, 1)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err
@@ -545,7 +545,7 @@ func render(client *streamdeck.Client, renderParam *renderParams) error {
 					iconCodePoint = "f70e" // output_circle
 				}
 			}
-			img, err := fontParams.RenderIconWithShadow(iconCodePoint, 20, color.White, color.Black, 1)
+			img, err := fontParams.RenderIcon(iconCodePoint, 20, color.White, color.RGBA{0, 0, 0, 128}, 1)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err
