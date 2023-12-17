@@ -53,6 +53,19 @@ type keyUpPayload struct {
 	Settings instanceSettings `json:"settings,omitempty"`
 }
 
+func (s *instanceSettings) getSafeLogicalId(vm *voicemeeter.Remote) (int, error) {
+	logicalId, err := strconv.Atoi(s.LogicalId)
+	if err != nil {
+		return 0, err
+	}
+
+	if logicalId < 0 || logicalId > len(vm.Button) {
+		return 0, nil
+	}
+
+	return logicalId, nil
+}
+
 func defaultInstanceSettings() instanceSettings {
 	return instanceSettings{
 		LogicalId:  "0",
@@ -107,15 +120,10 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			return err
 		}
 
-		logicalId, err := strconv.Atoi(payload.Settings.LogicalId)
+		logicalId, err := payload.Settings.getSafeLogicalId(vm)
 		if err != nil {
 			log.Printf("error parsing logicalId: %v\n", err)
 			return err
-		}
-
-		if logicalId < 0 || logicalId > len(vm.Button) {
-			log.Printf("invalid logicalId: %v\n", payload.Settings.LogicalId)
-			return nil
 		}
 		button := vm.Button[logicalId]
 
@@ -146,15 +154,10 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 			return err
 		}
 
-		logicalId, err := strconv.Atoi(payload.Settings.LogicalId)
+		logicalId, err := payload.Settings.getSafeLogicalId(vm)
 		if err != nil {
 			log.Printf("error parsing logicalId: %v\n", err)
 			return err
-		}
-
-		if logicalId < 0 || logicalId > len(vm.Button) {
-			log.Printf("invalid logicalId: %v\n", payload.Settings.LogicalId)
-			return nil
 		}
 		button := vm.Button[logicalId]
 
@@ -185,14 +188,9 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 					actionContext := item.Key
 					actionProps := item.Val
 					go func() {
-						logicalId, err := strconv.Atoi(actionProps.Settings.LogicalId)
+						logicalId, err := actionProps.Settings.getSafeLogicalId(vm)
 						if err != nil {
 							log.Printf("error parsing logicalId: %v\n", err)
-							return
-						}
-
-						if logicalId < 0 || logicalId > len(vm.Button) {
-							log.Printf("invalid logicalId: %v\n", actionProps.Settings.LogicalId)
 							return
 						}
 						button := vm.Button[logicalId]
