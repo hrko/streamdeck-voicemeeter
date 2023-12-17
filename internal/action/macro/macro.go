@@ -3,16 +3,17 @@ package macro
 import (
 	"context"
 	"encoding/json"
-	"image"
 	"image/color"
-	"image/draw"
 	"log"
 	"strconv"
 
 	"github.com/fufuok/cmap"
+	"github.com/go-playground/colors"
 	"github.com/hrko/streamdeck"
 	sdcontext "github.com/hrko/streamdeck/context"
 	"github.com/onyx-and-iris/voicemeeter/v2"
+
+	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
 
 const (
@@ -29,8 +30,13 @@ var (
 type instanceProperty streamdeck.WillAppearPayload[instanceSettings]
 
 type instanceSettings struct {
-	LogicalId  string `json:"logicalId,omitempty"`
-	ButtonType string `json:"buttonType,omitempty"`
+	LogicalId        string                             `json:"logicalId,omitempty"`
+	ButtonType       string                             `json:"buttonType,omitempty"`
+	IconFontParams   graphics.MaterialSymbolsFontParams `json:"iconFontParams,omitempty"`
+	IconCodePointOn  string                             `json:"iconCodePointOn,omitempty"`
+	IconCodePointOff string                             `json:"iconCodePointOff,omitempty"`
+	BgColorOn        string                             `json:"bgColorOn,omitempty"`
+	BgColorOff       string                             `json:"bgColorOff,omitempty"`
 }
 
 type renderParams struct {
@@ -51,10 +57,64 @@ func (s *instanceSettings) getSafeLogicalId(vm *voicemeeter.Remote) (int, error)
 	return logicalId, nil
 }
 
+func (s *instanceSettings) setImages(client *streamdeck.Client, actionContext string) error {
+	ctx := context.Background()
+	ctx = sdcontext.WithContext(ctx, actionContext)
+
+	iconColor := color.White
+	borderColor := color.Transparent
+	bgColorOn, _ := colors.ParseHEX(s.BgColorOn)
+	bgColorOff, _ := colors.ParseHEX(s.BgColorOff)
+
+	iconSize := 36
+	imgSize := 72
+	offsetX := (imgSize - iconSize) / 2
+	offsetY := offsetX
+	borderWidth := 0
+
+	svgOn, err := s.IconFontParams.RenderIconSVG(s.IconCodePointOn, iconSize, imgSize, offsetX, offsetY, iconColor, borderColor, bgColorOn, borderWidth)
+	if err != nil {
+		log.Printf("error rendering icon: %v\n", err)
+		return err
+	}
+	svgOff, err := s.IconFontParams.RenderIconSVG(s.IconCodePointOff, iconSize, imgSize, offsetX, offsetY, iconColor, borderColor, bgColorOff, borderWidth)
+	if err != nil {
+		log.Printf("error rendering icon: %v\n", err)
+		return err
+	}
+
+	imgStringOn := streamdeck.ImageSvg(svgOn)
+	imgStringOff := streamdeck.ImageSvg(svgOff)
+
+	err = client.SetImage(ctx, imgStringOn, streamdeck.HardwareAndSoftware, ptr(0))
+	if err != nil {
+		log.Printf("error setting image: %v\n", err)
+		return err
+	}
+	err = client.SetImage(ctx, imgStringOff, streamdeck.HardwareAndSoftware, ptr(1))
+	if err != nil {
+		log.Printf("error setting image: %v\n", err)
+		return err
+	}
+
+	return nil
+}
+
 func defaultInstanceSettings() instanceSettings {
 	return instanceSettings{
 		LogicalId:  "0",
 		ButtonType: ButtonTypePush,
+		IconFontParams: graphics.MaterialSymbolsFontParams{
+			Style: "Outlined",
+			Opsz:  "48",
+			Wght:  "400",
+			Fill:  "0",
+			Grad:  "0",
+		},
+		IconCodePointOn:  "e837",
+		IconCodePointOff: "e836",
+		BgColorOn:        "#067ba2",
+		BgColorOff:       "#004162",
 	}
 }
 
@@ -80,6 +140,8 @@ func SetupPreClientRun(client *streamdeck.Client) {
 			})
 		}
 
+		p.Settings.setImages(client, event.Context)
+
 		return nil
 	})
 
@@ -92,6 +154,7 @@ func SetupPreClientRun(client *streamdeck.Client) {
 			return err
 		}
 		shownInstances.Set(event.Context, instanceProperty(p))
+		p.Settings.setImages(client, event.Context)
 		return nil
 	})
 
@@ -206,22 +269,12 @@ func render(client *streamdeck.Client, renderParam *renderParams) {
 	ctx = sdcontext.WithContext(ctx, renderParam.targetContext)
 
 	if renderParam.state {
-		white72x72 := image.NewRGBA(image.Rect(0, 0, 72, 72))
-		draw.Draw(white72x72, white72x72.Bounds(), &image.Uniform{color.White}, image.Point{}, draw.Src)
-		imgBase64, err := streamdeck.Image(white72x72)
-		if err != nil {
-			log.Printf("error encoding image: %v\n", err)
-			return
-		}
-		client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware, nil)
+		client.SetState(ctx, 0)
 	} else {
-		black72x72 := image.NewRGBA(image.Rect(0, 0, 72, 72))
-		draw.Draw(black72x72, black72x72.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Src)
-		imgBase64, err := streamdeck.Image(black72x72)
-		if err != nil {
-			log.Printf("error encoding image: %v\n", err)
-			return
-		}
-		client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware, nil)
+		client.SetState(ctx, 1)
 	}
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }

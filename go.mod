@@ -7,6 +7,7 @@ require (
 	github.com/esimov/stackblur-go v1.1.0
 	github.com/fogleman/gg v1.3.0
 	github.com/fufuok/cmap v1.19.2
+	github.com/go-playground/colors v1.3.1
 	github.com/hrko/streamdeck v0.0.0-20231216232146-6742e72cf560
 	github.com/onyx-and-iris/voicemeeter/v2 v2.0.1
 	github.com/tdewolff/canvas v0.0.0-20231203232002-67b379b2cda5
@@ -15,7 +16,6 @@ require (
 
 require (
 	github.com/ByteArena/poly2tri-go v0.0.0-20170716161910-d102ad91854f // indirect
-	github.com/FlowingSPDG/streamdeck v0.0.0-20230506011737-7eb85f091e90 // indirect
 	github.com/benoitkugler/textlayout v0.3.0 // indirect
 	github.com/benoitkugler/textprocessing v0.0.3 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -36,4 +36,5 @@ require (
 
 // TODO: delete this once the module is published
 replace github.com/hrko/streamdeck => ../streamdeck
+
 replace github.com/tdewolff/canvas => ../canvas
