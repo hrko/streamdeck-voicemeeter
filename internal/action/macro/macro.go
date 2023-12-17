@@ -222,7 +222,7 @@ func render(client *streamdeck.Client, renderParam *renderParams) {
 			log.Printf("error encoding image: %v\n", err)
 			return
 		}
-		client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware)
+		client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware, nil)
 	} else {
 		black72x72 := image.NewRGBA(image.Rect(0, 0, 72, 72))
 		draw.Draw(black72x72, black72x72.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Src)
@@ -231,6 +231,6 @@ func render(client *streamdeck.Client, renderParam *renderParams) {
 			log.Printf("error encoding image: %v\n", err)
 			return
 		}
-		client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware)
+		client.SetImage(ctx, imgBase64, streamdeck.HardwareAndSoftware, nil)
 	}
 }
