@@ -76,6 +76,9 @@ func (p *MaterialSymbolsFontParams) RenderIconCanvas(codePoint string, iconSize,
 		return nil, err
 	}
 
+	ctx.SetFillColor(bgColor)
+	ctx.DrawPath(0, 0, canvas.Rectangle(imgSizeFloat, imgSizeFloat))
+
 	offsetXFloat := float64(offsetX)
 	offsetYFloat := float64(offsetY)
 	ctx.SetStrokeColor(borderColor)
