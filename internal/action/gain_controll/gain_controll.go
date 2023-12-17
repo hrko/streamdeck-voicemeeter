@@ -389,7 +389,7 @@ func render(client *streamdeck.Client, renderParam *renderParams) error {
 					iconCodePoint = "f70e" // output_circle
 				}
 			}
-			svg, err := fontParams.RenderIconSVG(iconCodePoint, 48, color.White, color.RGBA{0, 0, 0, 180}, 1)
+			svg, err := fontParams.RenderIconSVG(iconCodePoint, 48, 48, 0, 0, color.White, color.RGBA{0, 0, 0, 180}, color.Transparent, 1)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err
