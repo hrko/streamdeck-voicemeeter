@@ -36,3 +36,4 @@ require (
 
 // TODO: delete this once the module is published
 replace github.com/hrko/streamdeck => ../streamdeck
+replace github.com/tdewolff/canvas => ../canvas

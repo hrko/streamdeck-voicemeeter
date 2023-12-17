@@ -415,16 +415,13 @@ func render(client *streamdeck.Client, renderParam *renderParams) error {
 					iconCodePoint = "f70e" // output_circle
 				}
 			}
-			img, err := fontParams.RenderIcon(iconCodePoint, 48, color.White, color.RGBA{0, 0, 0, 180}, 1)
+			svg, err := fontParams.RenderIconSVG(iconCodePoint, 48, color.White, color.RGBA{0, 0, 0, 180}, 1)
 			if err != nil {
 				log.Printf("error creating image: %v\n", err)
 				return err
 			}
-			imgBase64, err := streamdeck.Image(img)
-			if err != nil {
-				log.Printf("error converting image to base64: %v\n", err)
-			}
-			payload.Icon = &imgBase64
+			imgString := streamdeck.ImageSvg(svg)
+			payload.Icon = &imgString
 		}
 		if renderParam.levels != nil {
 			levelMeter.Image.Width = 108
