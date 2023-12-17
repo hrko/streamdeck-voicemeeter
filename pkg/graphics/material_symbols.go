@@ -1,6 +1,7 @@
 package graphics
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/color"
@@ -16,6 +17,7 @@ import (
 	"github.com/fufuok/cmap"
 	"github.com/tdewolff/canvas"
 	"github.com/tdewolff/canvas/renderers/rasterizer"
+	"github.com/tdewolff/canvas/renderers/svg"
 )
 
 var (
@@ -38,7 +40,11 @@ func SetMaterialSymbolsCacheDir(dir string) {
 	materialSymbolsCacheDir = dir
 }
 
-func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int, iconColor, borderColor color.Color, borderWidth int) (*image.RGBA, error) {
+func (p *MaterialSymbolsFontParams) RenderIconCanvas(codePoint string, size int, iconColor, borderColor color.Color, borderWidth int) (*canvas.Canvas, error) {
+	sizeFloat := float64(size)
+	c := canvas.New(sizeFloat, sizeFloat)
+	ctx := canvas.NewContext(c)
+
 	font := canvas.NewFontFamily("Material Symbols")
 	rawFont, err := p.getFont()
 	if err != nil {
@@ -48,11 +54,8 @@ func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int, iconC
 	if err != nil {
 		return nil, err
 	}
-	sizeFloat := float64(size)
 	face := font.Face(mmToPoints(sizeFloat))
 
-	c := canvas.New(sizeFloat, sizeFloat)
-	ctx := canvas.NewContext(c)
 	codeInt, err := strconv.ParseInt(codePoint, 16, 32)
 	if err != nil {
 		return nil, err
@@ -62,13 +65,38 @@ func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int, iconC
 	if err != nil {
 		return nil, err
 	}
-	strokePath := path.Stroke(float64(borderWidth*2), canvas.RoundCap, canvas.BevelJoin, canvas.PixelTolerance)
-	ctx.SetFillColor(borderColor)
-	ctx.DrawPath(0, 0, strokePath)
+
+	ctx.SetStrokeColor(borderColor)
+	ctx.SetStrokeWidth(float64(borderWidth) * 2)
+	ctx.SetFillColor(color.Transparent)
+	ctx.DrawPath(0, 0, path)
+	ctx.SetStrokeColor(color.Transparent)
 	ctx.SetFillColor(iconColor)
 	ctx.DrawPath(0, 0, path)
 
+	return c, nil
+}
+
+func (p *MaterialSymbolsFontParams) RenderIcon(codePoint string, size int, iconColor, borderColor color.Color, borderWidth int) (*image.RGBA, error) {
+	c, err := p.RenderIconCanvas(codePoint, size, iconColor, borderColor, borderWidth)
+	if err != nil {
+		return nil, err
+	}
 	return rasterizer.Draw(c, canvas.DPMM(1.0), canvas.DefaultColorSpace), nil
+}
+
+func (p *MaterialSymbolsFontParams) RenderIconSVG(codePoint string, size int, iconColor, borderColor color.Color, borderWidth int) (string, error) {
+	c, err := p.RenderIconCanvas(codePoint, size, iconColor, borderColor, borderWidth)
+	if err != nil {
+		return "", err
+	}
+
+	buf := new(bytes.Buffer)
+	svgRenderer := svg.New(buf, float64(size), float64(size), &svg.DefaultOptions)
+	c.RenderTo(svgRenderer)
+	svgRenderer.Close()
+
+	return buf.String(), nil
 }
 
 func (p *MaterialSymbolsFontParams) RenderIconWithShadow(codePoint string, size int, iconColor color.Color, shadowColor color.Color, shadowBlurRadius int) (image.Image, error) {
