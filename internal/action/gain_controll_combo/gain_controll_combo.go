@@ -18,7 +18,6 @@ import (
 	sdcontext "github.com/hrko/streamdeck/context"
 	"github.com/onyx-and-iris/voicemeeter/v2"
 
-	"github.com/hrko/streamdeck-voicemeeter/internal/action"
 	"github.com/hrko/streamdeck-voicemeeter/internal/stripbus"
 	"github.com/hrko/streamdeck-voicemeeter/pkg/graphics"
 )
@@ -34,10 +33,7 @@ var (
 	levelMeter1Map *cmap.MapOf[string, *graphics.LevelMeter]
 )
 
-type instanceProperty struct {
-	action.ActionInstanceCommonProperty
-	Settings instanceSettings `json:"settings,omitempty"`
-}
+type instanceProperty streamdeck.WillAppearPayload[instanceSettings]
 
 type instanceSettings struct {
 	IconCodePoint    string                             `json:"iconCodePoint,omitempty"`
@@ -63,16 +59,6 @@ type renderParams struct {
 	levels1       *[]float64
 	gain1         *float64
 	status1       stripbus.IStripOrBusStatus
-}
-
-type dialRotatePayload struct {
-	action.DialRotateCommonPayload
-	Settings instanceSettings `json:"settings,omitempty"`
-}
-
-type touchTapPayload struct {
-	action.TouchTapCommonPayload
-	Settings instanceSettings `json:"settings,omitempty"`
 }
 
 func defaultInstanceSettings() instanceSettings {
@@ -110,17 +96,25 @@ func SetupPreClientRun(client *streamdeck.Client) {
 	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		var prop instanceProperty
-		prop.Settings = defaultInstanceSettings()
-		err := json.Unmarshal(event.Payload, &prop)
+		var p streamdeck.WillAppearPayload[instanceSettings]
+		p.Settings = defaultInstanceSettings()
+		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
-		instanceMap.Set(event.Context, prop)
+
+		if instanceMap.Has(event.Context) {
+			var dummy instanceProperty
+			instanceMap.Upsert(event.Context, dummy, func(exist bool, valueInMap, _ instanceProperty) instanceProperty {
+				valueInMap.Settings = p.Settings
+				return valueInMap
+			})
+		}
+
 		renderCh <- &renderParams{
 			targetContext: event.Context,
-			settings:      &prop.Settings,
+			settings:      &p.Settings,
 		}
 		return nil
 	})
@@ -128,17 +122,17 @@ func SetupPreClientRun(client *streamdeck.Client) {
 	action.RegisterHandler(streamdeck.WillAppear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
-		var prop instanceProperty
-		prop.Settings = defaultInstanceSettings()
-		err := json.Unmarshal(event.Payload, &prop)
+		var p streamdeck.WillAppearPayload[instanceSettings]
+		p.Settings = defaultInstanceSettings()
+		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
-		instanceMap.Set(event.Context, prop)
+		instanceMap.Set(event.Context, instanceProperty(p))
 		renderCh <- &renderParams{
 			targetContext: event.Context,
-			settings:      &prop.Settings,
+			settings:      &p.Settings,
 		}
 		return nil
 	})
@@ -160,7 +154,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
 
-		var p dialRotatePayload
+		var p streamdeck.DialRotatePayload[instanceSettings]
 		p.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
@@ -206,7 +200,7 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 		b, _ := json.MarshalIndent(event, "", "	")
 		log.Printf("event:%s\n", b)
 
-		var p touchTapPayload
+		var p streamdeck.TouchTapPayload[instanceSettings]
 		p.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {

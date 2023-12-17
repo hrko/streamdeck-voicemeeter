@@ -13,8 +13,6 @@ import (
 	"github.com/hrko/streamdeck"
 	sdcontext "github.com/hrko/streamdeck/context"
 	"github.com/onyx-and-iris/voicemeeter/v2"
-
-	"github.com/hrko/streamdeck-voicemeeter/internal/action"
 )
 
 const (
@@ -28,10 +26,7 @@ var (
 	renderCh       chan *renderParams
 )
 
-type instanceProperty struct {
-	action.ActionInstanceCommonProperty
-	Settings instanceSettings `json:"settings,omitempty"`
-}
+type instanceProperty streamdeck.WillAppearPayload[instanceSettings]
 
 type instanceSettings struct {
 	LogicalId  string `json:"logicalId,omitempty"`
@@ -41,16 +36,6 @@ type instanceSettings struct {
 type renderParams struct {
 	targetContext string
 	state         bool
-}
-
-type keyDownPayload struct {
-	action.KeyDownCommonPayload
-	Settings instanceSettings `json:"settings,omitempty"`
-}
-
-type keyUpPayload struct {
-	action.KeyUpCommonPayload
-	Settings instanceSettings `json:"settings,omitempty"`
 }
 
 func (s *instanceSettings) getSafeLogicalId(vm *voicemeeter.Remote) (int, error) {
@@ -79,26 +64,34 @@ func SetupPreClientRun(client *streamdeck.Client) {
 	renderCh = make(chan *renderParams, 32)
 
 	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		var prop instanceProperty
-		prop.Settings = defaultInstanceSettings()
-		err := json.Unmarshal(event.Payload, &prop)
+		var p streamdeck.DidReceiveSettingsPayload[instanceSettings]
+		p.Settings = defaultInstanceSettings()
+		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
-		shownInstances.Set(event.Context, prop)
+
+		if shownInstances.Has(event.Context) {
+			var dummy instanceProperty
+			shownInstances.Upsert(event.Context, dummy, func(exist bool, valueInMap, _ instanceProperty) instanceProperty {
+				valueInMap.Settings = p.Settings
+				return valueInMap
+			})
+		}
+
 		return nil
 	})
 
 	action.RegisterHandler(streamdeck.WillAppear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		var prop instanceProperty
-		prop.Settings = defaultInstanceSettings()
-		err := json.Unmarshal(event.Payload, &prop)
+		var p streamdeck.WillAppearPayload[instanceSettings]
+		p.Settings = defaultInstanceSettings()
+		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
-		shownInstances.Set(event.Context, prop)
+		shownInstances.Set(event.Context, instanceProperty(p))
 		return nil
 	})
 
@@ -112,29 +105,29 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 	action := client.Action(ActionUUID)
 
 	action.RegisterHandler(streamdeck.KeyDown, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		var payload keyDownPayload
-		payload.Settings = defaultInstanceSettings()
-		err := json.Unmarshal(event.Payload, &payload)
+		var p streamdeck.KeyDownPayload[instanceSettings]
+		p.Settings = defaultInstanceSettings()
+		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
 
-		logicalId, err := payload.Settings.getSafeLogicalId(vm)
+		logicalId, err := p.Settings.getSafeLogicalId(vm)
 		if err != nil {
 			log.Printf("error parsing logicalId: %v\n", err)
 			return err
 		}
 		button := vm.Button[logicalId]
 
-		if payload.Settings.ButtonType == ButtonTypeToggle {
+		if p.Settings.ButtonType == ButtonTypeToggle {
 			currentState := button.State()
 			button.SetState(!currentState)
 			renderCh <- &renderParams{
 				targetContext: event.Context,
 				state:         !currentState,
 			}
-		} else if payload.Settings.ButtonType == ButtonTypePush {
+		} else if p.Settings.ButtonType == ButtonTypePush {
 			button.SetState(true)
 			renderCh <- &renderParams{
 				targetContext: event.Context,
@@ -146,22 +139,22 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 	})
 
 	action.RegisterHandler(streamdeck.KeyUp, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		var payload keyUpPayload
-		payload.Settings = defaultInstanceSettings()
-		err := json.Unmarshal(event.Payload, &payload)
+		var p streamdeck.KeyUpPayload[instanceSettings]
+		p.Settings = defaultInstanceSettings()
+		err := json.Unmarshal(event.Payload, &p)
 		if err != nil {
 			log.Printf("error unmarshaling payload: %v\n", err)
 			return err
 		}
 
-		logicalId, err := payload.Settings.getSafeLogicalId(vm)
+		logicalId, err := p.Settings.getSafeLogicalId(vm)
 		if err != nil {
 			log.Printf("error parsing logicalId: %v\n", err)
 			return err
 		}
 		button := vm.Button[logicalId]
 
-		if payload.Settings.ButtonType == ButtonTypePush {
+		if p.Settings.ButtonType == ButtonTypePush {
 			button.SetState(false)
 			renderCh <- &renderParams{
 				targetContext: event.Context,
