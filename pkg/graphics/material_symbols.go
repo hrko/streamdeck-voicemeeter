@@ -40,11 +40,8 @@ func SetMaterialSymbolsCacheDir(dir string) {
 	materialSymbolsCacheDir = dir
 }
 
-func (p *MaterialSymbolsFontParams) RenderIconCanvas(codePoint string, size int, iconColor, borderColor color.Color, borderWidth int) (*canvas.Canvas, error) {
+func (p *MaterialSymbolsFontParams) GetIconPath(codePoint string, size int) (*canvas.Path, error) {
 	sizeFloat := float64(size)
-	c := canvas.New(sizeFloat, sizeFloat)
-	ctx := canvas.NewContext(c)
-
 	font := canvas.NewFontFamily("Material Symbols")
 	rawFont, err := p.getFont()
 	if err != nil {
@@ -62,6 +59,19 @@ func (p *MaterialSymbolsFontParams) RenderIconCanvas(codePoint string, size int,
 	}
 	codeRune := rune(codeInt)
 	path, _, err := face.ToPath(string(codeRune))
+	if err != nil {
+		return nil, err
+	}
+
+	return path, nil
+}
+
+func (p *MaterialSymbolsFontParams) RenderIconCanvas(codePoint string, size int, iconColor, borderColor color.Color, borderWidth int) (*canvas.Canvas, error) {
+	sizeFloat := float64(size)
+	c := canvas.New(sizeFloat, sizeFloat)
+	ctx := canvas.NewContext(c)
+
+	path, err := p.GetIconPath(codePoint, size)
 	if err != nil {
 		return nil, err
 	}
