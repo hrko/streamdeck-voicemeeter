@@ -44,6 +44,7 @@
           "Title": "OFF"
         }
       ],
+      "DisableAutomaticStates": true,
       "Controllers": ["Keypad"],
       "PropertyInspectorPath": "property_inspector/macro.html",
       "Tooltip": "VoiceMeeter Macro",
