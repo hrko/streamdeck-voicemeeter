@@ -94,8 +94,6 @@ func SetupPreClientRun(client *streamdeck.Client) {
 	renderCh = make(chan *renderParams, 32)
 
 	action.RegisterHandler(streamdeck.DidReceiveSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
 		var p streamdeck.WillAppearPayload[instanceSettings]
 		p.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
@@ -120,8 +118,6 @@ func SetupPreClientRun(client *streamdeck.Client) {
 	})
 
 	action.RegisterHandler(streamdeck.WillAppear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
 		var p streamdeck.WillAppearPayload[instanceSettings]
 		p.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
@@ -138,8 +134,6 @@ func SetupPreClientRun(client *streamdeck.Client) {
 	})
 
 	action.RegisterHandler(streamdeck.WillDisappear, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
 		instanceMap.Remove(event.Context)
 		return nil
 	})
@@ -151,9 +145,6 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 	levelMeter1Map = cmap.NewOf[string, *graphics.LevelMeter]() // key: context of action instance
 
 	action.RegisterHandler(streamdeck.DialRotate, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
-
 		var p streamdeck.DialRotatePayload[instanceSettings]
 		p.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)
@@ -197,9 +188,6 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 	})
 
 	action.RegisterHandler(streamdeck.TouchTap, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
-
 		var p streamdeck.TouchTapPayload[instanceSettings]
 		p.Settings = defaultInstanceSettings()
 		err := json.Unmarshal(event.Payload, &p)

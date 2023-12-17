@@ -101,8 +101,6 @@ func run(ctx context.Context) error {
 func registerNoActionHandlers(client *streamdeck.Client) {
 	chGlobalSettings = make(chan *GlobalSettings)
 	client.RegisterNoActionHandler(streamdeck.DidReceiveGlobalSettings, func(ctx context.Context, client *streamdeck.Client, event streamdeck.Event) error {
-		b, _ := json.MarshalIndent(event, "", "	")
-		log.Printf("event:%s\n", b)
 		payload := new(struct {
 			Settings *GlobalSettings `json:"settings"`
 		})
