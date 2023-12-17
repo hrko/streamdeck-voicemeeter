@@ -36,7 +36,14 @@
     },
     {
       "Name": "Macro",
-      "States": [{}],
+      "States": [
+        {
+          "Title": "ON"
+        },
+        {
+          "Title": "OFF"
+        }
+      ],
       "Controllers": ["Keypad"],
       "PropertyInspectorPath": "property_inspector/macro.html",
       "Tooltip": "VoiceMeeter Macro",
