@@ -23,8 +23,12 @@ const (
 )
 
 var (
-	shownInstances *cmap.MapOf[string, instanceProperty]
-	renderCh       chan *renderParams
+	shownInstances                  *cmap.MapOf[string, instanceProperty]
+	willAppearOrSettingsChangedChan = make(chan struct {
+		actionContext string
+		settings      instanceSettings
+	}, 32)
+	renderCh chan *renderParams
 )
 
 type instanceProperty streamdeck.WillAppearPayload[instanceSettings]
@@ -142,6 +146,11 @@ func SetupPreClientRun(client *streamdeck.Client) {
 
 		p.Settings.setImages(client, event.Context)
 
+		willAppearOrSettingsChangedChan <- struct {
+			actionContext string
+			settings      instanceSettings
+		}{event.Context, p.Settings}
+
 		return nil
 	})
 
@@ -159,6 +168,10 @@ func SetupPreClientRun(client *streamdeck.Client) {
 			log.Printf("error setting settings: %v\n", err)
 			return err
 		}
+		willAppearOrSettingsChangedChan <- struct {
+			actionContext string
+			settings      instanceSettings
+		}{event.Context, p.Settings}
 		return nil
 	})
 
@@ -262,6 +275,26 @@ func SetupPostClientRun(client *streamdeck.Client, vm *voicemeeter.Remote) error
 					}()
 				}
 			}
+		}
+	}()
+
+	go func() {
+		for w := range willAppearOrSettingsChangedChan {
+			actionContext := w.actionContext
+			actionSettings := w.settings
+			go func() {
+				logicalId, err := actionSettings.getSafeLogicalId(vm)
+				if err != nil {
+					log.Printf("error parsing logicalId: %v\n", err)
+					return
+				}
+				button := vm.Button[logicalId]
+				renderParam := &renderParams{
+					targetContext: actionContext,
+					state:         button.State(),
+				}
+				renderCh <- renderParam
+			}()
 		}
 	}()
 
