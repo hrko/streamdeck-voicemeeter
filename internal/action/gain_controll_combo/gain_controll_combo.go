@@ -130,6 +130,10 @@ func SetupPreClientRun(client *streamdeck.Client) {
 			targetContext: event.Context,
 			settings:      &p.Settings,
 		}
+		if err := client.SetSettings(ctx, p.Settings); err != nil {
+			log.Printf("error setting settings: %v\n", err)
+			return err
+		}
 		return nil
 	})
 

@@ -155,6 +155,10 @@ func SetupPreClientRun(client *streamdeck.Client) {
 		}
 		shownInstances.Set(event.Context, instanceProperty(p))
 		p.Settings.setImages(client, event.Context)
+		if err := client.SetSettings(ctx, p.Settings); err != nil {
+			log.Printf("error setting settings: %v\n", err)
+			return err
+		}
 		return nil
 	})
 
