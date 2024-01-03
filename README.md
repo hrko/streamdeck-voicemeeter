@@ -5,12 +5,12 @@
 ### Key
 - [ ] Toggle Mute
 - [ ] Gain Control (Set, Increment, Decrement)
-- [ ] VoiceMeeter Macro
+- [x] VoiceMeeter Macro
 - [ ] Restart VoiceMeeter
 
 ### Dial and Touchpad
 - [x] Gain Control
-- [ ] Gain Control Combo
+- [x] Gain Control Combo
 - [ ] Strip/Bus Parameter Control
 
 ## Build Requirements
