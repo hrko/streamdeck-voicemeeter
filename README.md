@@ -13,8 +13,17 @@
 - [x] Gain Control Combo
 - [ ] Strip/Bus Parameter Control
 
+## Screenshots
+### Actions
+![Actions](./screenshots/actions.png)
+
+### Configuration
+| Macro | Gain Control | Gain Control Combo |
+| --- | --- | --- |
+| ![Macro](./screenshots/macro.png) | ![Gain Control](./screenshots/gain_control.png) | ![Gain Control Combo](./screenshots/gain_control_combo.png) |
+
 ## Build Requirements
-- Go 1.21.4 or later
+- Go 1.23.0 or later
 - [Task](https://taskfile.dev/installation/)
 
 ## Build and Run
