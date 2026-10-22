@@ -1,5 +1,7 @@
 # VoiceMeeter for Stream Deck — Rust rewrite
 
+English | [日本語](README.ja.md)
+
 This branch is an independent Rust reimplementation with installable development
 packages. Gain Control, Gain Control Combo and Macro have been exercised on
 Windows 11 / Stream Deck + / VoiceMeeter Potato. Release acceptance is still in
