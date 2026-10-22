@@ -1,0 +1,11 @@
+*.exe
+/target/
+/dist/
+node_modules/
+pi/dist/
+coverage/
+*.streamDeckPlugin
+.mise.local.toml
+mise.local.toml
+mise.local.lock
+.DS_Store

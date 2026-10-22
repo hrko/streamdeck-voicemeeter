@@ -1,0 +1,6 @@
+{
+  "name": "streamdeck-voicemeeter",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@11.25.0"
+}
