@@ -16,7 +16,20 @@ The original Go implementation remains on `main`, at commit
 - Seven-day release-age policies and committed tool/package lockfiles.
 
 The new plugin ID is `jp.hrko.streamdeck.voicemeeter.rust`. Existing Go-plugin
-settings will not be migrated. The original MIT license is retained.
+settings will not be migrated.
+
+## License
+
+The Rust rewrite is source-available under the license in `LICENSE`.
+Commercial use (including work and monetized streaming), modification, and
+free redistribution are allowed. Selling the plugin or modified versions,
+paywalling access, and including them in paid products require prior written
+permission from hrko. This is not an OSI-approved open-source license.
+
+Third-party dependencies retain their own licenses. The original Go version
+and previously MIT-licensed versions retain their original MIT permissions;
+see `licenses/LEGACY-MIT.txt`. The custom terms should receive legal review
+before a public release.
 
 ## Development status
 

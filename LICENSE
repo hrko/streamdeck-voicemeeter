@@ -1,16 +1,61 @@
-MIT License
+VoiceMeeter Stream Deck Source-Available License 1.0
 
-Copyright (c) 2023 hrko
+Copyright (c) 2026 hrko
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Scope
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This license applies to the original code and accompanying materials of the
+Rust reimplementation of streamdeck-voicemeeter (the "Software"), except files
+identified as third-party or covered by a separate license. "Licensor" means
+the copyright holder identified above. "You" means a recipient of the Software.
+
+2. Permissions
+
+Subject to these terms, the Licensor grants You a worldwide, non-exclusive,
+royalty-free permission to use, copy, study, modify, build, and distribute the
+Software and modified versions in source or executable form. Use in commercial
+work, businesses, and monetized streams or other content is expressly allowed.
+
+3. Paid distribution requires separate permission
+
+Without prior written permission from the Licensor, You may not:
+(a) sell, rent, sublicense for a fee, or otherwise charge for obtaining a copy
+    of or access to the Software or a modified version;
+(b) include the Software or a modified version in a paid product, paid bundle,
+    or paid subscription offering that supplies the Software to its customers;
+(c) require a donation, membership, purchase, or other payment as a condition
+    of obtaining the Software or a modified version.
+
+Using the Software internally to provide services, perform paid work, or
+produce monetized content is not paid distribution. Optional donations and
+separately offered support are allowed if recipients can obtain and use the
+Software without paying. These permissions do not authorize a paid bundle
+merely because its price is attributed to another component or to support.
+
+4. Redistribution and modifications
+
+You must retain this license and applicable copyright notices with all copies
+or substantial portions of the Software. Identify modified versions as modified
+and do not represent them as official releases. You may distribute modified
+versions under this license; You may not grant recipients permission to evade
+section 3. Separate written permission may specify other distribution terms.
+No rights to the Licensor's trademarks or endorsement are granted.
+
+5. Third-party and previously licensed materials
+
+Third-party components remain governed by their own licenses. This license does
+not restrict rights granted directly under those licenses. Preserve their
+required notices and license texts. Materials previously provided under MIT
+remain available under MIT for those versions; this license does not revoke
+previous grants. See licenses/LEGACY-MIT.txt for the original Go version's notice.
+
+6. Termination
+
+Permissions under this license terminate if You violate its terms. Termination
+does not alter rights independently granted under a third-party or earlier
+license. Contact the Licensor for reinstatement or separate permission.
+
+7. Disclaimer
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
