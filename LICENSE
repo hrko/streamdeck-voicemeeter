@@ -36,9 +36,11 @@ merely because its price is attributed to another component or to support.
 
 You must retain this license and applicable copyright notices with all copies
 or substantial portions of the Software. Identify modified versions as modified
-and do not represent them as official releases. You may distribute modified
-versions under this license; You may not grant recipients permission to evade
-section 3. Separate written permission may specify other distribution terms.
+and do not represent them as official releases. You must distribute modified
+versions of the portions governed by this license under this same license,
+without additional restrictions on the permissions it grants. You may not
+grant recipients permission to evade section 3. Section 5 continues to apply
+to separately licensed portions. Separate written permission may specify other distribution terms.
 No rights to the Licensor's trademarks or endorsement are granted.
 
 5. Third-party and previously licensed materials
@@ -47,7 +49,9 @@ Third-party components remain governed by their own licenses. This license does
 not restrict rights granted directly under those licenses. Preserve their
 required notices and license texts. Materials previously provided under MIT
 remain available under MIT for those versions; this license does not revoke
-previous grants. See licenses/LEGACY-MIT.txt for the original Go version's notice.
+previous grants. This includes the original Go version and initial Rust commit
+6d25302. See licenses/LEGACY-MIT.txt for their original notice. The restrictions
+in this license apply to newly licensed material, not those earlier MIT grants.
 
 6. Termination
 
