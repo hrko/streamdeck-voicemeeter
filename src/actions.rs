@@ -22,6 +22,7 @@ pub struct DeckAction<const KIND: u8> {
     context: Option<String>,
     rendering: Option<JoinHandle<()>>,
     active: Arc<AtomicBool>,
+    invalid_settings: bool,
 }
 
 type Context<'a> = ActionContext<'a, Settings, WorkerClient>;
@@ -50,6 +51,15 @@ impl<const KIND: u8> DeckAction<KIND> {
         let settings = ctx.settings();
         let context = ctx.identity().context.clone();
         self.context = Some(context.clone());
+        if self.invalid_settings {
+            self.send(Request::Remove(context))?;
+            ctx.show_alert()?;
+            let mut status =
+                inspector_status(&self.client.snapshots.borrow(), &ctx.identity().context);
+            status["error"] = json!({"code":"invalidSettings", "field":""});
+            ctx.send_to_property_inspector(&status)?;
+            return Ok(());
+        }
         self.send(Request::Subscribe {
             context: context.clone(),
             subscription: Subscription {
@@ -170,10 +180,24 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
             context: None,
             rendering: None,
             active: Arc::new(AtomicBool::new(false)),
+            invalid_settings: false,
         }
     }
-    async fn on_will_appear(&mut self, _: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
+    async fn on_will_appear(&mut self, payload: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
+        self.invalid_settings =
+            serde_json::from_value::<Settings>(payload.settings.clone()).is_err();
         self.update(ctx)
+    }
+    async fn on_did_receive_settings(
+        &mut self,
+        payload: &ActionPayload,
+        _: &Context<'_>,
+    ) -> Result<()> {
+        // SDK 0.1.0 falls back to Settings::default() on deserialization errors.
+        // Inspect the raw payload so malformed targets can never act on Strip 0.
+        self.invalid_settings =
+            serde_json::from_value::<Settings>(payload.settings.clone()).is_err();
+        Ok(())
     }
     async fn on_settings_changed(&mut self, _: &Settings, ctx: &Context<'_>) -> Result<()> {
         self.update(ctx)
@@ -229,10 +253,11 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
         Ok(())
     }
     async fn on_property_inspector_did_appear(&mut self, ctx: &Context<'_>) -> Result<()> {
-        ctx.send_to_property_inspector(&inspector_status(
-            &self.client.snapshots.borrow(),
-            &ctx.identity().context,
-        ))
+        let mut status = inspector_status(&self.client.snapshots.borrow(), &ctx.identity().context);
+        if self.invalid_settings {
+            status["error"] = json!({"code":"invalidSettings", "field":""});
+        }
+        ctx.send_to_property_inspector(&status)
     }
     async fn on_property_inspector_message(&mut self, _: &Value, ctx: &Context<'_>) -> Result<()> {
         self.on_property_inspector_did_appear(ctx).await

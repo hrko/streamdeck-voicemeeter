@@ -6,8 +6,8 @@ use crate::{
 use std::{
     sync::{
         Arc,
-        atomic::{AtomicBool, Ordering},
-        mpsc::{self, SyncSender},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+        mpsc::{self, Sender},
     },
     thread::{self, JoinHandle},
     time::{Duration, Instant},
@@ -34,15 +34,39 @@ pub enum Request {
 
 #[derive(Clone)]
 pub struct WorkerClient {
-    requests: SyncSender<Request>,
+    requests: Sender<QueuedRequest>,
+    pending_input: Arc<AtomicUsize>,
     pub snapshots: watch::Receiver<Snapshot>,
+}
+
+struct QueuedRequest {
+    request: Request,
+    charged: bool,
 }
 
 impl WorkerClient {
     pub fn send(&self, request: Request) -> anyhow::Result<()> {
-        self.requests
-            .try_send(request)
-            .map_err(|error| anyhow::anyhow!("Worker request rejected: {error}"))
+        let charged = matches!(request, Request::Command { .. } | Request::Press { .. });
+        if charged {
+            self.pending_input
+                .try_update(Ordering::AcqRel, Ordering::Acquire, |pending| {
+                    (pending < 256).then_some(pending + 1)
+                })
+                .map_err(|_| anyhow::anyhow!("Worker input queue full"))?;
+        }
+        // Lifecycle messages share FIFO ordering with input but cannot be rejected
+        // by a saturated input quota (especially keyUp and willDisappear).
+        if self
+            .requests
+            .send(QueuedRequest { request, charged })
+            .is_err()
+        {
+            if charged {
+                self.pending_input.fetch_sub(1, Ordering::AcqRel);
+            }
+            anyhow::bail!("Worker stopped");
+        }
+        Ok(())
     }
     pub fn generation(&self) -> u64 {
         self.snapshots.borrow().generation
@@ -60,7 +84,9 @@ impl Worker {
     pub fn spawn<B: Backend + 'static>(
         factory: impl FnOnce() -> B + Send + 'static,
     ) -> anyhow::Result<Self> {
-        let (requests, receiver) = mpsc::sync_channel(256);
+        let (requests, receiver) = mpsc::channel::<QueuedRequest>();
+        let pending_input = Arc::new(AtomicUsize::new(0));
+        let pending_worker = pending_input.clone();
         let (snapshots, snapshot_receiver) = watch::channel(Snapshot::default());
         let stop = Arc::new(AtomicBool::new(false));
         let stopped = stop.clone();
@@ -103,7 +129,15 @@ impl Worker {
                         snapshots.send_replace(engine.snapshot().clone());
                         frame_at = now + Duration::from_micros(66_667);
                     }
-                    match receiver.recv_timeout(Duration::from_millis(2)) {
+                    let request = receiver
+                        .recv_timeout(Duration::from_millis(2))
+                        .map(|queued| {
+                            if queued.charged {
+                                pending_worker.fetch_sub(1, Ordering::AcqRel);
+                            }
+                            queued.request
+                        });
+                    match request {
                         Ok(Request::Subscribe {
                             context,
                             subscription,
@@ -131,6 +165,7 @@ impl Worker {
         Ok(Self {
             client: WorkerClient {
                 requests,
+                pending_input,
                 snapshots: snapshot_receiver,
             },
             stop,
@@ -145,5 +180,52 @@ impl Drop for Worker {
         if let Some(thread) = self.thread.take() {
             let _ = thread.join();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn input_saturation_preserves_release_and_lifecycle_order() {
+        let (requests, receiver) = mpsc::channel();
+        let (_, snapshots) = watch::channel(Snapshot::default());
+        let client = WorkerClient {
+            requests,
+            snapshots,
+            pending_input: Arc::new(AtomicUsize::new(0)),
+        };
+        for _ in 0..256 {
+            client
+                .send(Request::Press {
+                    context: "key".into(),
+                    generation: 0,
+                })
+                .unwrap();
+        }
+        assert!(
+            client
+                .send(Request::Press {
+                    context: "key".into(),
+                    generation: 0
+                })
+                .is_err()
+        );
+        client.send(Request::Release("key".into())).unwrap();
+        client.send(Request::Remove("key".into())).unwrap();
+        for _ in 0..256 {
+            assert!(matches!(
+                receiver.recv().unwrap().request,
+                Request::Press { .. }
+            ));
+        }
+        assert!(matches!(
+            receiver.recv().unwrap().request,
+            Request::Release(_)
+        ));
+        assert!(matches!(
+            receiver.recv().unwrap().request,
+            Request::Remove(_)
+        ));
     }
 }

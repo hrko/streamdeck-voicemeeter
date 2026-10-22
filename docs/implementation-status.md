@@ -14,7 +14,8 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- `mise run test`: subsequent runs: 19 Rust tests and 13 PI/localization tests
+- `mise run test`: subsequent runs: 20 Rust unit tests, 3 SDK/worker integration
+  tests and 13 PI/localization tests
   and 1 locale-validator test.
 - React PI production bundle builds. Shared channel/icon forms, independent
   Combo settings, Macro controls, explicit invalid-setting reset, translated
@@ -41,6 +42,11 @@ This is a progress record, not a release acceptance certificate.
   generation checks, lifecycle macro release and fake-backend tests.
 - Dedicated worker with 10 ms polling, 15 fps snapshots, bounded command queue
   and 1–10 second reconnect backoff compiles and passes Clippy.
+- Input queue saturation preserves FIFO delivery of lifecycle/release messages.
+  SDK integration tests verify Combo steps, stopped rendering after disappearance,
+  Push release on settings change/drop and rejection of malformed raw settings.
+  The latter explicitly prevents SDK 0.1.0's default-settings fallback from
+  operating on Strip 0.
 - Additional locale resources require no application code changes; regional
   fallback, partial translation fallback, long strings and RTL direction tested.
 - One GPT-6 Astra medium subagent reviewed the source-available license.
