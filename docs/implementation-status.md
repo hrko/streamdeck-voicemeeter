@@ -75,6 +75,13 @@ This is a progress record, not a release acceptance certificate.
   `scripts/validate-clean.ps1`; `-Update` additionally exercises dependency updates.
 - Manual draft-release workflow added; its local checksum/tag dry run passed.
   No GitHub release has been created and the workflow has not run remotely.
+- Isolated `validate-clean.ps1 -Update` passed on 2026-10-23 JST from commit
+  `78d51155f1b8b4a45e4935d0ba2a4d8ef6909e88`: setup, update, check, test and
+  package. It selected react-i18next 17.0.17 and Vitest 5.0.5 with eligible
+  publication dates. The primary checkout retains its reviewed dependency locks.
+- Archive verification rejects unexpected and duplicate file entries in addition
+  to comparing staged file hashes. Valid, extra-file and duplicate-file fixtures
+  produced their expected outcomes; the real 198-file archive also passes.
 
 ## Required before release
 
@@ -83,12 +90,10 @@ This is a progress record, not a release acceptance certificate.
   hardware. Verify per-target API errors, reconnect recovery and queue saturation.
 - Real PI appearance/keyboard checks and rendered SVG visual verification.
 - Actual Stream Deck dev-link test.
-- Exercise deps:update in an isolated checkout.
 - Run the Windows build and draft-release workflows on GitHub.
 - Final dependency/bundle license coverage audit, including future optional/peer
   dependencies and generated helpers. Do not treat allowlisted expressions as
   a full SPDX parser.
-- Release-age policy verification for updates.
 - Real Stream Deck PI and hardware, VoiceMeeter Basic/Banana/Potato behavior,
   restarts, offline behavior, overlapping actions, long labels, meter performance.
 - Record tested Windows/Stream Deck versions; do not claim untested support.

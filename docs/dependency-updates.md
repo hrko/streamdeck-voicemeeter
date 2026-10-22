@@ -30,3 +30,19 @@ an exception, record the exact package version, reason and review in this file,
 and remove any narrowly scoped exception after its purpose is fulfilled.
 
 There are currently no release-age exceptions.
+
+## Isolated validation
+
+Run `pwsh -NoProfile -File scripts/validate-clean.ps1 -Update` to archive HEAD
+into a fresh directory under target, install tools and dependencies into isolated
+stores, and execute setup, update, check, test and package. The script records
+the source commit, timestamps and outcome in that directory's result.json.
+It does not update the working checkout. Without `-Update`, it additionally
+requires all three lockfiles to remain unchanged throughout validation.
+
+An update validation on 2026-10-23 JST passed from commit
+`78d51155f1b8b4a45e4935d0ba2a4d8ef6909e88`. It advanced react-i18next from
+17.0.16 to 17.0.17 and Vitest from 5.0.4 to 5.0.5 after checking publication
+dates; tools and Cargo resolutions remained unchanged. The updated copy passed
+static checks, all automated tests, native registration and release packaging.
+Those trial dependency changes were not adopted in the primary checkout.
