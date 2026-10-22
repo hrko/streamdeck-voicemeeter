@@ -74,6 +74,7 @@ impl<const KIND: u8> DeckAction<KIND> {
         }
         let sender = ctx.sender().clone();
         let mut snapshots = self.client.snapshots.clone();
+        let language = self.client.language.clone();
         let active = Arc::new(AtomicBool::new(true));
         self.active = active.clone();
         self.rendering = Some(tokio::spawn(async move {
@@ -86,7 +87,13 @@ impl<const KIND: u8> DeckAction<KIND> {
                 if !active.load(Ordering::Acquire) {
                     break;
                 }
-                let frame = render::frame(&snapshot, &settings, Self::kind(), &mut cache);
+                let frame = render::localized_frame(
+                    &snapshot,
+                    &settings,
+                    Self::kind(),
+                    &mut cache,
+                    &language,
+                );
                 let mut message = inspector_status(&snapshot, &context);
                 if frame.missing_glyph && message["error"].is_null() {
                     message["error"] = json!({"code":"missingGlyph", "field":""});

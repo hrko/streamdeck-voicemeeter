@@ -19,8 +19,9 @@ async fn run() -> anyhow::Result<()> {
     use streamdeck_voicemeeter::{actions::DeckAction, voicemeeter::Remote, worker::Worker};
     let args: Vec<_> = std::env::args().skip(1).collect();
     // Validate before the SDK builder, which panics on malformed arguments.
-    streamdeck_plugin::RegistrationArguments::parse(&args)?;
-    let worker = Worker::spawn(Remote::default)?;
+    let registration = streamdeck_plugin::RegistrationArguments::parse(&args)?;
+    let mut worker = Worker::spawn(Remote::default)?;
+    worker.client.language = registration.info.application.language;
     let result = streamdeck_plugin::Plugin::builder(&args)
         .state(worker.client.clone())
         .add_action::<DeckAction<0>>()

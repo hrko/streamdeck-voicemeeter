@@ -53,6 +53,16 @@ pub fn frame(
     kind: ActionKind,
     cache: &mut IconCache,
 ) -> Frame {
+    localized_frame(snapshot, settings, kind, cache, "en")
+}
+
+pub fn localized_frame(
+    snapshot: &Snapshot,
+    settings: &Settings,
+    kind: ActionKind,
+    cache: &mut IconCache,
+    language: &str,
+) -> Frame {
     let mut missing = false;
     if kind == ActionKind::Macro {
         let state = snapshot.macros.get(&settings.macro_button.logical_id);
@@ -114,7 +124,7 @@ pub fn frame(
             &mut missing,
         ));
         let gain = channel
-            .map(|c| format!("{:.1}", c.gain))
+            .map(|c| escape(&crate::numbers::gain(c.gain, language)))
             .unwrap_or_else(|| "—".into());
         let _ = write!(
             body,
@@ -334,6 +344,18 @@ mod tests {
         assert!(output.svg.contains("&lt;script&gt;&amp;&quot;日本語"));
         assert!(output.svg.contains(">-12.5</text>"));
         assert!(output.svg.contains(">3.0</text>"));
+        #[cfg(windows)]
+        {
+            let localized = localized_frame(
+                &snapshot,
+                &settings,
+                ActionKind::Combo,
+                &mut IconCache::default(),
+                "de-DE",
+            );
+            assert!(localized.svg.contains(">-12,5</text>"));
+            assert!(localized.svg.contains(">3,0</text>"));
+        }
         assert!(output.svg.contains("#ffc44d"));
         assert!(output.svg.contains("#ff5959"));
         assert_eq!(

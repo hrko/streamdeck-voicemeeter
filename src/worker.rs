@@ -34,6 +34,7 @@ pub enum Request {
 
 #[derive(Clone)]
 pub struct WorkerClient {
+    pub language: String,
     requests: Sender<QueuedRequest>,
     pending_input: Arc<AtomicUsize>,
     pub snapshots: watch::Receiver<Snapshot>,
@@ -164,6 +165,7 @@ impl Worker {
             })?;
         Ok(Self {
             client: WorkerClient {
+                language: "en".into(),
                 requests,
                 pending_input,
                 snapshots: snapshot_receiver,
@@ -191,6 +193,7 @@ mod tests {
         let (requests, receiver) = mpsc::channel();
         let (_, snapshots) = watch::channel(Snapshot::default());
         let client = WorkerClient {
+            language: "en".into(),
             requests,
             snapshots,
             pending_input: Arc::new(AtomicUsize::new(0)),

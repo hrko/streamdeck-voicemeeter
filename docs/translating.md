@@ -13,6 +13,14 @@ Extra keys and mismatched interpolation variables fail validation in every
 language. Regional locales resolve to their base language before English.
 Never translate saved setting keys, code points, identifiers, or user labels.
 
+PI display numbers use Intl. Hardware gain text uses the host application's
+language from Stream Deck startup information and Windows locale data through
+[GetNumberFormatEx](https://learn.microsoft.com/en-us/windows/win32/api/winnls/nf-winnls-getnumberformatex),
+with one fractional digit. Regional and neutral locale names
+are resolved by Windows; invalid names fall back to invariant English formatting.
+No language-specific Rust branches are needed when adding a translation.
+JSON settings and VoiceMeeter API values remain numeric and locale-independent.
+
 Run `mise run check:locales` and `mise run test:pi`. Exercise long translations
 in the actual PI, including input labels, errors, and collapsed details. RTL
 languages use the document direction; styles must use logical properties.

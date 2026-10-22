@@ -20,3 +20,4 @@ base64 = "0.22"
 
 [target.'cfg(windows)'.dependencies]
 voicemeeter = "=0.4.0"
+windows-sys = { version = "0.61.2", features = ["Win32_Globalization"] }
