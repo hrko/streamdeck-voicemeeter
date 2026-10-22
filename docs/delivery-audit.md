@@ -6,7 +6,7 @@ been performed. This record does not certify every supported environment.
 
 | Planned area | Evidence |
 | --- | --- |
-| Independent Rust branch and legacy preservation | `rust` branch; original Go commit `8ab6ae9522423747bd3be7f9a667c82200d583dd` retained on `main` and signed tag `legacy-go-before-rust` |
+| Independent Rust branch and legacy preservation | `main` branch (originally `rust`); original Go commit `8ab6ae9522423747bd3be7f9a667c82200d583dd` retained on `legacy-go` and signed tag `legacy-go-before-rust` |
 | Locked local/CI tools and seven-day update policies | `mise.toml`, `mise.lock`, `pnpm-workspace.yaml`, dependency policy tests; isolated clean-install and update results in `implementation-status.md` |
 | Three actions, worker lifecycle, settings and generated types | Rust unit and SDK/worker tests; owner hardware results in `hardware-validation.md` |
 | React PI, customization and additional languages | PI and localization tests; `translating.md`; owner-confirmed Japanese/English, keyboard, validation and font controls |

@@ -4,7 +4,8 @@ This is a progress record, not a release acceptance certificate.
 
 ## Verified
 
-- Independent root commit on `rust`; old Go files removed and retained on `main`
+- Independent root commit on `rust` (renamed to default `main` on 2026-10-23);
+  old Go files removed and retained on `legacy-go`
   at `8ab6ae9522423747bd3be7f9a667c82200d583dd`.
 - Repository-local commit signing disabled at the owner's request.
 - mise 2026.10.3, Windows x64 tool lock: Node 24.22.0, pnpm 11.28.6,

@@ -6,7 +6,8 @@ Windows 11 / Stream Deck + / VoiceMeeter Potato. Release acceptance is still in
 progress; see the [hardware validation record](docs/hardware-validation.md) for
 confirmed behavior and untested environments.
 
-The original Go implementation remains on `main` and the signed
+The Rust implementation is on the default branch, `main` (formerly `rust`).
+The original Go implementation remains on `legacy-go` and the signed
 `legacy-go-before-rust` tag, at commit
 `8ab6ae9522423747bd3be7f9a667c82200d583dd`.
 

@@ -66,8 +66,8 @@ remains open. Never set this variable for the installed plugin.
 ## Prepare a GitHub release
 
 The `Prepare draft release` workflow runs when a `rust-v*` tag is pushed. The
-tag must match the Cargo package version, such as `rust-v0.1.0`. This supports
-the independent `rust` branch without changing the repository's default branch.
+tag must match the Cargo package version, such as `rust-v0.1.0`. The Rust rewrite
+now uses the default `main` branch; the `rust-v*` release tag convention remains.
 Create a signed release tag only when the desired commit is ready for review,
 then push that specific tag. The tag workflow first runs the reusable
 Windows build workflow, downloads that run's artifacts, verifies the package

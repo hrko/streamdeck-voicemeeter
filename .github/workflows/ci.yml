@@ -1,7 +1,7 @@
 name: Windows build
 on:
   push:
-    branches: [rust]
+    branches: [main]
   pull_request:
   workflow_dispatch:
   workflow_call:
