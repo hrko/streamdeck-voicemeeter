@@ -33,6 +33,15 @@ same target. Tested EXE from `04ab431` has SHA-256
 
 ## Available environment
 
+The subsequent Go appearance restoration (`fe5e769`, title defaults corrected
+in `79bed2c`) was also checked by the owner. Icons, status indicators, gain
+sliders and Macro icon size matched expectations. After repairing persisted
+hidden-title preferences, Gain/left-Combo labels and Macro ON/OFF titles became
+visible; the owner reported no apparent text size or position problem.
+Installed EXE SHA-256:
+`312f7b9e535e6122f11448882d2ce0ccc9770d04cd457e81ca936a803cb601e7`.
+See appearance-parity.md for the separate official-layout comparison.
+
 - User-confirmed: Windows 11, Stream Deck +, VoiceMeeter Potato.
 - Installed Stream Deck executable: 7.0.3.22071 (file metadata).
 - Installed Potato executable: 3.1.2.2 (file metadata).

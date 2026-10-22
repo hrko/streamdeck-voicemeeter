@@ -36,7 +36,7 @@ Do not describe pixel-for-pixel parity as verified without that comparison.
 Installed candidate EXE SHA-256:
 `312f7b9e535e6122f11448882d2ce0ccc9770d04cd457e81ca936a803cb601e7`.
 The EXE, both layouts and manifest were replaced and the plugin restarted on
-2026-10-23 JST. Owner comparison is pending. Rust checks (28 unit + 4 integration),
+2026-10-23 JST. Owner comparison is recorded below. Rust checks (28 unit + 4 integration),
 13 PI tests, 3 script tests and native smoke checks passed; the official CLI
 package contains 201 verified files and 102 dependency/asset license entries.
 
@@ -48,4 +48,39 @@ preferences; `title1` does not. New manifest defaults now explicitly show titles
 and restore the Go dial title size/alignment. Packaging rejects hidden defaults.
 On 2026-10-23, the owner's nine placed Rust states were repaired with byte-for-byte
 profile backups, preserving other plugin/profile data and custom dial titles.
-Stream Deck was restarted. Remaining text appearance confirmation is pending.
+Stream Deck was restarted. The owner then confirmed that Gain, left-Combo and
+Macro titles appeared and that their size and position looked correct.
+
+## Official built-in layout comparison (2026-10-23)
+
+Compared the shipped JSON with Elgato's published
+[built-in layouts](https://docs.elgato.com/streamdeck/sdk/guides/dials/).
+The installed Stream Deck 7.0.3 brightness plugin also selects `$B1` in its
+manifest. Rectangles below are `[x, y, width, height]`, in pixels.
+
+| Item | Current Go-compatible layout | Official reference | Finding |
+| --- | --- | --- | --- |
+| Gain title | [16,10,136,24], declared size 16 / weight 600 / left | `$B1`: same | Geometry and declarations match |
+| Gain icon | [16,40,48,48] | `$B1`: same | Matches |
+| Gain value | [112,40,72,24], size 16 / weight 600 / right | `$B1`: [76,40,108,32], size 24 / weight 600 / right | Same top and right edge; Go reserves 36px for status and uses smaller text |
+| Gain slider | [76,74,108,12] | `$B1`: same outer rectangle | Go adds its own border/colors |
+| Combo | Two horizontal halves, separate titles and size-16 values | `$C1`: one title and two vertically stacked indicators | Go-specific composition |
+
+The meter and status symbols are additional Go features. Combo titles retain
+the standard title row's y=10, height=24 and declared size=16, but use narrower
+rectangles alongside their icons. These differences are retained deliberately
+to reproduce Go; this comparison does not change the layout.
+
+The [text reference](https://docs.elgato.com/streamdeck/sdk/references/layouts/)
+specifies that the reserved `title` item's font and alignment use the user's
+title preferences instead of the JSON declarations. Actual title weight is
+therefore not guaranteed by `weight: 600`; Combo's non-reserved `title1` uses
+its declared style. Changing native title preferences can make the two differ.
+Macro ON/OFF uses native key state titles rather than custom SVG text, so its
+appearance likewise follows the host's title settings. The dial layout
+reference does not prescribe a matching Macro key text rectangle.
+
+This is a definition-level comparison with published layouts, corroborated by
+the installed brightness manifest, not a pixel comparison of every stock
+plugin. The owner's hardware confirmation covers the restored Go appearance.
+Windows CI for `79bed2c` passed (run `39819336073`).
