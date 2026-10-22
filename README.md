@@ -33,7 +33,7 @@ before a public release.
 
 ## Development status
 
-Install mise 2026.10.3 or later and Visual Studio Build Tools (Desktop development
+Install mise 2026.10.3 (the CI-pinned version) and Visual Studio Build Tools (Desktop development
 with C++ and a Windows SDK), then run:
 
 ```powershell
@@ -41,6 +41,7 @@ mise trust
 mise run setup
 mise run check
 mise run test
+mise run package
 ```
 
 `setup` installs only this project's locked Node, pnpm, and Rust tools. Task
@@ -49,6 +50,12 @@ auto-installation is disabled so unrelated global mise tools cannot interfere.
 Run `mise run types` after changing Rust settings. See
 [translation instructions](docs/translating.md) for additional languages.
 
-Do not install this working tree as a Stream Deck plugin yet. Runtime, inspector
-forms, rendering, packaging, and hardware acceptance are still in progress;
+`mise run package` creates the `.streamDeckPlugin`, SHA-256 checksum, and full
+third-party license inventory under `dist/`. It validates the manifest and
+layout with Elgato's CLI and compares every archived file with its staged source.
+The plugin contains no VoiceMeeter DLL. `mise run ci` runs checks, tests and this
+same packaging flow and rejects lockfile changes.
+
+These are development artifacts, not a hardware-validated release. Runtime
+integration, visual checks, and hardware acceptance remain in progress;
 see [implementation status](docs/implementation-status.md).

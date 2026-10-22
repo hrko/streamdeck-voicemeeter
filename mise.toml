@@ -34,7 +34,22 @@ depends = ["check:rust", "check:pi", "check:locales"]
 run = "cargo test --locked"
 
 [tasks."test:pi"]
-run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test scripts/check-locales.test.mjs"]
+run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test scripts/check-locales.test.mjs scripts/build-plugin.test.mjs"]
 
 [tasks.test]
 depends = ["test:rust", "test:pi"]
+
+[tasks.build]
+run = ["cargo build --locked --release --bin streamdeck-voicemeeter", "pnpm --filter @streamdeck-voicemeeter/pi exec vite build", "node scripts/build-plugin.mjs release", "node scripts/licenses.mjs"]
+
+[tasks."package:validate"]
+run = ["node scripts/verify-package.mjs", "pnpm exec streamdeck validate --no-update-check dist/jp.hrko.streamdeck.voicemeeter.rust.sdPlugin"]
+
+[tasks.licenses]
+run = "node scripts/licenses.mjs"
+
+[tasks.package]
+run = ["mise run build", "node scripts/verify-package.mjs", "pnpm exec streamdeck pack --no-update-check --no-file-list --force --output dist dist/jp.hrko.streamdeck.voicemeeter.rust.sdPlugin", "pwsh -NoProfile -File scripts/verify-archive.ps1", "node scripts/verify-package.mjs --checksum"]
+
+[tasks.ci]
+run = ["mise run check", "mise run test", "mise run package", "git diff --exit-code -- mise.lock pnpm-lock.yaml Cargo.lock"]

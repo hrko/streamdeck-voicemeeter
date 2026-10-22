@@ -46,5 +46,23 @@ SHA-256 values to both source fonts and PI build output. The complete root and
 variablefont directory trees contain no NOTICE. This statement concerns those
 directories, not unrelated parts of the repository.
 
-The current PI build does not copy license documents. Final packaging must
-include the font license and the dependency notices and texts listed above.
+The standalone Vite output does not copy license documents. The assembled
+plugin build now always runs `scripts/licenses.mjs`, including the font license
+and dependency notices and texts listed above.
+
+## Packaging review corrections
+
+The reviewer found that a rebuild could remove previously collected documents,
+and five inventory paths included an explanatory suffix rather than a real file
+name. Both were corrected. Package validation now checks all document paths,
+and archive verification compares every staged file by SHA-256.
+
+Upstream overrides are restricted to exact names/versions and source revisions;
+StreamDeck and ts-rs license texts also have expected SHA-256 values. Unicode's
+additional license is required independently of MIT/Apache files. The aliri
+exception records the inspected source revision, the missing upstream text,
+the Apache-2.0 selection and the original Cargo declaration with its author.
+
+Future optional/peer dependencies and actual bundled module coverage still
+need auditing. The license-expression allowlist is intentionally not described
+as a full SPDX parser.
