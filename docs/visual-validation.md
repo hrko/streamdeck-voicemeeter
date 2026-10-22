@@ -25,6 +25,13 @@ the preview HTML and its long-translation marker in production JavaScript.
 The owner subsequently confirmed touch-strip rendering, Japanese labels and
 font-detail controls in Stream Deck 7.0.3 on Windows 11, plus corrected falling
 peak meters on Gain/Combo. See hardware-validation.md for the exact tested build.
-Still required: a side-by-side built-in inspector comparison and validation on
-the minimum supported Stream Deck/CEF version. The browser-only long-text/RTL
+Validation on the minimum supported Stream Deck/CEF version remains pending.
+The browser-only long-text/RTL
 checks above do not establish embedded-browser results on other versions.
+
+The owner subsequently confirmed embedded PI Tab navigation/editing, restoration
+of the last valid step after leaving and returning from invalid input, and the
+missing-codepoint warning/fallback. The built-in inspector comparison was broadly
+acceptable except for the text font: Japanese kana appeared wider. The PI root
+font was changed from Arial/Segoe UI to `system-ui, sans-serif` in response.
+The appearance of this font correction still requires owner observation.
