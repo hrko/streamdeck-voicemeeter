@@ -9,8 +9,10 @@ Installation succeeded, and the user supplied a screenshot showing the PI with
 Potato connected. Gain/Combo touch-strip rendering remained blank both in the
 application and on hardware. Explicit layout selection and SVG dimensions did
 not resolve it after the installed EXE was hash-verified and Stream Deck restarted.
-A single-viewport SVG revision is under test. Do not treat the earlier render
-unit tests or the successful CI run as proof that hardware rendering works.
+The user confirmed that display appeared after the single-viewport SVG revision
+(`4f3d7f3`) was installed. Nested SVG viewports were replaced by group transforms;
+the existing icon paths and settings remain intact. This confirms resolution of
+the blank display, not every rendering/state/meter acceptance item below.
 
 ## Available environment
 
