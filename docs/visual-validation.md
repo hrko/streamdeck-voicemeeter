@@ -34,4 +34,4 @@ of the last valid step after leaving and returning from invalid input, and the
 missing-codepoint warning/fallback. The built-in inspector comparison was broadly
 acceptable except for the text font: Japanese kana appeared wider. The PI root
 font was changed from Arial/Segoe UI to `system-ui, sans-serif` in response.
-The appearance of this font correction still requires owner observation.
+The owner confirmed that the corrected font appearance is acceptable.
