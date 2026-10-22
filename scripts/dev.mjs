@@ -25,13 +25,13 @@ const cli = (...args) => run("pnpm", "exec", "streamdeck", ...args);
 let backup;
 let hostStopped = false;
 try {
-  // The host can retain directory handles even after the plugin has exited.
-  run("pwsh", "-NoProfile", "-File", "scripts/dev-host.ps1", "-Mode", "Stop");
-  hostStopped = true;
   // Stop before replacing the staged EXE, which may be the running linked EXE.
   if (stat) {
     run("pwsh", "-NoProfile", "-File", "scripts/stop-dev-plugin.ps1", "-PluginDirectory", installed);
   }
+  // Stop the host only after the native worker has logged out.
+  run("pwsh", "-NoProfile", "-File", "scripts/dev-host.ps1", "-Mode", "Stop");
+  hostStopped = true;
   run("cargo", "build", "--locked", "--bin", "streamdeck-voicemeeter");
   run("pnpm", "--filter", "@streamdeck-voicemeeter/pi", "exec", "vite", "build");
   run("node", "scripts/build-plugin.mjs", "debug");

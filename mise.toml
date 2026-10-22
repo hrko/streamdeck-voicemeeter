@@ -40,7 +40,7 @@ run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test 
 depends = ["test:rust", "test:pi", "test:native"]
 
 [tasks."test:native"]
-run = ["cargo build --locked --bin streamdeck-voicemeeter", "node scripts/smoke-native.mjs debug"]
+run = ["cargo build --locked --bin streamdeck-voicemeeter", "node scripts/smoke-native.mjs debug", "node scripts/smoke-native.mjs debug --shutdown-event"]
 
 [tasks.build]
 run = ["cargo build --locked --release --bin streamdeck-voicemeeter", "pnpm --filter @streamdeck-voicemeeter/pi exec vite build", "node scripts/build-plugin.mjs release", "node scripts/licenses.mjs"]

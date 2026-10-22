@@ -79,7 +79,7 @@ await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const timer = setTimeout(() => rejectMessage(new Error("Native registration timed out")), 10000);
 try {
   child = spawn(path.join(root, "target", profile, "streamdeck-voicemeeter.exe"), ["-port", String(server.address().port), "-pluginUUID", "smoke-instance", "-registerEvent", "registerPlugin", "-info", "{}"], {
-    cwd: profile === "release" ? destination : root, windowsHide: true, env: { ...process.env, APPDATA: runtime, LOCALAPPDATA: runtime, RUST_LOG: "info" }, stdio: ["ignore", "pipe", "pipe"],
+    cwd: profile === "release" ? destination : root, windowsHide: true, env: { ...process.env, APPDATA: runtime, LOCALAPPDATA: runtime, RUST_LOG: "info", STREAMDECK_SMOKE_TEST: "1" }, stdio: ["ignore", "pipe", "pipe"],
   });
   let stderr = "";
   child.stderr.on("data", data => { stderr += data; });
@@ -89,12 +89,22 @@ try {
     resolve(code);
   }));
   await completed;
-  socket.end(Buffer.from([0x88, 0]));
+  if (process.argv.includes("--shutdown-event")) {
+    assert.ok(Number.isSafeInteger(child.pid));
+    const signal = spawnSync("pwsh", ["-NoProfile", "-Command",
+      `$event = [Threading.EventWaitHandle]::OpenExisting('Local\\streamdeck-voicemeeter-stop-${child.pid}'); try { $null = $event.Set() } finally { $event.Dispose() }`],
+      { windowsHide: true, timeout: 5000 });
+    assert.ifError(signal.error);
+    assert.equal(signal.status, 0, signal.stderr.toString());
+  } else {
+    socket.end(Buffer.from([0x88, 0]));
+  }
   const code = await Promise.race([exited, new Promise((_, reject) => setTimeout(() => reject(new Error("Native shutdown timed out")), 5000).unref())]);
   assert.equal(code, 0, stderr);
   const log = await readFile(path.join(runtime, id, "logs/plugin.log"), "utf8");
   assert.match(log, /Plugin starting/);
   assert.match(log, /Plugin stopped/);
+  if (process.argv.includes("--shutdown-event")) assert.match(log, /Graceful shutdown requested/);
   assert.equal((log.match(/Plugin starting/g) ?? []).length, 1);
   assert.equal((log.match(/Plugin stopped/g) ?? []).length, 1);
   const failureRuntime = await mkdtemp(path.join(runtimeRoot, `${profile}-invalid-`));

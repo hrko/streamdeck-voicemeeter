@@ -33,6 +33,20 @@ same target. Tested EXE from `04ab431` has SHA-256
 
 ## Available environment
 
+### Development-update connection incident
+
+After repeated development updates, the owner reported frozen meters, ineffective
+controls and all eight Remote API indicators occupied. Only one Rust plugin
+process remained. The earlier helper's force termination could bypass `Remote`
+drop/logout; the indicators alone do not prove which process owned each slot.
+The helper now signals a per-process Windows event and waits for normal exit
+before stopping the host. It refuses to force-kill. Native smoke tests disable
+real mixer login, and CI tests event-driven exit with the WebSocket still open.
+The owner stopped VoiceMeeter for the one-time upgrade of the old binary.
+The installed replacement (`be11243a2520d99d9aa4ed5029021ec803e7c2deae0908750b8301a24ce7e79b`)
+then stopped gracefully through the helper and restarted successfully.
+Mixer restart/recovery and stable connection count await owner confirmation.
+
 The subsequent Go appearance restoration (`fe5e769`, title defaults corrected
 in `79bed2c`) was also checked by the owner. Icons, status indicators, gain
 sliders and Macro icon size matched expectations. After repairing persisted

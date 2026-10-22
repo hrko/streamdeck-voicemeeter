@@ -9,5 +9,7 @@ pub mod numbers;
 pub mod render;
 pub mod settings;
 #[cfg(windows)]
+pub mod shutdown;
+#[cfg(windows)]
 pub mod voicemeeter;
 pub mod worker;

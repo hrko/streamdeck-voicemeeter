@@ -26,7 +26,9 @@ operations are not replayed after recovery.
 ## Local development
 
 `mise run dev` builds debug Rust and PI assets, validates the assembled plugin,
-and links it into Stream Deck. It temporarily closes and restarts Stream Deck
+and links it into Stream Deck. It first requests normal plugin shutdown, allowing
+held buttons to be released and the Remote API session to log out. It refuses
+to forcibly terminate an unresponsive plugin. It then temporarily closes and restarts Stream Deck
 to release file locks, so all Stream Deck actions are briefly unavailable.
 The standard Windows installation under Program Files is required.
 Development output lives in `target/dev-plugin`, separate from release `dist`.
@@ -41,6 +43,10 @@ a second development build, and subsequent release packaging with the debug
 plugin running were verified on 2026-10-23. The CLI's stop response alone did
 not release all native process/directory locks; the host restart is required
 by this observed environment.
+The initial development helper forcibly stopped residual native processes; the
+owner subsequently observed exhausted VoiceMeeter connection slots. That path
+has been removed. Older binaries without the shutdown event require a one-time
+manual upgrade while VoiceMeeter is stopped; do not repeatedly force-stop them.
 
 To return to a packaged release, close Stream Deck, remove only the development
 junction at `Plugins\jp.hrko.streamdeck.voicemeeter.rust.sdPlugin` (not its target),
@@ -51,6 +57,9 @@ Alternatively unlink the development installation and install a new package.
 EXE without opening Stream Deck. It validates registration, rejection of malformed
 settings and clean shutdown. Each run gets a new directory under
 `target/smoke-runtime`, so old log records cannot satisfy a later check.
+Smoke processes set `STREAMDECK_SMOKE_TEST=1` to disable real VoiceMeeter login.
+The task also checks the per-process shutdown event while its test WebSocket
+remains open. Never set this variable for the installed plugin.
 
 ## Prepare a GitHub release
 

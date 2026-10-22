@@ -20,15 +20,22 @@ async fn run() -> anyhow::Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
     // Validate before the SDK builder, which panics on malformed arguments.
     let registration = streamdeck_plugin::RegistrationArguments::parse(&args)?;
+    let shutdown = streamdeck_voicemeeter::shutdown::ShutdownEvent::new()?;
     let mut worker = Worker::spawn(Remote::default)?;
     worker.client.language = registration.info.application.language;
-    let result = streamdeck_plugin::Plugin::builder(&args)
+    let plugin = streamdeck_plugin::Plugin::builder(&args)
         .state(worker.client.clone())
         .add_action::<DeckAction<0>>()
         .add_action::<DeckAction<1>>()
         .add_action::<DeckAction<2>>()
-        .run()
-        .await;
+        .run();
+    let result = tokio::select! {
+        result = plugin => result,
+        () = shutdown.requested() => {
+            tracing::info!("Graceful shutdown requested");
+            Ok(())
+        }
+    };
     drop(worker);
     result?;
     Ok(())

@@ -173,6 +173,10 @@ impl Remote {
 
 impl Backend for Remote {
     fn connect(&mut self) -> Result<Option<Edition>> {
+        // Native protocol smoke tests must never consume a real mixer session.
+        if std::env::var_os("STREAMDECK_SMOKE_TEST").is_some_and(|value| value == "1") {
+            return Ok(None);
+        }
         self.pending.clear();
         if self.raw.is_none() {
             self.raw = Some(voicemeeter::get_voicemeeter_raw()?);

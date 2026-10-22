@@ -1,13 +1,12 @@
 param([Parameter(Mandatory)][string]$PluginDirectory)
 $ErrorActionPreference = 'Stop'
 $expected = [IO.Path]::GetFullPath((Join-Path $PluginDirectory 'bin/streamdeck-voicemeeter.exe'))
-# The official stop command can return while the native child is still alive.
+# Signal the worker to release held buttons and log out before process exit.
 # Match the exact installed path; never stop another plugin or checkout.
 Get-Process -Name streamdeck-voicemeeter -ErrorAction SilentlyContinue |
     Where-Object { $_.Path -and [IO.Path]::GetFullPath($_.Path) -eq $expected } |
     ForEach-Object {
-        if (-not $_.WaitForExit(3000)) {
-            $_ | Stop-Process -Force
-            $_.WaitForExit()
-        }
+        $signal = [Threading.EventWaitHandle]::OpenExisting("Local\streamdeck-voicemeeter-stop-$($_.Id)")
+        try { $null = $signal.Set() } finally { $signal.Dispose() }
+        if (-not $_.WaitForExit(10000)) { throw 'Plugin did not shut down gracefully; refusing to force termination.' }
     }
