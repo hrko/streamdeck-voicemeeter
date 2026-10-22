@@ -144,6 +144,13 @@ This is a progress record, not a release acceptance certificate.
   It remains unpublished. This packaging verification does not replace the
   outstanding hardware checks recorded in `hardware-validation.md`.
 
+- Signed tag `rust-v0.1.4` points to `72d3659` and includes the owner-accepted
+  system-ui PI font correction. Workflow `39835532909` passed both build and
+  draft creation. The downloaded draft package (33,660,164 bytes) matched its
+  sidecar and GitHub asset digest:
+  `57eb9e6ce92de603d094cdef79e28f89057c195e20ddb8e5fa70d3874947bc3b`.
+  The release remains an unpublished development candidate.
+
 ## Required before release
 
 All commits were signed before the first push; subsequent fixes are signed.
@@ -175,7 +182,7 @@ Tab navigation/editing, invalid-save suppression and missing-glyph warning/
 fallback. PI appearance was broadly acceptable except for the text font;
 the owner subsequently confirmed the requested system-ui correction.
 
-The corrected 0.1.3 candidate and its downloaded assets are verified above.
+The corrected 0.1.4 candidate and its downloaded assets are verified above.
 Outstanding hardware checks prevent treating it as a fully accepted stable
 release; they do not invalidate the completed packaging checks.
 
