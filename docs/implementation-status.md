@@ -151,18 +151,28 @@ The confirmed hardware environment is Windows 11,
 Stream Deck + and Potato; the procedure and pending results are in
 [hardware-validation.md](hardware-validation.md).
 
-- Real VoiceMeeter adapter and worker integration tests. Review asynchronous
-  gain writes against the SDK cache before claiming rapid-input correctness on
-  hardware. Verify per-target API errors, reconnect recovery and queue saturation.
-- Real PI appearance/keyboard checks and rendered SVG visual verification.
-- Development conversion/repeated builds passed on the actual host in `aa297eb`;
-  the junction and running EXE were verified. Release packaging also passed while
-  the debug plugin remained running. Separate debug-build UI acceptance is pending.
-- Prepare a corrected release candidate after the meter hardware recheck;
-  draft creation and asset upload have passed on GitHub.
-- Real Stream Deck PI and hardware, VoiceMeeter Basic/Banana/Potato behavior,
-  restarts, offline behavior, overlapping actions, long labels, meter performance.
-- Record tested Windows/Stream Deck versions; do not claim untested support.
+- Confirm rapid gain input and both limits against the real DLL, overlapping
+  Push ownership, normal shutdown during Push, restart during Push, invalid
+  targets and the exact Combo tap boundary. Fake-backend tests cover several
+  of these invariants but do not establish actual DLL/hardware behavior.
+- Complete embedded PI keyboard/invalid-input checks, comparison with a built-in
+  inspector, and Japanese/English host-language switching. Browser preview
+  results are recorded separately in `visual-validation.md`.
+- Complete long-label/missing-glyph rendering checks, the representative
+  physical/virtual target and state-flag matrix, and sustained responsiveness/
+  CPU observations. Normal rendering, Japanese labels, font controls and falling
+  meters have already passed owner checks.
+- Extend lifecycle observation beyond the single corrected development update
+  that preserved six R indicators. Recovery without replay and Push page/target
+  release have already passed; the older residual indicators remain unexplained.
+- Windows 10, Basic, Banana and the minimum Stream Deck 6.4 environment remain
+  untested. Record separate evidence before describing them as verified. The
+  tested Windows/Stream Deck/Potato versions are in `hardware-validation.md`;
+  device firmware is not yet recorded.
+
+The corrected 0.1.3 candidate and its downloaded assets are verified above.
+Outstanding hardware checks prevent treating it as a fully accepted stable
+release; they do not invalidate the completed packaging checks.
 
 ## Implementation notes
 
