@@ -575,6 +575,7 @@ dependencies = [
  "streamdeck-plugin",
  "tokio",
  "tracing",
+ "tracing-subscriber",
  "ts-rs",
  "ttf-parser",
  "voicemeeter",

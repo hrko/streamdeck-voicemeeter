@@ -14,6 +14,7 @@ streamdeck-plugin = { version = "=0.1.0", features = ["typegen"] }
 ts-rs = { version = "10.1", features = ["serde-compat"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ttf-parser = "0.25"
 base64 = "0.22"
 

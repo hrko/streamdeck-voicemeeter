@@ -37,7 +37,10 @@ run = "cargo test --locked"
 run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test scripts/check-locales.test.mjs scripts/build-plugin.test.mjs"]
 
 [tasks.test]
-depends = ["test:rust", "test:pi"]
+depends = ["test:rust", "test:pi", "test:native"]
+
+[tasks."test:native"]
+run = ["cargo build --locked --bin streamdeck-voicemeeter", "node scripts/smoke-native.mjs debug"]
 
 [tasks.build]
 run = ["cargo build --locked --release --bin streamdeck-voicemeeter", "pnpm --filter @streamdeck-voicemeeter/pi exec vite build", "node scripts/build-plugin.mjs release", "node scripts/licenses.mjs"]
@@ -49,7 +52,10 @@ run = ["node scripts/verify-package.mjs", "pnpm exec streamdeck validate --no-up
 run = "node scripts/licenses.mjs"
 
 [tasks.package]
-run = ["mise run build", "node scripts/verify-package.mjs", "pnpm exec streamdeck pack --no-update-check --no-file-list --force --output dist dist/jp.hrko.streamdeck.voicemeeter.rust.sdPlugin", "pwsh -NoProfile -File scripts/verify-archive.ps1", "node scripts/verify-package.mjs --checksum"]
+run = ["mise run build", "node scripts/smoke-native.mjs release", "node scripts/verify-package.mjs", "pnpm exec streamdeck pack --no-update-check --no-file-list --force --output dist dist/jp.hrko.streamdeck.voicemeeter.rust.sdPlugin", "pwsh -NoProfile -File scripts/verify-archive.ps1", "node scripts/verify-package.mjs --checksum"]
+
+[tasks.dev]
+run = ["cargo build --locked --bin streamdeck-voicemeeter", "pnpm --filter @streamdeck-voicemeeter/pi exec vite build", "node scripts/build-plugin.mjs debug", "node scripts/licenses.mjs", "mise run package:validate", "pnpm exec streamdeck link dist/jp.hrko.streamdeck.voicemeeter.rust.sdPlugin", "pnpm exec streamdeck restart jp.hrko.streamdeck.voicemeeter.rust"]
 
 [tasks.ci]
 run = ["mise run check", "mise run test", "mise run package", "git diff --exit-code -- mise.lock pnpm-lock.yaml Cargo.lock"]

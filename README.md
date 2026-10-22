@@ -59,3 +59,6 @@ same packaging flow and rejects lockfile changes.
 These are development artifacts, not a hardware-validated release. Runtime
 integration, visual checks, and hardware acceptance remain in progress;
 see [implementation status](docs/implementation-status.md).
+
+Installation, action behavior, development linking and log locations are in
+[usage and diagnostics](docs/usage.md).

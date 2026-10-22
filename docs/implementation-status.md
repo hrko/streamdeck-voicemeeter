@@ -14,7 +14,7 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- `mise run test`: subsequent runs: 20 Rust unit tests, 3 SDK/worker integration
+- `mise run test`: subsequent runs: 21 Rust unit tests, 3 SDK/worker integration
   tests and 13 PI/localization tests
   and 1 locale-validator test.
 - React PI production bundle builds. Shared channel/icon forms, independent
@@ -60,6 +60,10 @@ This is a progress record, not a release acceptance certificate.
   verify package version, source commit and document hash. Unicode's additional
   license is explicitly required. Reviewer findings are recorded separately.
 - SHA-pinned Windows workflow added with mise 2026.10.3; remote execution pending.
+- Native debug and release EXEs register against a real loopback WebSocket server, report
+  malformed settings and exits cleanly. Startup argument parsing excludes argv[0].
+- Rotating logs cap each file at 1 MiB and retain three generations; oversized
+  writes and rotation are tested. Startup/normal shutdown logs verified in smoke test.
 
 ## Required before release
 
@@ -69,8 +73,8 @@ This is a progress record, not a release acceptance certificate.
 - SDK action registration, lifecycle cleanup, settings and PI messages, event
   integration tests, real WebSocket registration.
 - Real PI appearance/keyboard checks and rendered SVG visual verification.
-- Direct EXE startup integration test and bounded structured logs.
-- Remaining mise tasks: dev and deps:update.
+- Actual Stream Deck dev-link test.
+- Remaining mise task: deps:update.
 - Run the Windows workflow on GitHub; add release publication support.
 - Final dependency/bundle license coverage audit, including future optional/peer
   dependencies and generated helpers. Do not treat allowlisted expressions as
