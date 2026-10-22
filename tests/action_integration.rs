@@ -302,3 +302,73 @@ async fn sdk_macro_settings_change_and_drop_release_original_push() {
         ]
     );
 }
+
+#[tokio::test]
+async fn sdk_shared_push_remains_on_until_last_action_disappears() {
+    let (worker, mut first, sender, _output, state) = setup::<2>(json!({})).await;
+    let mut second = TypedInstance::<DeckAction<2>>::new(Arc::new(worker.client.clone()));
+    second.attach(
+        "second".into(),
+        DeckAction::<2>::UUID.into(),
+        "device".into(),
+        None,
+    );
+    second.apply_settings(&json!({}));
+    second
+        .handle(event("willAppear", json!({"settings":{}})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    first
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    second
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    first
+        .handle(event("keyUp", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().writes, vec!["macro:0:true"]);
+    second
+        .handle(event("willDisappear", json!({})), sender)
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(
+        state.lock().unwrap().writes,
+        vec!["macro:0:true", "macro:0:false"]
+    );
+}
+
+#[tokio::test]
+async fn sdk_rapid_gain_events_accumulate_and_clamp_before_reversing() {
+    let settings = Settings::default();
+    let target = settings.channels[0].target;
+    let (worker, mut action, sender, _output, state) = setup::<0>(json!({})).await;
+    for ticks in [-1, -1, -1, -1, 1, 1] {
+        action
+            .handle(
+                event("dialRotate", json!({"ticks":ticks,"pressed":false})),
+                sender.clone(),
+            )
+            .await
+            .unwrap();
+    }
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().channels[&target].gain, -6.0);
+    for (ticks, expected) in [(100, 12.0), (-1, 9.0), (-100, -60.0), (1, -57.0)] {
+        action
+            .handle(
+                event("dialRotate", json!({"ticks":ticks,"pressed":false})),
+                sender.clone(),
+            )
+            .await
+            .unwrap();
+        settle(&worker).await;
+        assert_eq!(state.lock().unwrap().channels[&target].gain, expected);
+    }
+}
