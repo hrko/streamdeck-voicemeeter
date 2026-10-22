@@ -1,6 +1,7 @@
 use crate::{
     domain::{self, ActionKind, Command},
     engine::{Snapshot, Subscription},
+    render::{self, IconCache},
     settings::Settings,
     worker::{Request, WorkerClient},
 };
@@ -67,23 +68,43 @@ impl<const KIND: u8> DeckAction<KIND> {
         self.active = active.clone();
         self.rendering = Some(tokio::spawn(async move {
             let mut previous = Value::Null;
+            let mut previous_image = String::new();
+            let mut previous_state = None;
+            let mut cache = IconCache::default();
             loop {
                 let snapshot = snapshots.borrow_and_update().clone();
                 if !active.load(Ordering::Acquire) {
                     break;
                 }
-                let message = inspector_status(&snapshot, &context);
+                let frame = render::frame(&snapshot, &settings, Self::kind(), &mut cache);
+                let mut message = inspector_status(&snapshot, &context);
+                if frame.missing_glyph && message["error"].is_null() {
+                    message["error"] = json!({"code":"missingGlyph", "field":""});
+                }
                 if message != previous {
                     let _ = sender.send_to_property_inspector(&context, &message);
                     previous = message;
                 }
-                if Self::kind() == ActionKind::Macro {
-                    if let Some(on) = snapshot.macros.get(&settings.macro_button.logical_id) {
-                        let _ = sender.set_state(&context, if *on { 0 } else { 1 });
+                if Self::kind() == ActionKind::Macro
+                    && let Some(on) = snapshot.macros.get(&settings.macro_button.logical_id)
+                    && Some(*on) != previous_state
+                {
+                    let _ = sender.set_state(&context, if *on { 0 } else { 1 });
+                    previous_state = Some(*on);
+                }
+                if frame.svg != previous_image {
+                    let image = render::data_url(&frame.svg);
+                    if Self::kind() == ActionKind::Macro {
+                        let _ = sender.set_image(
+                            &context,
+                            Some(&image),
+                            streamdeck_plugin::Target::HardwareAndSoftware,
+                            None,
+                        );
+                    } else {
+                        let _ = sender.set_feedback(&context, &json!({"canvas":image}));
                     }
-                } else {
-                    let feedback = gain_feedback(&snapshot, &settings, Self::kind());
-                    let _ = sender.set_feedback(&context, &feedback);
+                    previous_image = frame.svg;
                 }
                 if snapshots.changed().await.is_err() {
                     break;

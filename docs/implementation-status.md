@@ -14,7 +14,7 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- `mise run test`: subsequent runs: 17 Rust tests and 13 PI/localization tests
+- `mise run test`: subsequent runs: 19 Rust tests and 13 PI/localization tests
   and 1 locale-validator test.
 - React PI production bundle builds. Shared channel/icon forms, independent
   Combo settings, Macro controls, explicit invalid-setting reset, translated
@@ -26,6 +26,9 @@ This is a progress record, not a release acceptance certificate.
   cache. Generated glyph catalogs support missing-glyph warnings in the PI.
 - PI previews use the same bundled fonts, including independent Macro colors.
   Build output contains local TTF assets and requires no font CDN.
+- SVG channel frames include escaped labels, gain, stereo meters and state
+  flags. Macro frames follow external state and use separate icons/colors.
+  SDK callbacks send changed images only; hardware layout validation is pending.
 - Rust-generated defaults and PI validation preserve offline targets, reject
   malformed stored values, and restore missing nested fields without guessing.
 - Subsequent `mise run test:rust` and `check:rust`: 15 Rust tests and static

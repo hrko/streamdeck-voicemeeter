@@ -37,3 +37,14 @@ Absence of NOTICE in a crate archive does not prove absence upstream.
 The initial Rust commit and older Go code retain their prior MIT grants. The
 current source-available license cannot revoke them. Third-party contributions
 need appropriate rights before the project owner can separately license them.
+
+## Material Symbols follow-up
+
+The reviewer matched all three local font blobs and LICENSE.txt to upstream
+revision `49d4db35df873165d6bd6ba09b063c7dafbac2f4`, and matched source.json's
+SHA-256 values to both source fonts and PI build output. The complete root and
+variablefont directory trees contain no NOTICE. This statement concerns those
+directories, not unrelated parts of the repository.
+
+The current PI build does not copy license documents. Final packaging must
+include the font license and the dependency notices and texts listed above.
