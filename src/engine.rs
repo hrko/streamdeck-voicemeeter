@@ -5,6 +5,7 @@ use crate::{
 };
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
+use std::time::Instant;
 
 #[derive(Clone)]
 pub struct Subscription {
@@ -18,6 +19,7 @@ pub struct Snapshot {
     pub generation: u64,
     pub edition: Option<Edition>,
     pub channels: Vec<(Target, ChannelSnapshot)>,
+    pub meter_peaks: Vec<(Target, [f32; 2])>,
     pub macros: BTreeMap<u8, bool>,
     pub errors: BTreeMap<String, String>,
 }
@@ -27,6 +29,7 @@ pub struct Engine<B> {
     subscriptions: BTreeMap<String, Subscription>,
     presses: Presses,
     snapshot: Snapshot,
+    meters: BTreeMap<Target, crate::meter::PeakMeter>,
 }
 
 impl<B: Backend> Engine<B> {
@@ -36,6 +39,7 @@ impl<B: Backend> Engine<B> {
             subscriptions: BTreeMap::new(),
             presses: Presses::default(),
             snapshot: Snapshot::default(),
+            meters: BTreeMap::new(),
         }
     }
 
@@ -56,6 +60,8 @@ impl<B: Backend> Engine<B> {
         self.snapshot.generation = self.snapshot.generation.wrapping_add(1);
         self.snapshot.edition = None;
         self.snapshot.channels.clear();
+        self.snapshot.meter_peaks.clear();
+        self.meters.clear();
         self.snapshot.macros.clear();
         self.presses.clear();
     }
@@ -168,6 +174,10 @@ impl<B: Backend> Engine<B> {
 
     /// Read each visible target once even when multiple actions refer to it.
     pub fn refresh(&mut self) {
+        self.refresh_at(Instant::now());
+    }
+
+    fn refresh_at(&mut self, now: Instant) {
         let Some(edition) = self.snapshot.edition else {
             return;
         };
@@ -191,11 +201,23 @@ impl<B: Backend> Engine<B> {
             }
         }
         self.snapshot.channels.clear();
+        self.snapshot.meter_peaks.clear();
+        self.meters.retain(|target, _| targets.contains(target));
         self.snapshot.macros.clear();
         for target in targets {
             match self.backend.channel(target) {
-                Ok(channel) => self.snapshot.channels.push((target, channel)),
+                Ok(channel) => {
+                    let meter = self
+                        .meters
+                        .entry(target)
+                        .or_insert_with(|| crate::meter::PeakMeter::new(now, channel.levels));
+                    self.snapshot
+                        .meter_peaks
+                        .push((target, meter.update(now, channel.levels)));
+                    self.snapshot.channels.push((target, channel));
+                }
                 Err(error) => {
+                    self.meters.remove(&target);
                     tracing::warn!(?target, %error, "Channel read failed");
                     for (context, sub) in &self.subscriptions {
                         let count = match sub.kind {
@@ -254,6 +276,7 @@ mod tests {
     struct Fake {
         reads: usize,
         gain: f32,
+        levels: [f32; 2],
         writes: Vec<Command>,
         fail: bool,
     }
@@ -270,6 +293,7 @@ mod tests {
             anyhow::ensure!(!self.fail, "channel unavailable");
             Ok(ChannelSnapshot {
                 gain: self.gain,
+                levels: self.levels,
                 ..Default::default()
             })
         }
@@ -319,6 +343,31 @@ mod tests {
             Command::ToggleMute(Target::default())
         ));
         assert!(e.backend.writes.is_empty());
+    }
+    #[test]
+    fn shared_meter_decays_once_and_resets_after_disconnect_or_removal() {
+        use std::time::Duration;
+        let mut e = setup(ActionKind::Gain);
+        let now = Instant::now();
+        e.refresh_at(now);
+        e.backend.levels = [-60.0; 2];
+        e.refresh_at(now + Duration::from_secs(1));
+        assert_eq!(
+            e.snapshot.meter_peaks,
+            vec![(Target::default(), [-12.0; 2])]
+        );
+        assert_eq!(e.backend.reads, 2);
+        assert_eq!(e.snapshot.channels[0].1.levels, [-60.0; 2]);
+        e.disconnect();
+        assert!(e.snapshot.meter_peaks.is_empty());
+        e.connect().unwrap();
+        e.refresh_at(now + Duration::from_secs(2));
+        assert_eq!(e.snapshot.meter_peaks[0].1, [-60.0; 2]);
+        e.remove("a");
+        e.remove("b");
+        e.refresh_at(now + Duration::from_secs(3));
+        assert!(e.meters.is_empty());
+        assert!(e.snapshot.meter_peaks.is_empty());
     }
     #[test]
     fn disconnected_and_previous_session_commands_are_discarded() {

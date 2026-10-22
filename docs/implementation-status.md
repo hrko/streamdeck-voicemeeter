@@ -14,7 +14,7 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- `mise run test`: subsequent runs: 22 Rust unit tests, 4 SDK/worker integration
+- Rust tests after the meter fix: 26 Rust unit tests, 4 SDK/worker integration
   tests and 13 PI/localization tests
   and 3 locale-validator/dependency-policy script tests.
 - React PI production bundle builds. Shared channel/icon forms, independent
@@ -78,8 +78,13 @@ This is a progress record, not a release acceptance certificate.
   This also caught and fixed first-install PATH reuse: setup now enters a fresh
   `mise exec` environment after installing tools. Repeat with
   `scripts/validate-clean.ps1`; `-Update` additionally exercises dependency updates.
-- Manual draft-release workflow added; its local checksum/tag dry run passed.
-  No GitHub release has been created and the workflow has not run remotely.
+- Signed tag `rust-v0.1.0` points to `279403a`. Draft-release workflow
+  [39813913748](https://github.com/hrko/streamdeck-voicemeeter/actions/runs/39813913748)
+  passed remotely, creating draft release ID `420951982` with the plugin and
+  SHA-256 sidecar (package SHA-256
+  `18de4ff6c60add5f04686e06fe7f618f90c27d83fa14e02dc402323ced7565b4`).
+  It is unpublished and predates the meter-decay fix; do not publish it as the
+  corrected build. Keep the existing signed tag immutable.
 - Isolated `validate-clean.ps1 -Update` passed on 2026-10-23 JST from commit
   `78d51155f1b8b4a45e4935d0ba2a4d8ef6909e88`: setup, update, check, test and
   package. It selected react-i18next 17.0.17 and Vitest 5.0.5 with eligible
@@ -101,6 +106,15 @@ This is a progress record, not a release acceptance certificate.
   separators, invalid-locale fallback and localized Combo SVG values are tested.
   No per-language Rust branches or localized persisted settings were introduced.
 
+- Restored the Go meter's immediate attack, 12 dB/second falling filled peak,
+  instantaneous-level marker, -60..+12 dB scale and segmented colors. History
+  is shared per target and cleared on disconnect/read failure/removal. Regression
+  tests cover elapsed-time decay, independent stereo levels, shared subscriptions,
+  reset, silence and the current-level marker. Rust checks and package validation
+  passed; installed hardware confirmation remains pending.
+- Draft assets were downloaded independently and their actual package SHA-256
+  matched both the sidecar and GitHub asset digest recorded above.
+
 ## Required before release
 
 All commits were signed before the first push; subsequent fixes are signed.
@@ -113,7 +127,8 @@ Stream Deck + and Potato; the procedure and pending results are in
   hardware. Verify per-target API errors, reconnect recovery and queue saturation.
 - Real PI appearance/keyboard checks and rendered SVG visual verification.
 - Actual Stream Deck dev-link test.
-- Validate the draft-release path on GitHub; Windows build CI has passed.
+- Prepare a corrected release candidate after the meter hardware recheck;
+  draft creation and asset upload have passed on GitHub.
 - Real Stream Deck PI and hardware, VoiceMeeter Basic/Banana/Potato behavior,
   restarts, offline behavior, overlapping actions, long labels, meter performance.
 - Record tested Windows/Stream Deck versions; do not claim untested support.

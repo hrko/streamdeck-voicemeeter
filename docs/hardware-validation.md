@@ -20,6 +20,14 @@ rotation and left/right tap mute, and Macro Toggle/Push with external-state
 synchronization. These observations apply to Windows 11 / Stream Deck + /
 Potato only. Limits, restart/lifecycle cases and visual details remain separate.
 
+Further user checks confirmed offline PI operation, recovery after restarting
+VoiceMeeter without replaying offline dial input, release of the original Push
+target on page/target changes, shared-target display synchronization, state
+flags and Japanese labels. The user separately confirmed all icon font detail
+controls. Meter decay differed from the Go version: the Rust renderer lacked
+its 12 dB/second filled falling peak and instantaneous-level marker. The fix
+restores these with shared per-target history; hardware recheck is pending.
+
 ## Available environment
 
 - User-confirmed: Windows 11, Stream Deck +, VoiceMeeter Potato.
@@ -58,18 +66,18 @@ manually when necessary.
 | Check | Procedure and expected behavior | Result |
 | --- | --- | --- |
 | Installation | Install or dev-link; all three actions appear without replacing the old plugin. | Package installed; all three actions exercised. Development link untested. |
-| Offline PI | Open PI with VoiceMeeter stopped; forms and saved settings remain usable and status reports disconnected. | Pending |
-| Startup recovery | Start Potato; status and displays recover without reloading the plugin. Offline operations are not replayed. | Pending |
+| Offline PI | Open PI with VoiceMeeter stopped; forms and saved settings remain usable and status reports disconnected. | PI remains usable per user. |
+| Startup recovery | Start Potato; status and displays recover without reloading the plugin. Offline operations are not replayed. | Passed per user, including no gain change from offline dial input. |
 | Gain | Rotate slowly and rapidly with a 3 dB step; values accumulate and stop at -60/+12 dB. Press and tap toggle mute. | 3 dB rotation and press/tap mute passed per user; rapid input/limits not separately confirmed. |
 | Combo | Set left step 3 and right step 0.5. Rotate normally and while pressed; each side uses its own target/step. Tap either half and the center boundary; only the expected target toggles. | Independent steps, normal/pressed rotation and left/right mute passed per user; exact center boundary not separately confirmed. |
-| Shared targets | Put the same target on multiple actions. Operate either and change gain/mute in VoiceMeeter; all displays converge. | Pending |
+| Shared targets | Put the same target on multiple actions. Operate either and change gain/mute in VoiceMeeter; all displays converge. | Synchronization passed per user. |
 | Toggle | Press a Macro Toggle repeatedly, then change its state externally; state, icon and color synchronize. | Passed per user. |
-| Push | Hold/release a Macro Push. Repeat while changing its target/settings, changing page and normally closing the plugin; original target is released when communication remains available. | Normal Push passed per user; lifecycle cases pending. |
+| Push | Hold/release a Macro Push. Repeat while changing its target/settings, changing page and normally closing the plugin; original target is released when communication remains available. | Normal Push, page change and target change passed per user; normal close not separately confirmed. |
 | Overlapping Push | Hold two actions pointing at one MacroButton; releasing the first keeps it ON, releasing the last turns it OFF. | Pending |
 | Restart during Push | Restart VoiceMeeter during a hold. The old press/release must not be replayed in the new session; a fresh press/release works. | Pending |
 | Invalid target | Configure an out-of-range Strip/Bus or Macro ID; show an error and never operate on target zero. | Pending |
-| State and meters | Compare stereo meters, mute, solo, routing, Mono/MC and EQ against VoiceMeeter on representative physical/virtual strips and buses. | Pending |
-| Rendering | Use long and non-ASCII labels, three icon styles and extreme supported axes. No cross-channel overlap; missing codepoints show a warning/fallback. | Pending |
+| State and meters | Compare stereo meters, mute, solo, routing, Mono/MC and EQ against VoiceMeeter on representative physical/virtual strips and buses. | Mute/Solo/routing and other state displays synchronize per user. Meter decay discrepancy reported; fix awaiting hardware recheck. Full target/flag matrix not individually recorded. |
+| Rendering | Use long and non-ASCII labels, three icon styles and extreme supported axes. No cross-channel overlap; missing codepoints show a warning/fallback. | Japanese labels and font-detail controls passed per user. Long-label/extreme-axis/missing-codepoint cases not separately recorded. |
 | PI | Restore settings, edit independent Combo values and Macro colors/icons, expand details, enter invalid numbers and navigate by keyboard. Invalid intermediate values are not saved. | Pending |
 | PI appearance | Compare with a built-in PI at the same window size: colors, font size, label width, control height, spacing and focus. Record differences. | Pending |
 | Localization | Switch host language between Japanese and English and restart the plugin. Confirm translated PI/action labels and unchanged saved targets. | Pending |
@@ -80,7 +88,7 @@ manually when necessary.
 
 | Environment | Status |
 | --- | --- |
-| Windows 11 / Stream Deck + / Potato | Available; tests pending |
+| Windows 11 / Stream Deck + / Potato | Normal actions, recovery, Push page/target release, shared targets, state flags, Japanese labels and font controls passed; remaining cases above. |
 | Windows 10 x64 | Not tested |
 | VoiceMeeter Basic | Not tested |
 | VoiceMeeter Banana | Not tested |

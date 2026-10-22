@@ -19,6 +19,42 @@ pub fn data_url(svg: &str) -> String {
     format!("data:image/svg+xml;base64,{}", STANDARD.encode(svg))
 }
 
+fn draw_meter(body: &mut String, width: f32, y: usize, current: f32, peak: f32) {
+    // Match the Go FillPeakShowCurrent meter: -60..+12 dB, a filled falling
+    // peak, and one dark cell at the instantaneous level inside that fill.
+    let cells = (width / 2.0).floor() as usize;
+    let cell_index = |level: f32| -> usize {
+        if level.is_finite() {
+            (((level + 60.0) / 72.0).clamp(0.0, 1.0) * cells as f32).round() as usize
+        } else {
+            0
+        }
+    };
+    let current = cell_index(current);
+    let peak = cell_index(peak);
+    let good = cell_index(-24.0);
+    let clip = cell_index(0.0);
+    let _ = write!(
+        body,
+        r##"<rect x="4" y="{y}" width="{width}" height="4" fill="#424242"/>"##
+    );
+    for cell in 0..cells {
+        let active = cell < peak && !(current != peak && cell == current);
+        let color = match (active, cell < good, cell < clip) {
+            (true, true, _) => "#85adb9",
+            (true, false, true) => "#1efe5b",
+            (true, false, false) => "#fa0000",
+            (false, _, true) => "#191b1b",
+            (false, _, false) => "#1f1715",
+        };
+        let x = 4 + cell * 2;
+        let _ = write!(
+            body,
+            r##"<rect x="{x}" y="{y}" width="1" height="4" fill="{color}"/>"##
+        );
+    }
+}
+
 pub struct Frame {
     pub svg: String,
     pub missing_glyph: bool,
@@ -139,25 +175,15 @@ pub fn localized_frame(
         );
         if let Some(channel) = channel {
             let meter_width = width - 8.0;
+            let peaks = snapshot
+                .meter_peaks
+                .iter()
+                .find(|(target, _)| *target == settings.target)
+                .map(|(_, levels)| *levels)
+                .unwrap_or(channel.levels);
             for (side, level) in channel.levels.iter().enumerate() {
-                let amount = if level.is_finite() {
-                    ((*level + 60.0) / 60.0).clamp(0.0, 1.0)
-                } else {
-                    0.0
-                };
                 let y = 52 + side * 7;
-                let color = if *level > -3.0 {
-                    "#ff5959"
-                } else if *level > -12.0 {
-                    "#ffc44d"
-                } else {
-                    "#60d394"
-                };
-                let _ = write!(
-                    body,
-                    r##"<rect x="4" y="{y}" width="{meter_width}" height="4" fill="#424242"/><rect x="4" y="{y}" width="{}" height="4" fill="{color}"/>"##,
-                    amount * meter_width
-                );
+                draw_meter(&mut body, meter_width, y, *level, peaks[side]);
             }
             let mut flags = vec![("M", channel.mute)];
             flags.extend(
@@ -313,6 +339,21 @@ pub fn glyph_catalog() -> anyhow::Result<BTreeMap<String, BTreeSet<u32>>> {
 mod tests {
     use super::*;
     #[test]
+    fn meter_fills_falling_peak_and_marks_current_without_overflow() {
+        let mut svg = String::new();
+        draw_meter(&mut svg, 144.0, 52, -24.0, 12.0);
+        // 72 cells span 72 dB. Current -24 dB marks cell 36 inside the peak.
+        assert!(svg.contains(r##"x="76" y="52" width="1" height="4" fill="#191b1b""##));
+        assert!(svg.contains(r##"x="78" y="52" width="1" height="4" fill="#1efe5b""##));
+        assert!(svg.contains(r##"x="124" y="52" width="1" height="4" fill="#fa0000""##));
+        assert_eq!(svg.matches("<rect").count(), 73);
+        let mut silence = String::new();
+        draw_meter(&mut silence, 144.0, 52, -120.0, -120.0);
+        assert!(!silence.contains("#1efe5b"));
+        assert!(!silence.contains("#85adb9"));
+        assert!(!silence.contains("#fa0000"));
+    }
+    #[test]
     fn channel_frames_escape_user_labels_and_keep_stereo_and_combo_values() {
         use crate::backend::ChannelSnapshot;
         let settings = Settings::default();
@@ -364,8 +405,8 @@ mod tests {
             assert!(localized.svg.contains(">-12,5</text>"));
             assert!(localized.svg.contains(">3,0</text>"));
         }
-        assert!(output.svg.contains("#ffc44d"));
-        assert!(output.svg.contains("#ff5959"));
+        assert!(output.svg.contains("#1efe5b"));
+        assert!(output.svg.contains("#1f1715"));
         assert_eq!(
             output.svg.matches("height=\"4\" fill=\"#424242\"").count(),
             4

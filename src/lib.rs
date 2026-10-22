@@ -3,6 +3,7 @@ pub mod backend;
 pub mod domain;
 pub mod engine;
 pub mod logging;
+mod meter;
 pub mod numbers;
 pub mod render;
 pub mod settings;
