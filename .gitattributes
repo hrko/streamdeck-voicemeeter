@@ -1,1 +1,4 @@
 pi/src/generated/* text eol=lf
+# Preserve upstream bytes for provenance hashes, including their original EOLs.
+licenses/upstream/* -text
+assets/fonts/LICENSE.txt -text
