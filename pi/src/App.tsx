@@ -20,7 +20,7 @@ function Input({ label, value, onCommit, validate, numeric = false }: {
   const [draft, setDraft] = useState(String(value));
   const [error, setError] = useState<string>();
   useEffect(() => { setDraft(String(value)); setError(undefined); }, [value]);
-  return <Row label={label}><input aria-label={label} aria-invalid={!!error} aria-describedby={error ? `${id}-error` : undefined}
+  return <Row label={label}><input dir="ltr" aria-label={label} aria-invalid={!!error} aria-describedby={error ? `${id}-error` : undefined}
     inputMode={numeric ? "decimal" : "text"} value={draft} onChange={event => {
       const next = event.target.value;
       setDraft(next);

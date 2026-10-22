@@ -64,6 +64,11 @@ This is a progress record, not a release acceptance certificate.
   malformed settings and exits cleanly. Startup argument parsing excludes argv[0].
 - Rotating logs cap each file at 1 MiB and retain three generations; oversized
   writes and rotation are tested. Startup/normal shutdown logs verified in smoke test.
+- Dependency update/audit tasks added. The current fixed tool/bootstrap and
+  direct npm publication dates pass the seven-day audit. Unit tests reject
+  recent, undated, prerelease and different-major update candidates.
+- Development PI preview visually checked for Japanese, synthetic long text,
+  RTL, invalid-input placement and keyboard focus. See visual-validation.md.
 
 ## Required before release
 
@@ -74,7 +79,7 @@ This is a progress record, not a release acceptance certificate.
   integration tests, real WebSocket registration.
 - Real PI appearance/keyboard checks and rendered SVG visual verification.
 - Actual Stream Deck dev-link test.
-- Remaining mise task: deps:update.
+- Exercise deps:update in an isolated checkout and verify clean locked installs.
 - Run the Windows workflow on GitHub; add release publication support.
 - Final dependency/bundle license coverage audit, including future optional/peer
   dependencies and generated helpers. Do not treat allowlisted expressions as
