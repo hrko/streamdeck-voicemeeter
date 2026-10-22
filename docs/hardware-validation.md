@@ -52,7 +52,16 @@ Readable process-module inspection found the Remote DLL only in the single Rust
 plugin process (this is not a complete inventory of all possible clients).
 The crate documents stale visual indicators when applications exit without logout;
 we have not proven whether the remaining display represents live or stale slots.
-A fully quiescent mixer/client restart and stable connection count remain pending.
+The owner then closed both the mixer and MacroButtons. After graceful plugin
+shutdown and mixer startup, Stream Deck automatically relaunched the plugin;
+this invalidated the first proposed disconnected baseline. We gracefully stopped
+the plugin again and closed the host. Process inspection then found only the
+mixer, and the owner observed one R indicator. Starting Stream Deck produced
+exactly one Rust plugin process and the owner observed two R indicators: one
+additional indicator for this connection, no longer the full display. The origin
+of the baseline indicator is unproven. MacroButtons was restored afterward.
+Repeated-update connection-count stability remains unverified; do not infer it
+from this single reconnect. Meter/gain/mute recovery was confirmed earlier above.
 
 The subsequent Go appearance restoration (`fe5e769`, title defaults corrected
 in `79bed2c`) was also checked by the owner. Icons, status indicators, gain
