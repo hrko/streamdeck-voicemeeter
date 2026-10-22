@@ -81,15 +81,21 @@ describe("property inspector forms", () => {
     expect(enabled(choices()[0])).toHaveLength(8);
   });
   it("previews independent Macro colors and reports unsupported glyphs", async () => {
-    const { client } = await setup("macro");
+    const settings = structuredClone(defaultSettings);
+    settings.macroButton.iconOn.codePoint = "10ffff";
+    const { client } = await setup("macro", settings);
     const on = screen.getByRole("group", { name: "ON icon" });
     const off = screen.getByRole("group", { name: "OFF icon" });
     expect(within(on).getByRole("img").style.backgroundColor).not.toBe(within(off).getByRole("img").style.backgroundColor);
-    fireEvent.change(within(on).getByLabelText("Icon code point"), { target: { value: "10ffff" } });
+    expect(screen.queryByLabelText("Icon code point")).toBeNull();
     expect(within(on).getByRole("alert").textContent).toContain("not present");
     expect(within(on).getByRole("img").textContent).toBe("□");
     expect(within(off).queryByRole("alert")).toBeNull();
-    expect(client.setSettings).toHaveBeenCalled();
+    expect(client.setSettings).not.toHaveBeenCalled();
+    fireEvent.click(within(on).getByRole("button", { name: "Choose icon" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "volume_up" }));
+    expect(within(on).queryByRole("alert")).toBeNull();
+    expect((vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings).macroButton.iconOn.codePoint).toBe("e050");
   });
   it("restores independent Combo values and never saves incomplete or invalid input", async () => {
     const settings = structuredClone(defaultSettings);
@@ -108,9 +114,11 @@ describe("property inspector forms", () => {
   it("edits Macro ON and OFF independently and restores external settings", async () => {
     const { client, emit } = await setup("macro");
     const on = screen.getByRole("group", { name: "ON icon" });
-    fireEvent.change(within(on).getByLabelText("Icon code point"), { target: { value: "e051" } });
+    fireEvent.click(within(on).getByRole("button", { name: "Choose icon" }));
+    fireEvent.change(within(screen.getByRole("dialog")).getByRole("searchbox"), { target: { value: "U+E050" } });
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "volume_up" }));
     let saved = vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
-    expect(saved.macroButton.iconOn.codePoint).toBe("e051");
+    expect(saved.macroButton.iconOn.codePoint).toBe("e050");
     expect(saved.macroButton.iconOff.codePoint).toBe(defaultSettings.macroButton.iconOff.codePoint);
     const next = structuredClone(defaultSettings);
     next.macroButton.logicalId = 42;

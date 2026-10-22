@@ -53,11 +53,6 @@ function IconEditor({ value, onChange, background }: { value: IconSettings; onCh
     </button>
     {picking && <IconPicker value={value} onClose={() => setPicking(false)} onSelect={codePoint => { patch({ codePoint }); setPicking(false); }} />}
     {!present && <p className="error" role="alert">{t("error.missingGlyph")}</p>}
-    <Input label={t("field.codePoint")} value={value.codePoint} onCommit={codePoint => patch({ codePoint })} validate={text => {
-      const code = Number.parseInt(text, 16);
-      return /^[\da-f]{1,6}$/i.test(text) && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? undefined : "invalidCodePoint";
-    }} />
-    <p className="help">{t("help.codePoint")}</p>
     <details><summary>{t("section.font")}</summary>
       <Select label={t("field.style")} value={value.style} options={["outlined", "rounded", "sharp"].map(style => [style as IconSettings["style"], t(`style.${style}`)])} onChange={style => patch({ style })} />
       <Select label={t("field.weight")} value={value.weight} options={[100, 200, 300, 400, 500, 600, 700].map(n => [n, String(n)])} onChange={weight => patch({ weight })} />

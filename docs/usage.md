@@ -37,7 +37,8 @@ Click an icon to apply it and close the picker. Escape, the close button or the
 backdrop dismisses it without changing settings. Tab and arrow keys navigate
 the choices; Enter selects. Scrolling loads more icons; **Show more** is also
 available for keyboard users. Font style/axes and Macro colors are preserved.
-The code-point input remains available. All catalog data and fonts are bundled,
+Code points can be searched in the picker; there is no separate input field.
+All catalog data and fonts are bundled,
 so searching does not require network access.
 
 ## Collect logs
