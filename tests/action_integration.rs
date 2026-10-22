@@ -400,3 +400,53 @@ async fn sdk_rapid_gain_events_accumulate_and_clamp_before_reversing() {
         assert_eq!(state.lock().unwrap().channels[&target].gain, expected);
     }
 }
+
+#[tokio::test]
+async fn macro_page_reentry_does_not_flash_offline_but_real_outage_does() {
+    use base64::Engine as _;
+    let (worker, mut action, sender, mut output, state) = setup::<2>(json!({})).await;
+    let images = |output: &mut tokio::sync::mpsc::UnboundedReceiver<String>| {
+        std::iter::from_fn(|| output.try_recv().ok())
+            .filter_map(|text| {
+                let message: Value = serde_json::from_str(&text).unwrap();
+                if message["event"] != "setImage" {
+                    return None;
+                }
+                let image = message["payload"]["image"].as_str().unwrap();
+                Some(
+                    String::from_utf8(
+                        base64::engine::general_purpose::STANDARD
+                            .decode(image.split_once(',').unwrap().1)
+                            .unwrap(),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect::<Vec<_>>()
+    };
+    let first = images(&mut output);
+    assert!(!first.is_empty());
+    assert!(first.iter().all(|svg| !svg.contains("M8 136L136 8")));
+    action
+        .handle(event("willDisappear", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert!(worker.client.snapshots.borrow().macros.is_empty());
+    action
+        .handle(event("willAppear", json!({"settings":{}})), sender)
+        .await
+        .unwrap();
+    settle(&worker).await;
+    let reentered = images(&mut output);
+    assert!(!reentered.is_empty());
+    assert!(reentered.iter().all(|svg| !svg.contains("M8 136L136 8")));
+    state.lock().unwrap().unavailable = true;
+    wait_connected(&worker, false).await;
+    settle(&worker).await;
+    assert!(
+        images(&mut output)
+            .iter()
+            .any(|svg| svg.contains("M8 136L136 8"))
+    );
+}

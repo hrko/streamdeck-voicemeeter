@@ -92,9 +92,20 @@ impl<const KIND: u8> DeckAction<KIND> {
                     break;
                 }
                 let (frame, feedback, missing_glyph) = if Self::kind() == ActionKind::Macro {
-                    let frame = render::macro_frame(&snapshot, &settings, &mut cache);
-                    let missing = frame.missing_glyph;
-                    (Some(frame), Value::Null, missing)
+                    // A newly visible subscription has not necessarily been read yet.
+                    // Keep the host's existing image until data or an actual error arrives.
+                    if snapshot.edition.is_some()
+                        && !snapshot
+                            .macros
+                            .contains_key(&settings.macro_button.logical_id)
+                        && !snapshot.errors.contains_key(&context)
+                    {
+                        (None, Value::Null, false)
+                    } else {
+                        let frame = render::macro_frame(&snapshot, &settings, &mut cache);
+                        let missing = frame.missing_glyph;
+                        (Some(frame), Value::Null, missing)
+                    }
                 } else {
                     let (feedback, missing) = crate::dial::feedback(
                         &snapshot,
