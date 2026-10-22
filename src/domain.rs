@@ -1,0 +1,199 @@
+use crate::settings::{ButtonMode, Settings, Target, TargetKind};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use ts_rs::TS;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum Edition {
+    Basic,
+    Banana,
+    Potato,
+}
+
+impl Edition {
+    pub fn counts(self) -> (u8, u8, u8, u8) {
+        // physical inputs, total strips, physical buses, total buses
+        match self {
+            Self::Basic => (2, 3, 1, 2),
+            Self::Banana => (3, 5, 3, 5),
+            Self::Potato => (5, 8, 5, 8),
+        }
+    }
+    pub fn contains(self, target: Target) -> bool {
+        let (_, strips, _, buses) = self.counts();
+        target.index
+            < match target.kind {
+                TargetKind::Strip => strips,
+                TargetKind::Bus => buses,
+            }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ActionKind {
+    Gain,
+    Combo,
+    Macro,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Command {
+    AdjustGain { target: Target, delta: f32 },
+    ToggleMute(Target),
+    ToggleMacro(u8),
+    SetMacro { id: u8, on: bool },
+}
+
+pub fn rotated(
+    kind: ActionKind,
+    settings: &Settings,
+    ticks: i32,
+    pressed: bool,
+) -> Option<Command> {
+    if kind == ActionKind::Macro || ticks == 0 {
+        return None;
+    }
+    let channel = &settings.channels[usize::from(kind == ActionKind::Combo && pressed)];
+    Some(Command::AdjustGain {
+        target: channel.target,
+        delta: channel.gain_step * ticks as f32,
+    })
+}
+
+pub fn tapped(kind: ActionKind, settings: &Settings, x: u32) -> Option<Command> {
+    match kind {
+        ActionKind::Gain => Some(Command::ToggleMute(settings.channels[0].target)),
+        ActionKind::Combo => Some(Command::ToggleMute(
+            settings.channels[usize::from(x >= 100)].target,
+        )),
+        ActionKind::Macro => None,
+    }
+}
+
+pub fn adjusted_gain(current: f32, delta: f32) -> Option<f32> {
+    if !current.is_finite() || !delta.is_finite() {
+        return None;
+    }
+    Some((current + delta).clamp(-60.0, 12.0))
+}
+
+/// Tracks the original target of every accepted Push, including overlapping keys.
+/// Clear on disconnect: releases must never be replayed into a different session.
+#[derive(Default)]
+pub struct Presses {
+    by_context: BTreeMap<String, u8>,
+}
+
+impl Presses {
+    pub fn down(&mut self, context: &str, settings: &Settings) -> Option<Command> {
+        let m = &settings.macro_button;
+        if m.mode == ButtonMode::Toggle {
+            return Some(Command::ToggleMacro(m.logical_id));
+        }
+        if self.by_context.contains_key(context) {
+            return None;
+        }
+        let already_pressed = self.by_context.values().any(|id| *id == m.logical_id);
+        self.by_context.insert(context.into(), m.logical_id);
+        (!already_pressed).then_some(Command::SetMacro {
+            id: m.logical_id,
+            on: true,
+        })
+    }
+
+    pub fn release(&mut self, context: &str) -> Option<Command> {
+        let id = self.by_context.remove(context)?;
+        (!self.by_context.values().any(|other| *other == id))
+            .then_some(Command::SetMacro { id, on: false })
+    }
+
+    pub fn clear(&mut self) {
+        self.by_context.clear();
+    }
+
+    pub fn release_all(&mut self) -> Vec<Command> {
+        let ids: std::collections::BTreeSet<_> = self.by_context.values().copied().collect();
+        self.clear();
+        ids.into_iter()
+            .map(|id| Command::SetMacro { id, on: false })
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn combo_uses_independent_steps_and_tap_boundary() {
+        let mut s = Settings::default();
+        s.channels[0].gain_step = 1.0;
+        s.channels[1].gain_step = 0.5;
+        assert_eq!(
+            rotated(ActionKind::Combo, &s, -3, true),
+            Some(Command::AdjustGain {
+                target: s.channels[1].target,
+                delta: -1.5
+            })
+        );
+        assert_eq!(
+            rotated(ActionKind::Gain, &s, 2, true),
+            Some(Command::AdjustGain {
+                target: s.channels[0].target,
+                delta: 2.0
+            })
+        );
+        assert_eq!(
+            tapped(ActionKind::Combo, &s, 99),
+            Some(Command::ToggleMute(s.channels[0].target))
+        );
+        assert_eq!(
+            tapped(ActionKind::Combo, &s, 100),
+            Some(Command::ToggleMute(s.channels[1].target))
+        );
+    }
+    #[test]
+    fn clamps_gain_and_rejects_invalid_values() {
+        assert_eq!(adjusted_gain(11.0, 3.0), Some(12.0));
+        assert_eq!(adjusted_gain(-59.0, -3.0), Some(-60.0));
+        assert_eq!(adjusted_gain(f32::NAN, 3.0), None);
+        assert_eq!(adjusted_gain(0.0, f32::INFINITY), None);
+    }
+    #[test]
+    fn edition_bounds_do_not_fallback() {
+        for edition in [Edition::Basic, Edition::Banana, Edition::Potato] {
+            let (_, strips, _, buses) = edition.counts();
+            for (kind, count) in [(TargetKind::Strip, strips), (TargetKind::Bus, buses)] {
+                assert!(edition.contains(Target {
+                    kind,
+                    index: count - 1
+                }));
+                assert!(!edition.contains(Target { kind, index: count }));
+            }
+        }
+    }
+    #[test]
+    fn push_releases_original_id_only_after_last_key() {
+        let mut p = Presses::default();
+        let mut s = Settings::default();
+        s.macro_button.logical_id = 4;
+        assert_eq!(p.down("a", &s), Some(Command::SetMacro { id: 4, on: true }));
+        assert_eq!(p.down("a", &s), None);
+        assert_eq!(p.down("b", &s), None);
+        s.macro_button.logical_id = 7;
+        assert_eq!(p.release("a"), None);
+        assert_eq!(p.release("b"), Some(Command::SetMacro { id: 4, on: false }));
+        assert_eq!(p.release("b"), None);
+    }
+    #[test]
+    fn toggle_has_no_release_and_disconnect_clears_pushes() {
+        let mut p = Presses::default();
+        let mut s = Settings::default();
+        p.down("a", &s);
+        p.clear();
+        assert_eq!(p.release("a"), None);
+        s.macro_button.mode = ButtonMode::Toggle;
+        assert_eq!(p.down("b", &s), Some(Command::ToggleMacro(0)));
+        assert_eq!(p.release("b"), None);
+    }
+}
