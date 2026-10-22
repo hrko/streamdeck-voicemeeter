@@ -136,7 +136,7 @@ manually when necessary.
 | Combo | Set left step 3 and right step 0.5. Rotate normally and while pressed; each side uses its own target/step. Tap either half and the center boundary; only the expected target toggles. | Independent steps, normal/pressed rotation and left/right mute passed per user; center-boundary taps also passed per user. |
 | Shared targets | Put the same target on multiple actions. Operate either and change gain/mute in VoiceMeeter; all displays converge. | Synchronization passed per user. |
 | Toggle | Press a Macro Toggle repeatedly, then change its state externally; state, icon and color synchronize. | Passed per user. |
-| Push | Hold/release a Macro Push. Repeat while changing its target/settings, changing page and normally closing the plugin; original target is released when communication remains available. | Normal Push, page change and target change passed per user; normal tray-menu exit FAILED: ON persisted until Stream Deck restarted. A bounded raw Macro status confirmation before logout is implemented; hardware recheck pending. |
+| Push | Hold/release a Macro Push. Repeat while changing its target/settings, changing page and normally closing the plugin; original target is released when communication remains available. | Normal Push, page change and target change passed per user; normal tray-menu exit FAILED: ON persisted until Stream Deck restarted. A bounded raw Macro status confirmation before logout is implemented; Owner recheck passed: the target turns OFF on normal Stream Deck exit without restarting Stream Deck. |
 | Overlapping Push | Hold two actions pointing at one MacroButton; releasing the first keeps it ON, releasing the last turns it OFF. | Passed per user: remains ON after the first release and turns OFF after both releases. |
 | Restart during Push | Restart VoiceMeeter during a hold. The old press/release must not be replayed in the new session; a fresh press/release works. | Owner confirmed old ON remains through mixer restart, releasing the old hold does not write into the new session, and a fresh press/release turns it OFF. Same result when released before restart. This matches the no-cross-session-replay policy; manually reset a retained ON when needed. |
 | Invalid target | Configure an out-of-range Strip/Bus or Macro ID; show an error and never operate on target zero. | Pending |
@@ -166,8 +166,8 @@ long-duration responsiveness/connection-leak test.
 | --- | --- |
 | Windows 11 / Stream Deck + / Potato | Normal actions, recovery, Push page/target release, shared targets, state flags, Japanese labels and font controls passed; remaining cases above. |
 | Windows 10 x64 | Not tested |
-| VoiceMeeter Basic | Owner tested startup and edition detection. PI incorrectly offered eight channels; fixed choices await recheck. Other behavior not fully verified. |
-| VoiceMeeter Banana | Owner tested startup and edition detection. Same PI choice bug; fixed choices await recheck. Other behavior not fully verified. |
+| VoiceMeeter Basic | Owner tested startup and edition detection. PI incorrectly offered eight channels; owner confirmed corrected choices. Other behavior not fully verified. |
+| VoiceMeeter Banana | Owner tested startup and edition detection. Same PI choice bug; owner confirmed corrected choices. Other behavior not fully verified. |
 | Stream Deck 6.4 minimum version | Not tested; manifest declares this minimum |
 
 Do not infer compatibility verification for these environments from a successful
@@ -179,7 +179,7 @@ The owner observed Potato Strip 6 Karaoke (K) did not affect the status display.
 The adapter read only MC; it now reads Karaoke and lights the existing center
 indicator when either is active. Basic/Banana PI choices were hardcoded to eight;
 they now follow detected edition, preserving an invalid stored selection as a
-disabled option instead of silently replacing it. Both fixes await hardware checks.
+disabled option instead of silently replacing it. The owner confirmed both fixes, including the requested Mono-cyan K indicator.
 Normal host exit logs showed logout=0 despite retained Push ON; shutdown now
 waits up to 500 ms for raw Macro status confirmation, bypassing optimistic cache,
 before logout. It never reconnects or retries a write into another mixer session.

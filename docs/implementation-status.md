@@ -158,11 +158,9 @@ The confirmed hardware environment is Windows 11,
 Stream Deck + and Potato; the procedure and pending results are in
 [hardware-validation.md](hardware-validation.md).
 
-- Recheck the three fixes reported by the owner: Karaoke status indication,
-  edition-aware PI channel choices, and Push release on normal host shutdown.
-  The first two were missing implementation; shutdown now confirms queued Macro
-  writes before logout. Automated checks pass, but actual OFF delivery still
-  requires the host-exit recheck.
+- Owner rechecks passed for Karaoke (Mono-cyan) status, Basic/Banana PI
+  channel choices, and Push release on normal tray-menu exit without restarting
+  Stream Deck. The shutdown path confirms queued Macro writes before logout.
 - Invalid-target hardware behavior and the broader physical/virtual flag matrix
   remain incompletely verified. Out-of-range choices are preserved as disabled
   values, never silently redirected to channel zero.
