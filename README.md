@@ -33,6 +33,22 @@ before a public release.
 
 ## Development status
 
-Tooling and implementation are being introduced incrementally. Setup, checks,
-packaging, and installation instructions will be added as those tasks become
-available. Do not install this working tree as a Stream Deck plugin yet.
+Install mise 2026.10.3 or later and Visual Studio Build Tools (Desktop development
+with C++ and a Windows SDK), then run:
+
+```powershell
+mise trust
+mise run setup
+mise run check
+mise run test
+```
+
+`setup` installs only this project's locked Node, pnpm, and Rust tools. Task
+auto-installation is disabled so unrelated global mise tools cannot interfere.
+`check` includes generated TypeScript contract and locale consistency checks.
+Run `mise run types` after changing Rust settings. See
+[translation instructions](docs/translating.md) for additional languages.
+
+Do not install this working tree as a Stream Deck plugin yet. Runtime, inspector
+forms, rendering, packaging, and hardware acceptance are still in progress;
+see [implementation status](docs/implementation-status.md).

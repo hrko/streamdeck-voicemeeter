@@ -4,7 +4,37 @@ min_version = "2026.10.3"
 lockfile = true
 minimum_release_age = "7d"
 
+[settings.task]
+run_auto_install = false
+
 [tools]
 node = "24"
 pnpm = "11"
 rust = "1.99"
+
+[tasks.setup]
+run = ["mise install --locked node pnpm rust", "pnpm install --frozen-lockfile", "node scripts/doctor.mjs"]
+
+[tasks."check:locales"]
+run = "node scripts/check-locales.mjs"
+
+[tasks.types]
+run = "cargo run --locked --bin typegen"
+
+[tasks."check:rust"]
+run = ["cargo fmt --check", "cargo clippy --locked --all-targets -- -D warnings", "cargo run --locked --bin typegen -- --check"]
+
+[tasks."check:pi"]
+run = "pnpm --filter @streamdeck-voicemeeter/pi exec tsc --noEmit"
+
+[tasks.check]
+depends = ["check:rust", "check:pi", "check:locales"]
+
+[tasks."test:rust"]
+run = "cargo test --locked"
+
+[tasks."test:pi"]
+run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test scripts/check-locales.test.mjs"]
+
+[tasks.test]
+depends = ["test:rust", "test:pi"]
