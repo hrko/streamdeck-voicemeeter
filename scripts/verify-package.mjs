@@ -22,6 +22,15 @@ for (const required of ["manifest.json", "bin/streamdeck-voicemeeter.exe", "ui/i
   if (!(await stat(path.join(destination, required))).size) throw new Error(`Empty package file: ${required}`);
 }
 const inventory = JSON.parse(await readFile(path.join(destination, "licenses/inventory.json"), "utf8"));
+const manifest = JSON.parse(await readFile(path.join(destination, "manifest.json"), "utf8"));
+for (const action of manifest.Actions) {
+  if (action.States.some(state => state.ShowTitle !== true)) throw new Error(`Native titles must be visible by default: ${action.UUID}`);
+  if (action.Controllers.includes("Encoder")) {
+    if (action.States.some(state => Number(state.FontSize) !== 16 || state.TitleAlignment !== "middle")) throw new Error(`Dial title style differs from Go: ${action.UUID}`);
+  } else if (action.UUID.endsWith(".macro") && action.States.map(state => state.Title).join(",") !== "ON,OFF") {
+    throw new Error("Macro default state titles are missing");
+  }
+}
 for (const entry of inventory) for (const document of entry.documents) {
   const resolved = path.resolve(destination, "licenses", document);
   const relative = path.relative(path.join(destination, "licenses"), resolved);

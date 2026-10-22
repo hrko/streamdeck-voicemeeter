@@ -39,3 +39,13 @@ The EXE, both layouts and manifest were replaced and the plugin restarted on
 2026-10-23 JST. Owner comparison is pending. Rust checks (28 unit + 4 integration),
 13 PI tests, 3 script tests and native smoke checks passed; the official CLI
 package contains 201 verified files and 102 dependency/asset license entries.
+
+The owner's first comparison confirmed icons, status indicators, gain sliders
+and Macro icon size. Gain/left-Combo labels and Macro state titles were absent.
+Read-only profile inspection found the early Rust manifest's `ShowTitle: false`
+persisted in placed actions. The reserved dial key `title` follows those host
+preferences; `title1` does not. New manifest defaults now explicitly show titles
+and restore the Go dial title size/alignment. Packaging rejects hidden defaults.
+On 2026-10-23, the owner's nine placed Rust states were repaired with byte-for-byte
+profile backups, preserving other plugin/profile data and custom dial titles.
+Stream Deck was restarted. Remaining text appearance confirmation is pending.
