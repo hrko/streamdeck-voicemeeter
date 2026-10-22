@@ -34,7 +34,7 @@ depends = ["check:rust", "check:pi", "check:locales"]
 run = "cargo test --locked"
 
 [tasks."test:pi"]
-run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test scripts/check-locales.test.mjs scripts/build-plugin.test.mjs scripts/dependency-policy.test.mjs"]
+run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test scripts/check-locales.test.mjs scripts/build-plugin.test.mjs scripts/dependency-policy.test.mjs scripts/icon-catalog.test.mjs"]
 
 [tasks.test]
 depends = ["test:rust", "test:pi", "test:native"]

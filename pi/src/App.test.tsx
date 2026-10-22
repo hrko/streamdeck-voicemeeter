@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within, act } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
@@ -7,6 +7,11 @@ import { createLocalization } from "./i18n";
 import { defaultSettings, type Settings } from "./generated/contracts";
 
 afterEach(cleanup);
+beforeAll(() => {
+  // jsdom has no native dialog implementation; browser behavior is checked in preview.
+  HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  HTMLDialogElement.prototype.close = function () { this.open = false; };
+});
 async function setup(action = "gain-control-combo", settings: unknown = defaultSettings, language = "en") {
   const handlers = new Map<string, (payload: unknown) => void>();
   const client: StreamDeckPiApi = {
@@ -20,6 +25,42 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("opens a searchable picker, cancels without saving and applies only the selected Macro icon", async () => {
+    const { client } = await setup("macro");
+    const on = screen.getByRole("group", { name: "ON icon" });
+    const trigger = within(on).getByRole("button", { name: "Choose icon" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    let picker = screen.getByRole("dialog");
+    const search = within(picker).getByRole("searchbox");
+    expect(document.activeElement).toBe(search);
+    expect(within(picker).getAllByRole("button")[1].getAttribute("aria-label")).toBe("volume_up");
+    const firstIcon = within(picker).getByRole("button", { name: "volume_up" });
+    firstIcon.focus();
+    fireEvent.keyDown(firstIcon, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(within(picker).getByRole("button", { name: "volume_down" }));
+    const initialCount = within(picker).getAllByRole("button").length;
+    fireEvent.click(within(picker).getByRole("button", { name: "Show more" }));
+    expect(within(picker).getAllByRole("button").length).toBe(initialCount + 120);
+    fireEvent.change(search, { target: { value: "zoom_out" } });
+    expect(within(picker).getByRole("button", { name: "zoom_out" })).toBeTruthy();
+    fireEvent.change(search, { target: { value: "no_such_icon_zzz" } });
+    expect(within(picker).getByText("No matching icons.")).toBeTruthy();
+    expect(client.setSettings).not.toHaveBeenCalled();
+    fireEvent(picker, new Event("cancel", { cancelable: true }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    expect(client.setSettings).not.toHaveBeenCalled();
+    fireEvent.click(trigger);
+    picker = screen.getByRole("dialog");
+    fireEvent.change(within(picker).getByRole("searchbox"), { target: { value: "U+E050" } });
+    fireEvent.click(within(picker).getByRole("button", { name: "volume_up" }));
+    const saved = vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.macroButton.iconOn).toEqual({ ...defaultSettings.macroButton.iconOn, codePoint: "e050" });
+    expect(saved.macroButton.iconOff).toEqual(defaultSettings.macroButton.iconOff);
+    expect(saved.macroButton.colorOn).toBe(defaultSettings.macroButton.colorOn);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
   it("updates channel choices by edition without replacing an unavailable saved target", async () => {
     const settings = structuredClone(defaultSettings);
     settings.channels[0].target.index = 6;

@@ -54,16 +54,33 @@
     "preview.icon": "アイコンのプレビュー",
     "preview.on": "ON",
     "preview.off": "OFF",
-    "channel.name": "{{kind}} {{index}}"
+    "channel.name": "{{kind}} {{index}}",
+    "picker.more": "さらに表示",
+    "picker.search": "英語名・コードポイントで検索",
+    "picker.hint": "アイコンを選ぶと反映されます。",
+    "picker.count": "検索結果: {{count}}件",
+    "picker.title": "アイコンを選択",
+    "picker.open": "アイコンを選ぶ",
+    "picker.close": "アイコン選択を閉じる",
+    "picker.empty": "一致するアイコンがありません。"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",
     "Description": "VoiceMeeterのゲイン、ミュート、MacroButtonsを操作します。",
     "Category": "VoiceMeeter",
     "Actions": {
-      "gain-control": { "Name": "ゲイン操作", "Tooltip": "ゲインの調整とミュートの切り替え。" },
-      "gain-control-combo": { "Name": "2チャンネルのゲイン操作", "Tooltip": "1つのダイヤルで2つのチャンネルを操作します。" },
-      "macro": { "Name": "マクロ", "Tooltip": "VoiceMeeter MacroButtonを操作します。" }
+      "gain-control": {
+        "Name": "ゲイン操作",
+        "Tooltip": "ゲインの調整とミュートの切り替え。"
+      },
+      "gain-control-combo": {
+        "Name": "2チャンネルのゲイン操作",
+        "Tooltip": "1つのダイヤルで2つのチャンネルを操作します。"
+      },
+      "macro": {
+        "Name": "マクロ",
+        "Tooltip": "VoiceMeeter MacroButtonを操作します。"
+      }
     }
   }
 }

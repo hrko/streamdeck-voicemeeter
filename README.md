@@ -16,6 +16,7 @@ or assign MacroButtons to keys.
 
 - Display channel labels, gain, stereo levels and channel states.
 - Customize Material Symbols icons, including style, weight and fill, and separate Macro ON/OFF icons and background colors.
+- Find icons in an offline picker with audio icons first and English-name/code-point search.
 - Set independent channels and gain steps for Combo.
 - Use Japanese or English settings screens; additional languages can be added through translation resources.
 

@@ -54,16 +54,33 @@
     "preview.icon": "Icon preview",
     "preview.on": "ON",
     "preview.off": "OFF",
-    "channel.name": "{{kind}} {{index}}"
+    "channel.name": "{{kind}} {{index}}",
+    "picker.more": "Show more",
+    "picker.search": "Search English name or code point",
+    "picker.hint": "Select an icon to apply it.",
+    "picker.count": "Results: {{count}}",
+    "picker.title": "Choose an icon",
+    "picker.open": "Choose icon",
+    "picker.close": "Close icon picker",
+    "picker.empty": "No matching icons."
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",
     "Description": "Control VoiceMeeter gain, mute, and MacroButtons.",
     "Category": "VoiceMeeter",
     "Actions": {
-      "gain-control": { "Name": "Gain Control", "Tooltip": "Adjust gain and toggle mute." },
-      "gain-control-combo": { "Name": "Gain Control Combo", "Tooltip": "Control two VoiceMeeter channels with one dial." },
-      "macro": { "Name": "Macro", "Tooltip": "Operate a VoiceMeeter MacroButton." }
+      "gain-control": {
+        "Name": "Gain Control",
+        "Tooltip": "Adjust gain and toggle mute."
+      },
+      "gain-control-combo": {
+        "Name": "Gain Control Combo",
+        "Tooltip": "Control two VoiceMeeter channels with one dial."
+      },
+      "macro": {
+        "Name": "Macro",
+        "Tooltip": "Operate a VoiceMeeter MacroButton."
+      }
     }
   }
 }

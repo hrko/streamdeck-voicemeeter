@@ -22,4 +22,22 @@ input[aria-invalid=true] { border-color: #ff9393; }
 details { margin-block: 8px; }
 summary { cursor: pointer; padding-block: 4px; }
 button { cursor: pointer; }
+.icon-picker-trigger { display: block; margin-inline: auto; margin-block: 8px; background: transparent; border-color: transparent; }
+.icon-picker-trigger:hover { background: #383838; border-color: #555; }
+.icon-picker-trigger .icon-preview { margin-block: 0 4px; }
+.icon-picker { padding: 0; border: 1px solid #666; border-radius: 7px; background: #303030; color: inherit; inline-size: min(360px, calc(100vw - 16px)); max-inline-size: calc(100vw - 16px); max-block-size: calc(100dvh - 16px); box-shadow: 0 6px 24px #0008; }
+.icon-picker::backdrop { background: #0005; }
+.picker-content { display: flex; flex-direction: column; padding: 10px; max-block-size: calc(100dvh - 20px); }
+.picker-content header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-block-end: 8px; }
+.picker-content header strong { overflow-wrap: anywhere; }
+.picker-content header button { font-size: 20px; padding: 0 8px; }
+.picker-content input { flex-shrink: 0; }
+.picker-count { margin-block: 8px; color: #aaa; }
+.picker-scroll { overflow-y: auto; min-block-size: 0; block-size: 300px; overscroll-behavior: contain; }
+.picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 3px; padding: 3px; }
+.picker-grid button { font-family: inherit; font-size: 26px; font-variation-settings: inherit; block-size: 36px; min-inline-size: 0; padding: 3px; line-height: 1; background: transparent; border-color: transparent; }
+.picker-grid button:hover, .picker-grid button:focus-visible { background: #505050; }
+.picker-grid button[aria-pressed=true] { background: #194c69; border-color: #1688ce; }
+.picker-more { display: block; margin: 8px auto; }
+.picker-content footer { margin-block-start: 8px; border-block-start: 1px solid #555; padding-block-start: 8px; min-block-size: 30px; overflow-wrap: anywhere; font-size: 11px; }
 @media (max-width: 260px) { .row { flex-wrap: wrap; } .row-label { flex-basis: 100%; text-align: start; } }

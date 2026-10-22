@@ -4,6 +4,7 @@ import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
 import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError } from "./generated/contracts";
 import { channelLimits, restoreSettings, validateSettings } from "./settings";
 import glyphs from "./generated/glyphs.json";
+import { IconPicker } from "./IconPicker";
 
 export interface Status { connected: boolean; edition?: Edition; error?: ValidationError | null }
 
@@ -41,11 +42,16 @@ function Select<T extends string | number>({ label, value, options, onChange }: 
 
 function IconEditor({ value, onChange, background }: { value: IconSettings; onChange: (value: IconSettings) => void; background?: string }) {
   const { t } = useTranslation();
+  const [picking, setPicking] = useState(false);
   const patch = (next: Partial<IconSettings>) => onChange({ ...value, ...next });
   const codePoint = Number.parseInt(value.codePoint, 16);
   const present = glyphs[value.style].includes(codePoint);
   return <>
-    <div className="icon-preview" role="img" aria-label={t("preview.icon")} style={{ backgroundColor: background, fontFamily: `Symbols-${value.style}`, fontVariationSettings: `'FILL' ${Number(value.fill)}, 'wght' ${value.weight}, 'GRAD' ${value.grade}, 'opsz' ${value.opticalSize}` }}>{present ? String.fromCodePoint(codePoint) : "□"}</div>
+    <button type="button" className="icon-picker-trigger" aria-label={t("picker.open")} aria-haspopup="dialog" onClick={() => setPicking(true)}>
+      <span className="icon-preview" role="img" aria-label={t("preview.icon")} style={{ backgroundColor: background, fontFamily: `Symbols-${value.style}`, fontVariationSettings: `'FILL' ${Number(value.fill)}, 'wght' ${value.weight}, 'GRAD' ${value.grade}, 'opsz' ${value.opticalSize}` }}>{present ? String.fromCodePoint(codePoint) : "□"}</span>
+      <span>{t("picker.open")}</span>
+    </button>
+    {picking && <IconPicker value={value} onClose={() => setPicking(false)} onSelect={codePoint => { patch({ codePoint }); setPicking(false); }} />}
     {!present && <p className="error" role="alert">{t("error.missingGlyph")}</p>}
     <Input label={t("field.codePoint")} value={value.codePoint} onCommit={codePoint => patch({ codePoint })} validate={text => {
       const code = Number.parseInt(text, 16);

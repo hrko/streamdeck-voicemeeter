@@ -26,6 +26,20 @@ operations are not replayed after recovery.
 For building, development installation and release preparation, see the
 [development guide](development.md).
 
+## Choose an icon
+
+Click the icon preview or **Choose icon** to open the picker. Frequently useful
+audio icons appear first, followed by the remaining icons in name order, without
+categories. Search by English name (for example `volume up` or `mic`) or code
+point (`e050`, `U+E050`). No localized search keywords are required.
+
+Click an icon to apply it and close the picker. Escape, the close button or the
+backdrop dismisses it without changing settings. Tab and arrow keys navigate
+the choices; Enter selects. Scrolling loads more icons; **Show more** is also
+available for keyboard users. Font style/axes and Macro colors are preserved.
+The code-point input remains available. All catalog data and fonts are bundled,
+so searching does not require network access.
+
 ## Collect logs
 
 Logs are in `%LOCALAPPDATA%\jp.hrko.streamdeck.voicemeeter.rust\logs`:

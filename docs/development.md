@@ -41,6 +41,16 @@ The custom license should receive legal review before public release; see
 
 ## Local development
 
+The icon picker imports the three upstream `.codepoints` files alongside the
+fonts from the same pinned revision. Provenance and SHA-256 hashes are in
+`assets/fonts/source.json`; `scripts/icon-catalog.test.mjs` verifies those bytes.
+The existing Material Symbols license covers the bundled upstream catalog.
+`pi/src/icons.ts` filters entries through generated glyph coverage, merges
+same-code-point aliases and orders common audio icons before the remaining names.
+Search uses official English names and code points in every locale. Only picker
+controls need translation; there is no per-language icon keyword inventory.
+
+
 `mise run dev` builds debug Rust and PI assets, validates the assembled plugin,
 and links it into Stream Deck. It first requests normal plugin shutdown, allowing
 held buttons to be released and the Remote API session to log out. It refuses
