@@ -151,14 +151,13 @@ The confirmed hardware environment is Windows 11,
 Stream Deck + and Potato; the procedure and pending results are in
 [hardware-validation.md](hardware-validation.md).
 
-- Confirm rapid gain input and both limits against the real DLL, overlapping
-  Push ownership, normal shutdown during Push, restart during Push, invalid
+- Confirm normal shutdown during Push, restart during Push, invalid
   targets and the exact Combo tap boundary. Fake-backend tests cover several
   of these invariants but do not establish actual DLL/hardware behavior.
 - Complete embedded PI keyboard/invalid-input checks, comparison with a built-in
   inspector, and Japanese/English host-language switching. Browser preview
   results are recorded separately in `visual-validation.md`.
-- Complete long-label/missing-glyph rendering checks, the representative
+- Complete missing-glyph rendering checks, the representative
   physical/virtual target and state-flag matrix, and sustained responsiveness/
   CPU observations. Normal rendering, Japanese labels, font controls and falling
   meters have already passed owner checks.
@@ -169,6 +168,11 @@ Stream Deck + and Potato; the procedure and pending results are in
   untested. Record separate evidence before describing them as verified. The
   tested Windows/Stream Deck/Potato versions are in `hardware-validation.md`;
   device firmware is not yet recorded.
+
+The owner additionally confirmed rapid gain input and both limits, overlapping
+Push ownership, fading long labels without overlap, and invalid-step error
+messages (-1, 100 and empty). Embedded keyboard navigation and invalid-save
+suppression remain separate unconfirmed checks.
 
 The corrected 0.1.3 candidate and its downloaded assets are verified above.
 Outstanding hardware checks prevent treating it as a fully accepted stable
