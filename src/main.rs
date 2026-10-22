@@ -4,7 +4,11 @@
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     streamdeck_voicemeeter::logging::initialize()?;
-    tracing::info!(version = env!("CARGO_PKG_VERSION"), "Plugin starting");
+    tracing::info!(
+        pid = std::process::id(),
+        version = env!("CARGO_PKG_VERSION"),
+        "Plugin starting"
+    );
     let result = run().await;
     if let Err(error) = &result {
         tracing::error!(%error, "Plugin terminated with an error");

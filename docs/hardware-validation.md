@@ -70,7 +70,15 @@ Inspection found a redundant CLI restart after host startup in the development
 helper. This was removed: host startup now launches the plugin once, and the
 helper only verifies that exactly one matching process appears. A subsequent
 update with MacroButtons unchanged completed successfully; indicator comparison
-against the four-indicator baseline is pending.
+against the four-indicator baseline failed: the owner observed five indicators.
+PID/API diagnostics then showed logout success for process 78620 followed by
+automatic host relaunch as 78936 about two seconds later. The host-close helper
+waited three seconds before terminating the tray host, leaving enough time for
+this relaunch. It now requests another graceful plugin stop immediately before
+host termination. A subsequent update logged logout=0 for both the original
+78936 and relaunched 71880 before the host stopped; startup created only 23608.
+The diagnostic installation itself used the old helper, so its indicator baseline
+may have increased once more. Final visual count/stability is still pending.
 
 The subsequent Go appearance restoration (`fe5e769`, title defaults corrected
 in `79bed2c`) was also checked by the owner. Icons, status indicators, gain

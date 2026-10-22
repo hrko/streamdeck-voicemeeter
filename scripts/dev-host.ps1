@@ -11,6 +11,10 @@ if ($Mode -eq 'Start') {
     foreach ($process in $running) {
         $null = $process.CloseMainWindow()
         if (-not $process.WaitForExit(3000)) {
+            # The host may relaunch a plugin about two seconds after its normal
+            # exit while CloseMainWindow merely hides the tray application.
+            # Release that new session immediately before terminating the host.
+            & (Join-Path $PSScriptRoot 'stop-dev-plugin.ps1') -PluginDirectory (Join-Path $env:APPDATA 'Elgato/StreamDeck/Plugins/jp.hrko.streamdeck.voicemeeter.rust.sdPlugin')
             $process | Stop-Process -Force
             $process.WaitForExit()
         }

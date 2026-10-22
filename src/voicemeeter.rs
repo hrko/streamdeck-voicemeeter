@@ -185,6 +185,11 @@ impl Backend for Remote {
             // SAFETY: DLL is retained by the crate for the process lifetime;
             // this adapter is created and accessed on a single worker thread.
             let code = unsafe { self.raw.unwrap().VBVMR_Login() };
+            tracing::info!(
+                pid = std::process::id(),
+                code,
+                "VoiceMeeter login completed"
+            );
             ensure!(code == 0 || code == 1, "VoiceMeeter login returned {code}");
             self.logged_in = true;
         }
@@ -306,6 +311,11 @@ impl Drop for Remote {
         {
             // SAFETY: the worker has stopped all polling and released held keys.
             let code = unsafe { raw.VBVMR_Logout() };
+            tracing::info!(
+                pid = std::process::id(),
+                code,
+                "VoiceMeeter logout completed"
+            );
             if code != 0 {
                 tracing::warn!(code, "VoiceMeeter logout failed");
             }
