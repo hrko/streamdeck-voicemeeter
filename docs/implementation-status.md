@@ -15,6 +15,12 @@ This is a progress record, not a release acceptance certificate.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
 - `mise run test`: 12 Rust tests, 4 localization tests, 1 locale-validator test.
+- Subsequent `mise run test:rust` and `check:rust`: 15 Rust tests and static
+  checks pass with the real API adapter and SDK action implementations.
+- Raw API adapter retains login across outages, reads UTF-16 names, maps meter
+  offsets by edition, and bridges asynchronous writes with expiring pending values.
+- Gain, Combo and Macro SDK callbacks dispatch through the shared worker;
+  settings updates and disappearance release held MacroButtons.
 - Backend boundary and session engine with deduplicated target snapshots,
   generation checks, lifecycle macro release and fake-backend tests.
 - Dedicated worker with 10 ms polling, 15 fps snapshots, bounded command queue
@@ -49,9 +55,10 @@ This is a progress record, not a release acceptance certificate.
 
 ## Implementation notes
 
-The voicemeeter 0.4.0 handle logs out when its last clone is dropped and cannot
-log in again in that process. Retain it across disconnected states; only drop
-at process shutdown. SDK source is available in the local Cargo registry.
+The adapter uses voicemeeter 0.4.0's existing raw bindings because its high-level
+handle logs out when dropped and cannot log in again in that process. Login is
+retained across disconnected states; logout occurs only at process shutdown.
+The wide-string API preserves non-ASCII names. SDK source is in the Cargo registry.
 
 The PI client's provider installs the Stream Deck connect hook and owns one
 WebSocket. Its `connect` currently ignores host `info`, so capture locale from

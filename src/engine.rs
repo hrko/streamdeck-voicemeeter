@@ -174,6 +174,7 @@ impl<B: Backend> Engine<B> {
         let mut targets = BTreeSet::new();
         let mut macros = BTreeSet::new();
         for (context, sub) in &self.subscriptions {
+            self.snapshot.errors.remove(context);
             if sub.kind == ActionKind::Macro {
                 macros.insert(sub.settings.macro_button.logical_id);
                 continue;
@@ -196,6 +197,22 @@ impl<B: Backend> Engine<B> {
                 Ok(channel) => self.snapshot.channels.push((target, channel)),
                 Err(error) => {
                     tracing::warn!(?target, %error, "Channel read failed");
+                    for (context, sub) in &self.subscriptions {
+                        let count = match sub.kind {
+                            ActionKind::Gain => 1,
+                            ActionKind::Combo => 2,
+                            ActionKind::Macro => 0,
+                        };
+                        if sub.settings.channels[..count]
+                            .iter()
+                            .any(|c| c.target == target)
+                        {
+                            self.snapshot
+                                .errors
+                                .entry(context.clone())
+                                .or_insert_with(|| "apiError".into());
+                        }
+                    }
                 }
             }
         }
@@ -206,6 +223,15 @@ impl<B: Backend> Engine<B> {
                 }
                 Err(error) => {
                     tracing::warn!(id, %error, "Macro read failed");
+                    for (context, sub) in &self.subscriptions {
+                        if sub.kind == ActionKind::Macro
+                            && sub.settings.macro_button.logical_id == id
+                        {
+                            self.snapshot
+                                .errors
+                                .insert(context.clone(), "apiError".into());
+                        }
+                    }
                 }
             }
         }
@@ -241,6 +267,7 @@ mod tests {
         }
         fn channel(&mut self, _: Target) -> anyhow::Result<ChannelSnapshot> {
             self.reads += 1;
+            anyhow::ensure!(!self.fail, "channel unavailable");
             Ok(ChannelSnapshot {
                 gain: self.gain,
                 ..Default::default()
@@ -330,6 +357,23 @@ mod tests {
                 Command::SetMacro { id: 3, on: false }
             ]
         );
+    }
+    #[test]
+    fn read_errors_reach_all_subscribers_and_clear_after_recovery() {
+        let mut e = setup(ActionKind::Gain);
+        e.backend.fail = true;
+        e.refresh();
+        assert!(e.snapshot.channels.is_empty());
+        for context in ["a", "b"] {
+            assert_eq!(
+                e.snapshot.errors.get(context).map(String::as_str),
+                Some("apiError")
+            );
+        }
+        e.backend.fail = false;
+        e.refresh();
+        assert!(e.snapshot.errors.is_empty());
+        assert_eq!(e.snapshot.channels.len(), 1);
     }
     #[test]
     fn rapid_gain_commands_accumulate_and_clamp() {
