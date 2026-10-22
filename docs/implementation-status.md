@@ -14,8 +14,8 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- Rust tests after the appearance restoration: 28 Rust unit tests, 8 SDK/worker integration
-  tests and 13 PI/localization tests
+- Rust tests after the appearance restoration: 29 Rust unit tests, 8 SDK/worker integration
+  tests and 14 PI/localization tests
   and 3 locale-validator/dependency-policy script tests.
 - React PI production bundle builds. Shared channel/icon forms, independent
   Combo settings, Macro controls, explicit invalid-setting reset, translated
@@ -158,24 +158,22 @@ The confirmed hardware environment is Windows 11,
 Stream Deck + and Potato; the procedure and pending results are in
 [hardware-validation.md](hardware-validation.md).
 
-- Confirm normal shutdown during Push, restart during Push, invalid
-  targets and the exact Combo tap boundary. Fake-backend tests cover several
-  of these invariants but do not establish actual DLL/hardware behavior.
-- English PI/action names for all three actions were confirmed by the owner
-  with screenshots, complementing the earlier Japanese checks. Confirm unchanged
-  saved targets across switching and the return to Japanese. Browser preview
-  results are recorded separately in `visual-validation.md`.
-- Complete the representative
-  physical/virtual target and state-flag matrix, and sustained responsiveness/
-  CPU observations. Normal rendering, Japanese labels, font controls and falling
-  meters have already passed owner checks.
-- Extend lifecycle observation beyond the single corrected development update
-  that preserved six R indicators. Recovery without replay and Push page/target
-  release have already passed; the older residual indicators remain unexplained.
-- Windows 10, Basic, Banana and the minimum Stream Deck 6.4 environment remain
-  untested. Record separate evidence before describing them as verified. The
-  tested Windows/Stream Deck/Potato versions are in `hardware-validation.md`;
-  device firmware is not yet recorded.
+- Recheck the three fixes reported by the owner: Karaoke status indication,
+  edition-aware PI channel choices, and Push release on normal host shutdown.
+  The first two were missing implementation; shutdown now confirms queued Macro
+  writes before logout. Automated checks pass, but actual OFF delivery still
+  requires the host-exit recheck.
+- Invalid-target hardware behavior and the broader physical/virtual flag matrix
+  remain incompletely verified. Out-of-range choices are preserved as disabled
+  values, never silently redirected to channel zero.
+- Language return/settings persistence and Combo center taps passed per owner.
+  Mixer restart during Push matched the no-cross-session-write policy: retained
+  ON is not automatically released; a new press/release works.
+- The owner deferred extended stability testing to daily use and explicitly
+  excluded it from this delivery gate. Do not label a soak test passed.
+- Windows 10 and Stream Deck 6.4 remain untested. Basic/Banana edition detection
+  was confirmed, with the PI choice bug above; other behavior is not fully
+  verified. Device firmware is 2.0.3.2.
 
 The owner additionally confirmed rapid gain input and both limits, overlapping
 Push ownership, fading long labels without overlap, and invalid-step error

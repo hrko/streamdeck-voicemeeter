@@ -1,5 +1,7 @@
 import { defaultSettings, type Settings, type Edition, type ValidationError } from "./generated/contracts";
 
+export const channelLimits = { basic: { strip: 3, bus: 2 }, banana: { strip: 5, bus: 5 }, potato: { strip: 8, bus: 8 } };
+
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
@@ -41,9 +43,8 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
     const path = `channels.${index}`;
     if (!record(channel) || !record(channel.target)) return error("invalidSettings", path);
     const target = channel.target;
-    const limits = { basic: { strip: 3, bus: 2 }, banana: { strip: 5, bus: 5 }, potato: { strip: 8, bus: 8 } };
     if (target.kind !== "strip" && target.kind !== "bus") return error("invalidSettings", `${path}.target.kind`);
-    const max = edition ? limits[edition][target.kind] : 8;
+    const max = edition ? channelLimits[edition][target.kind] : 8;
     if (!Number.isInteger(target.index) || (target.index as number) < 0 || (target.index as number) >= max) return error("targetOutOfRange", `${path}.target.index`);
     if (typeof channel.gainStep !== "number" || !Number.isFinite(channel.gainStep) || channel.gainStep <= 0 || channel.gainStep > 72) return error("invalidGainStep", `${path}.gainStep`);
     const failure = icon(channel.icon, `${path}.icon`);

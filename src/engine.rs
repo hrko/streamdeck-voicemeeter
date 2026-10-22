@@ -265,6 +265,11 @@ impl<B: Backend> Engine<B> {
                 tracing::warn!(%error, "Shutdown release failed");
             }
         }
+        if self.snapshot.edition.is_some()
+            && let Err(error) = self.backend.flush()
+        {
+            tracing::warn!(%error, "Shutdown write confirmation failed");
+        }
         self.disconnect();
     }
 }

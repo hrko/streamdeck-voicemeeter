@@ -246,6 +246,7 @@ impl Backend for Remote {
                 flags.insert("Mono".into(), self.float(&format!("{name}.Mono"))? != 0.0);
             } else if edition != Edition::Basic {
                 flags.insert("MC".into(), self.float(&format!("{name}.MC"))? != 0.0);
+                flags.insert("K".into(), self.float(&format!("{name}.Karaoke"))? != 0.0);
             }
             if target.index < physical && edition == Edition::Potato {
                 flags.insert("EQ".into(), self.float(&format!("{name}.EQ.on"))? != 0.0);
@@ -300,6 +301,54 @@ impl Backend for Remote {
             "write macro",
         )?;
         self.remember(format!("macro:{id}"), value);
+        Ok(())
+    }
+
+    fn flush(&mut self) -> Result<()> {
+        let mut macros: BTreeMap<u8, f32> = self
+            .pending
+            .iter()
+            .filter_map(|(key, pending)| {
+                key.strip_prefix("macro:")?
+                    .parse()
+                    .ok()
+                    .map(|id| (id, pending.value))
+            })
+            .collect();
+        if macros.is_empty() {
+            return Ok(());
+        }
+        let deadline = Instant::now() + Duration::from_millis(500);
+        while !macros.is_empty() {
+            // SetStatus is asynchronous. Keep the DLL session alive and read
+            // fresh status, bypassing our optimistic UI pending-value cache.
+            std::thread::sleep(Duration::from_millis(10));
+            self.poll()?; // Abort on mixer loss; never reconnect or resend here.
+            let raw = self.api()?;
+            // SAFETY: the worker owns the session throughout this bounded drain.
+            let dirty = unsafe { raw.VBVMR_MacroButton_IsDirty() };
+            ensure!(dirty >= 0, "Macro polling returned {dirty}");
+            let mut confirmed = Vec::new();
+            for (&id, &expected) in &macros {
+                let mut actual = 0.0;
+                // SAFETY: valid ID and output pointer; no concurrent API calls.
+                status(
+                    unsafe { raw.VBVMR_MacroButton_GetStatus(i32::from(id), &mut actual, 0) },
+                    "confirm macro",
+                )?;
+                if (actual - expected).abs() < 0.001 {
+                    confirmed.push(id);
+                }
+            }
+            for id in confirmed {
+                macros.remove(&id);
+            }
+            ensure!(
+                macros.is_empty() || Instant::now() < deadline,
+                "Macro write confirmation timed out"
+            );
+        }
+        tracing::info!("Pending Macro writes confirmed before logout");
         Ok(())
     }
 }

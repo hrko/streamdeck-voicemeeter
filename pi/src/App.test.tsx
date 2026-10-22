@@ -20,6 +20,25 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("updates channel choices by edition without replacing an unavailable saved target", async () => {
+    const settings = structuredClone(defaultSettings);
+    settings.channels[0].target.index = 6;
+    const { client, emit } = await setup("gain-control-combo", settings);
+    const choices = () => screen.getAllByLabelText("Channel") as HTMLSelectElement[];
+    const enabled = (select: HTMLSelectElement) => Array.from(select.options).filter(option => !option.disabled);
+    for (const [edition, strips, buses] of [["basic", 3, 2], ["banana", 5, 5], ["potato", 8, 8]] as const) {
+      emit("sendToPropertyInspector", { event: "status", connected: true, edition });
+      expect(enabled(choices()[0])).toHaveLength(strips);
+      expect(enabled(choices()[1])).toHaveLength(buses);
+      expect(choices()[0].value).toBe("6");
+      expect(client.setSettings).not.toHaveBeenCalled();
+    }
+    emit("sendToPropertyInspector", { event: "status", connected: true, edition: "basic" });
+    fireEvent.change(choices()[0], { target: { value: "2" } });
+    expect((vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings).channels[0].target.index).toBe(2);
+    emit("sendToPropertyInspector", { event: "status", connected: false });
+    expect(enabled(choices()[0])).toHaveLength(8);
+  });
   it("previews independent Macro colors and reports unsupported glyphs", async () => {
     const { client } = await setup("macro");
     const on = screen.getByRole("group", { name: "ON icon" });

@@ -2,7 +2,7 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
 import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError } from "./generated/contracts";
-import { restoreSettings, validateSettings } from "./settings";
+import { channelLimits, restoreSettings, validateSettings } from "./settings";
 import glyphs from "./generated/glyphs.json";
 
 export interface Status { connected: boolean; edition?: Edition; error?: ValidationError | null }
@@ -62,11 +62,19 @@ function IconEditor({ value, onChange, background }: { value: IconSettings; onCh
   </>;
 }
 
-function ChannelEditor({ title, value, onChange }: { title: string; value: ChannelSettings; onChange: (value: ChannelSettings) => void }) {
+function ChannelEditor({ title, value, edition, onChange }: { title: string; value: ChannelSettings; edition?: Edition; onChange: (value: ChannelSettings) => void }) {
   const { t, i18n } = useTranslation();
+  const count = edition ? channelLimits[edition][value.target.kind] : 8;
+  const label = (index: number) => t("channel.name", { kind: t(`kind.${value.target.kind}`), index: new Intl.NumberFormat(i18n.language).format(index) });
   return <fieldset><legend>{title}</legend>
     <Select label={t("field.kind")} value={value.target.kind} options={[["strip", t("kind.strip")], ["bus", t("kind.bus")]]} onChange={kind => onChange({ ...value, target: { ...value.target, kind } })} />
-    <Select label={t("field.index")} value={value.target.index} options={Array.from({ length: 8 }, (_, index) => [index, t("channel.name", { kind: t(`kind.${value.target.kind}`), index: new Intl.NumberFormat(i18n.language).format(index) })])} onChange={index => onChange({ ...value, target: { ...value.target, index } })} />
+    <Row label={t("field.index")}><select aria-label={t("field.index")} value={value.target.index} onChange={event => {
+      const index = Number(event.target.value);
+      if (Number.isInteger(index) && index >= 0 && index < count) onChange({ ...value, target: { ...value.target, index } });
+    }}>
+      {value.target.index >= count && <option value={value.target.index} disabled>{label(value.target.index)} — {t("error.targetOutOfRange")}</option>}
+      {Array.from({ length: count }, (_, index) => <option key={index} value={index}>{label(index)}</option>)}
+    </select></Row>
     <Input label={t("field.gainStep")} numeric value={value.gainStep} validate={text => text.trim() && Number.isFinite(Number(text)) && Number(text) > 0 && Number(text) <= 72 ? undefined : "invalidGainStep"} onCommit={text => onChange({ ...value, gainStep: Number(text) })} />
     <IconEditor value={value.icon} onChange={icon => onChange({ ...value, icon })} />
   </fieldset>;
@@ -109,7 +117,7 @@ export function App({ client }: { client: StreamDeckPiApi }) {
         <Input label={t(`field.color${state}`)} value={settings.macroButton[`color${state}`]} validate={text => /^#[\da-f]{6}$/i.test(text) ? undefined : "invalidColor"} onCommit={color => save({ ...settings, macroButton: { ...settings.macroButton, [`color${state}`]: color } })} />
       </fieldset>)}
     </> : <>
-      {(action === "gain-control-combo" ? [0, 1] as const : [0] as const).map(index => <ChannelEditor key={index} title={t(action === "gain-control-combo" ? (index === 0 ? "section.left" : "section.right") : "section.target")} value={settings.channels[index]} onChange={channel => {
+      {(action === "gain-control-combo" ? [0, 1] as const : [0] as const).map(index => <ChannelEditor key={index} edition={status.connected ? status.edition : undefined} title={t(action === "gain-control-combo" ? (index === 0 ? "section.left" : "section.right") : "section.target")} value={settings.channels[index]} onChange={channel => {
         const channels: Settings["channels"] = [...settings.channels];
         channels[index] = channel;
         save({ ...settings, channels });

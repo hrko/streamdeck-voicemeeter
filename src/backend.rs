@@ -21,4 +21,8 @@ pub trait Backend {
     fn set_mute(&mut self, target: Target, value: bool) -> anyhow::Result<()>;
     fn macro_state(&mut self, id: u8) -> anyhow::Result<bool>;
     fn set_macro(&mut self, id: u8, value: bool) -> anyhow::Result<()>;
+    /// Wait for queued writes before logout; never resend into another session.
+    fn flush(&mut self) -> anyhow::Result<()> {
+        Ok(())
+    }
 }

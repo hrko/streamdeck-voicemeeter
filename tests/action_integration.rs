@@ -22,6 +22,7 @@ struct State {
     macros: BTreeMap<u8, bool>,
     writes: Vec<String>,
     writes_at_drop: Option<Vec<String>>,
+    writes_at_flush: Option<Vec<String>>,
 }
 struct Fake(Arc<Mutex<State>>);
 impl Drop for Fake {
@@ -31,6 +32,12 @@ impl Drop for Fake {
     }
 }
 impl Backend for Fake {
+    fn flush(&mut self) -> anyhow::Result<()> {
+        let mut state = self.0.lock().unwrap();
+        assert!(state.writes_at_drop.is_none());
+        state.writes_at_flush = Some(state.writes.clone());
+        Ok(())
+    }
     fn connect(&mut self) -> anyhow::Result<Option<Edition>> {
         Ok((!self.0.lock().unwrap().unavailable).then_some(Edition::Potato))
     }
@@ -367,6 +374,7 @@ async fn worker_shutdown_releases_held_push_before_backend_drop() {
         let state = state.lock().unwrap();
         assert_eq!(state.writes, expected);
         assert_eq!(state.writes_at_drop.as_ref(), Some(&expected));
+        assert_eq!(state.writes_at_flush.as_ref(), Some(&expected));
     }
     drop(action);
     assert_eq!(state.lock().unwrap().writes, expected);

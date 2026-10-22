@@ -190,7 +190,7 @@ fn status(edition: Edition, target: Target, channel: &ChannelSnapshot) -> String
                 squares.push((flag("EQ"), "#296ffd"));
             }
         } else if edition != Edition::Basic {
-            squares.push((flag("MC"), "#f66051"));
+            squares.push((flag("MC") || flag("K"), "#f66051"));
         }
     } else if edition != Edition::Basic {
         squares.push((flag("EQ"), "#296ffd"));
@@ -210,6 +210,22 @@ fn status(edition: Edition, target: Target, channel: &ChannelSnapshot) -> String
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn karaoke_lights_virtual_strip_center_indicator() {
+        let target = Target {
+            kind: TargetKind::Strip,
+            index: 6,
+        };
+        let mut channel = ChannelSnapshot::default();
+        let off = status(Edition::Potato, target, &channel);
+        channel.flags.insert("K".into(), true);
+        let on = status(Edition::Potato, target, &channel);
+        assert!(!off.contains("#f66051"));
+        assert!(on.contains(r##"x="20" y="15" width="7" height="7" rx="1.5" fill="#f66051""##));
+        channel.flags.clear();
+        channel.flags.insert("MC".into(), true);
+        assert_eq!(on, status(Edition::Potato, target, &channel));
+    }
     #[test]
     fn go_meter_and_fader_dimensions_and_thresholds() {
         let meter = meter(108, 3, [-60.0, 12.0], [12.0; 2]);

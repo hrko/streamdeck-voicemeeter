@@ -99,7 +99,7 @@ See appearance-parity.md for the separate official-layout comparison.
 - Installed Potato executable: 3.1.2.2 (file metadata).
 - Windows release/build read from the registry: 26H2 / 26300.9711. The user
   identifies the OS as Windows 11 (the legacy ProductName registry value says
-  Windows 10 Pro). Device firmware is not yet recorded.
+  Windows 10 Pro). Device firmware is 2.0.3.2 (owner-confirmed).
 - Basic and Banana executables exist locally, but neither edition has been
   confirmed as an available test environment. Windows 10 is also unverified.
 
@@ -115,7 +115,7 @@ the development link. The new plugin ID does not migrate existing settings.
 | --- | --- |
 | Commit / package SHA-256 | Installed EXE from `04ab431`, hash above; package was followed by an EXE replacement. |
 | Windows build | Windows 11, 26H2, 26300.9711 |
-| Stream Deck / firmware | App 7.0.3.22071; firmware not recorded |
+| Stream Deck / firmware | App 7.0.3.22071; firmware 2.0.3.2 |
 | VoiceMeeter edition/version | Potato 3.1.2.2 |
 | Install or development link | Package installation, then verified EXE replacement |
 | Date / tester | 2026-10-23 JST / repository owner |
@@ -133,19 +133,19 @@ manually when necessary.
 | Offline PI | Open PI with VoiceMeeter stopped; forms and saved settings remain usable and status reports disconnected. | PI remains usable per user. |
 | Startup recovery | Start Potato; status and displays recover without reloading the plugin. Offline operations are not replayed. | Passed per user, including no gain change from offline dial input. |
 | Gain | Rotate slowly and rapidly with a 3 dB step; values accumulate and stop at -60/+12 dB. Press and tap toggle mute. | Passed per user: 3 dB rotation, press/tap mute, rapid rotation and -60/+12 dB limits. |
-| Combo | Set left step 3 and right step 0.5. Rotate normally and while pressed; each side uses its own target/step. Tap either half and the center boundary; only the expected target toggles. | Independent steps, normal/pressed rotation and left/right mute passed per user; exact center boundary not separately confirmed. |
+| Combo | Set left step 3 and right step 0.5. Rotate normally and while pressed; each side uses its own target/step. Tap either half and the center boundary; only the expected target toggles. | Independent steps, normal/pressed rotation and left/right mute passed per user; center-boundary taps also passed per user. |
 | Shared targets | Put the same target on multiple actions. Operate either and change gain/mute in VoiceMeeter; all displays converge. | Synchronization passed per user. |
 | Toggle | Press a Macro Toggle repeatedly, then change its state externally; state, icon and color synchronize. | Passed per user. |
-| Push | Hold/release a Macro Push. Repeat while changing its target/settings, changing page and normally closing the plugin; original target is released when communication remains available. | Normal Push, page change and target change passed per user; normal close not separately confirmed. |
+| Push | Hold/release a Macro Push. Repeat while changing its target/settings, changing page and normally closing the plugin; original target is released when communication remains available. | Normal Push, page change and target change passed per user; normal tray-menu exit FAILED: ON persisted until Stream Deck restarted. A bounded raw Macro status confirmation before logout is implemented; hardware recheck pending. |
 | Overlapping Push | Hold two actions pointing at one MacroButton; releasing the first keeps it ON, releasing the last turns it OFF. | Passed per user: remains ON after the first release and turns OFF after both releases. |
-| Restart during Push | Restart VoiceMeeter during a hold. The old press/release must not be replayed in the new session; a fresh press/release works. | Pending |
+| Restart during Push | Restart VoiceMeeter during a hold. The old press/release must not be replayed in the new session; a fresh press/release works. | Owner confirmed old ON remains through mixer restart, releasing the old hold does not write into the new session, and a fresh press/release turns it OFF. Same result when released before restart. This matches the no-cross-session-replay policy; manually reset a retained ON when needed. |
 | Invalid target | Configure an out-of-range Strip/Bus or Macro ID; show an error and never operate on target zero. | Pending |
 | State and meters | Compare stereo meters, mute, solo, routing, Mono/MC and EQ against VoiceMeeter on representative physical/virtual strips and buses. | State synchronization passed. Corrected meter decay/current marker and shared-meter behavior passed per user on `04ab431`. Full target/flag matrix not individually recorded. |
 | Rendering | Use long and non-ASCII labels, three icon styles and extreme supported axes. No cross-channel overlap; missing codepoints show a warning/fallback. | Japanese labels and font-detail controls passed per user. Long labels fade without overlapping adjacent content, confirmed by the user. Missing-codepoint warning/fallback also passed per user. Extreme-axis cases not separately recorded. |
 | PI | Restore settings, edit independent Combo values and Macro colors/icons, expand details, enter invalid numbers and navigate by keyboard. Invalid intermediate values are not saved. | User confirmed that -1, 100 and an empty step show the localized positive-number/up-to-72-dB error. The user also confirmed Tab navigation/editing and restoration of the last valid step after switching away and returning from invalid input. |
 | PI appearance | Compare with a built-in PI at the same window size: colors, font size, label width, control height, spacing and focus. Record differences. | Broadly acceptable per user; Japanese kana were wider than the built-in PI. Root font changed to system-ui in response; the owner confirmed the corrected appearance. |
-| Localization | Switch host language between Japanese and English and restart the plugin. Confirm translated PI/action labels and unchanged saved targets. | Owner confirmed English display on 2026-10-23. Three screenshots show English Gain Control, Gain Control Combo and Macro names, PI labels/help, font controls and connected status. Japanese display was verified earlier. Persistence of the same saved targets across the switch and return to Japanese were not explicitly confirmed. |
-| Lifecycle/performance | Change pages repeatedly and operate multiple actions. No updates to disappeared actions, stale meter backlog or sustained excessive CPU usage. Record observed CPU and responsiveness. | Pending |
+| Localization | Switch host language between Japanese and English and restart the plugin. Confirm translated PI/action labels and unchanged saved targets. | Owner confirmed English display on 2026-10-23. Three screenshots show English Gain Control, Gain Control Combo and Macro names, PI labels/help, font controls and connected status. Japanese display was verified earlier. Owner subsequently confirmed settings persistence and return to Japanese. |
+| Lifecycle/performance | Change pages repeatedly and operate multiple actions. No updates to disappeared actions, stale meter backlog or sustained excessive CPU usage. Record observed CPU and responsiveness. | Owner explicitly deferred extended stability observation to daily use; excluded from this delivery gate, not marked passed. Short runtime sample below remains the available evidence. |
 | Diagnostics | Confirm startup/errors/shutdown in the documented rotating log directory; attach relevant excerpts to failures. | Actual host WARN record observed in the documented directory; inherited `RUST_LOG=warn` suppresses INFO. Fresh isolated debug/release runs verify startup, normal shutdown and invalid-launch ERROR records. Normal host shutdown with INFO enabled is not separately recorded. |
 
 ## Read-only runtime sample
@@ -166,9 +166,20 @@ long-duration responsiveness/connection-leak test.
 | --- | --- |
 | Windows 11 / Stream Deck + / Potato | Normal actions, recovery, Push page/target release, shared targets, state flags, Japanese labels and font controls passed; remaining cases above. |
 | Windows 10 x64 | Not tested |
-| VoiceMeeter Basic | Not tested |
-| VoiceMeeter Banana | Not tested |
+| VoiceMeeter Basic | Owner tested startup and edition detection. PI incorrectly offered eight channels; fixed choices await recheck. Other behavior not fully verified. |
+| VoiceMeeter Banana | Owner tested startup and edition detection. Same PI choice bug; fixed choices await recheck. Other behavior not fully verified. |
 | Stream Deck 6.4 minimum version | Not tested; manifest declares this minimum |
 
 Do not infer compatibility verification for these environments from a successful
 Potato test. Record separate results when those environments become available.
+
+## Latest reported regressions and fixes
+
+The owner observed Potato Strip 6 Karaoke (K) did not affect the status display.
+The adapter read only MC; it now reads Karaoke and lights the existing center
+indicator when either is active. Basic/Banana PI choices were hardcoded to eight;
+they now follow detected edition, preserving an invalid stored selection as a
+disabled option instead of silently replacing it. Both fixes await hardware checks.
+Normal host exit logs showed logout=0 despite retained Push ON; shutdown now
+waits up to 500 ms for raw Macro status confirmation, bypassing optimistic cache,
+before logout. It never reconnects or retries a write into another mixer session.
