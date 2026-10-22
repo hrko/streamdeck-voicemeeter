@@ -1,5 +1,6 @@
 pub mod actions;
 pub mod backend;
+pub mod dial;
 pub mod domain;
 pub mod engine;
 pub mod logging;

@@ -21,7 +21,7 @@ export const defaultSettings: Settings = {
       },
       "gainStep": 3.0,
       "icon": {
-        "codePoint": "e050",
+        "codePoint": "f71a",
         "style": "rounded",
         "weight": 400,
         "fill": false,
@@ -36,7 +36,7 @@ export const defaultSettings: Settings = {
       },
       "gainStep": 3.0,
       "icon": {
-        "codePoint": "e050",
+        "codePoint": "f70e",
         "style": "rounded",
         "weight": 400,
         "fill": false,
@@ -50,7 +50,7 @@ export const defaultSettings: Settings = {
     "mode": "push",
     "iconOn": {
       "codePoint": "e837",
-      "style": "rounded",
+      "style": "outlined",
       "weight": 400,
       "fill": false,
       "grade": 0,
@@ -58,7 +58,7 @@ export const defaultSettings: Settings = {
     },
     "iconOff": {
       "codePoint": "e836",
-      "style": "rounded",
+      "style": "outlined",
       "weight": 400,
       "fill": false,
       "grade": 0,

@@ -18,7 +18,7 @@ for (const file of files.filter(file => file.endsWith(".js"))) {
   if ((await readFile(file, "utf8")).includes("extended translation for layout testing")) throw new Error("Test locale included in production JavaScript");
 }
 if (files.some(file => /\.dll$/i.test(file))) throw new Error("DLLs must not be distributed");
-for (const required of ["manifest.json", "bin/streamdeck-voicemeeter.exe", "ui/index.html", "layouts/channel.json", "en.json", "ja.json", "LICENSE", "licenses/THIRD-PARTY-NOTICES.md", "licenses/inventory.json"]) {
+for (const required of ["manifest.json", "bin/streamdeck-voicemeeter.exe", "ui/index.html", "layouts/gain.json", "layouts/combo.json", "en.json", "ja.json", "LICENSE", "licenses/THIRD-PARTY-NOTICES.md", "licenses/inventory.json"]) {
   if (!(await stat(path.join(destination, required))).size) throw new Error(`Empty package file: ${required}`);
 }
 const inventory = JSON.parse(await readFile(path.join(destination, "licenses/inventory.json"), "utf8"));

@@ -74,7 +74,7 @@ impl<const KIND: u8> DeckAction<KIND> {
         }
         let sender = ctx.sender().clone();
         if Self::kind() != ActionKind::Macro {
-            ctx.set_feedback_layout("layouts/channel.json")?;
+            ctx.set_feedback_layout(crate::dial::layout(Self::kind()))?;
         }
         let mut snapshots = self.client.snapshots.clone();
         let language = self.client.language.clone();
@@ -83,6 +83,7 @@ impl<const KIND: u8> DeckAction<KIND> {
         self.rendering = Some(tokio::spawn(async move {
             let mut previous = Value::Null;
             let mut previous_image = String::new();
+            let mut previous_feedback = Value::Null;
             let mut previous_state = None;
             let mut cache = IconCache::default();
             loop {
@@ -90,15 +91,22 @@ impl<const KIND: u8> DeckAction<KIND> {
                 if !active.load(Ordering::Acquire) {
                     break;
                 }
-                let frame = render::localized_frame(
-                    &snapshot,
-                    &settings,
-                    Self::kind(),
-                    &mut cache,
-                    &language,
-                );
+                let (frame, feedback, missing_glyph) = if Self::kind() == ActionKind::Macro {
+                    let frame = render::macro_frame(&snapshot, &settings, &mut cache);
+                    let missing = frame.missing_glyph;
+                    (Some(frame), Value::Null, missing)
+                } else {
+                    let (feedback, missing) = crate::dial::feedback(
+                        &snapshot,
+                        &settings,
+                        Self::kind(),
+                        &mut cache,
+                        &language,
+                    );
+                    (None, feedback, missing)
+                };
                 let mut message = inspector_status(&snapshot, &context);
-                if frame.missing_glyph && message["error"].is_null() {
+                if missing_glyph && message["error"].is_null() {
                     message["error"] = json!({"code":"missingGlyph", "field":""});
                 }
                 if message != previous {
@@ -112,22 +120,23 @@ impl<const KIND: u8> DeckAction<KIND> {
                     let _ = sender.set_state(&context, if *on { 0 } else { 1 });
                     previous_state = Some(*on);
                 }
-                if frame.svg != previous_image {
+                if let Some(frame) = frame
+                    && frame.svg != previous_image
+                {
                     let image = render::data_url(&frame.svg);
-                    if Self::kind() == ActionKind::Macro {
-                        let _ = sender.set_image(
-                            &context,
-                            Some(&image),
-                            streamdeck_plugin::Target::HardwareAndSoftware,
-                            None,
-                        );
-                    } else {
-                        if let Err(error) = sender.set_feedback(&context, &json!({"canvas":image}))
-                        {
-                            tracing::warn!(%error, "Could not send dial feedback");
-                        }
-                    }
+                    let _ = sender.set_image(
+                        &context,
+                        Some(&image),
+                        streamdeck_plugin::Target::HardwareAndSoftware,
+                        None,
+                    );
                     previous_image = frame.svg;
+                }
+                if !feedback.is_null() && feedback != previous_feedback {
+                    if let Err(error) = sender.set_feedback(&context, &feedback) {
+                        tracing::warn!(%error, "Could not send dial feedback");
+                    }
+                    previous_feedback = feedback;
                 }
                 if snapshots.changed().await.is_err() {
                     break;

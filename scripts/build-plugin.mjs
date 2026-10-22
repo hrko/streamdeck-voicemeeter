@@ -33,8 +33,10 @@ export async function buildPlugin(profile = "release") {
     ...text, UUID: `${id}.${suffix}`, Icon: "imgs/action", PropertyInspectorPath: "ui/index.html",
     Controllers: [suffix === "macro" ? "Keypad" : "Encoder"],
     DisableAutomaticStates: true,
-    States: Array.from({ length: suffix === "macro" ? 2 : 1 }, () => ({ Image: "imgs/key", ShowTitle: false })),
-    ...(suffix === "macro" ? {} : { Encoder: { layout: "layouts/channel.json" } }),
+    States: suffix === "macro"
+      ? ["ON", "OFF"].map(Title => ({ Image: "imgs/key", Title }))
+      : [{ Image: "imgs/key", ShowTitle: false }],
+    ...(suffix === "macro" ? {} : { Encoder: { layout: `layouts/${suffix === "gain-control-combo" ? "combo" : "gain"}.json` } }),
   }));
   await writeJson(path.join(destination, "manifest.json"), {
     $schema: "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
@@ -45,10 +47,7 @@ export async function buildPlugin(profile = "release") {
     Icon: "imgs/plugin", CategoryIcon: "imgs/action", Actions: actions,
     URL: "https://github.com/hrko/streamdeck-voicemeeter",
   });
-  await writeJson(path.join(destination, "layouts/channel.json"), {
-    $schema: "https://schemas.elgato.com/streamdeck/plugins/layout.json",
-    id: "voicemeeter-channel", controller: "Encoder", items: [{ key: "canvas", type: "pixmap", rect: [0, 0, 200, 100] }],
-  });
+  await cp(path.join(root, "assets/layouts"), path.join(destination, "layouts"), { recursive: true });
   for (const file of await readdir(path.join(root, "pi/src/locales"))) {
     if (!file.endsWith(".json")) continue;
     const catalog = await json(path.join(root, "pi/src/locales", file));

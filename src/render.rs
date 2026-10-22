@@ -1,5 +1,5 @@
 use crate::settings::{IconSettings, IconStyle};
-use crate::{domain::ActionKind, engine::Snapshot, settings::Settings};
+use crate::{engine::Snapshot, settings::Settings};
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use std::{
     collections::{BTreeMap, BTreeSet, VecDeque},
@@ -19,48 +19,12 @@ pub fn data_url(svg: &str) -> String {
     format!("data:image/svg+xml;base64,{}", STANDARD.encode(svg))
 }
 
-fn draw_meter(body: &mut String, width: f32, y: usize, current: f32, peak: f32) {
-    // Match the Go FillPeakShowCurrent meter: -60..+12 dB, a filled falling
-    // peak, and one dark cell at the instantaneous level inside that fill.
-    let cells = (width / 2.0).floor() as usize;
-    let cell_index = |level: f32| -> usize {
-        if level.is_finite() {
-            (((level + 60.0) / 72.0).clamp(0.0, 1.0) * cells as f32).round() as usize
-        } else {
-            0
-        }
-    };
-    let current = cell_index(current);
-    let peak = cell_index(peak);
-    let good = cell_index(-24.0);
-    let clip = cell_index(0.0);
-    let _ = write!(
-        body,
-        r##"<rect x="4" y="{y}" width="{width}" height="4" fill="#424242"/>"##
-    );
-    for cell in 0..cells {
-        let active = cell < peak && !(current != peak && cell == current);
-        let color = match (active, cell < good, cell < clip) {
-            (true, true, _) => "#85adb9",
-            (true, false, true) => "#1efe5b",
-            (true, false, false) => "#fa0000",
-            (false, _, true) => "#191b1b",
-            (false, _, false) => "#1f1715",
-        };
-        let x = 4 + cell * 2;
-        let _ = write!(
-            body,
-            r##"<rect x="{x}" y="{y}" width="1" height="4" fill="{color}"/>"##
-        );
-    }
-}
-
 pub struct Frame {
     pub svg: String,
     pub missing_glyph: bool,
 }
 
-fn place_icon(
+pub(crate) fn place_icon(
     cache: &mut IconCache,
     settings: &IconSettings,
     x: f32,
@@ -90,142 +54,43 @@ fn place_icon(
     }
 }
 
-pub fn frame(
-    snapshot: &Snapshot,
-    settings: &Settings,
-    kind: ActionKind,
-    cache: &mut IconCache,
-) -> Frame {
-    localized_frame(snapshot, settings, kind, cache, "en")
-}
-
-pub fn localized_frame(
-    snapshot: &Snapshot,
-    settings: &Settings,
-    kind: ActionKind,
-    cache: &mut IconCache,
-    language: &str,
-) -> Frame {
+pub fn macro_frame(snapshot: &Snapshot, settings: &Settings, cache: &mut IconCache) -> Frame {
     let mut missing = false;
-    if kind == ActionKind::Macro {
-        let state = snapshot.macros.get(&settings.macro_button.logical_id);
-        let on = state.copied().unwrap_or(false);
-        let icon = if on {
-            &settings.macro_button.icon_on
-        } else {
-            &settings.macro_button.icon_off
-        };
-        let color = if on {
-            &settings.macro_button.color_on
-        } else {
-            &settings.macro_button.color_off
-        };
-        let path = place_icon(cache, icon, 12.0, 12.0, 120.0, &mut missing);
-        let offline = if state.is_none() {
-            r##"<path d="M8 136L136 8" stroke="#ffb1b1" stroke-width="4"/>"##
-        } else {
-            ""
-        };
-        return Frame {
-            svg: format!(
-                r##"<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="{}"/>{path}{offline}</svg>"##,
-                escape(color)
-            ),
-            missing_glyph: missing,
-        };
-    }
-    let count = if kind == ActionKind::Combo { 2 } else { 1 };
-    let width = 200.0 / count as f32;
-    let mut body = String::new();
-    for index in 0..count {
-        let settings = &settings.channels[index];
-        let channel = snapshot
-            .channels
-            .iter()
-            .find(|(target, _)| *target == settings.target)
-            .map(|(_, value)| value);
-        let x = index as f32 * width;
-        let fallback = format!("{:?} {}", settings.target.kind, settings.target.index);
-        let label = channel
-            .map(|c| c.label.as_str())
-            .filter(|s| !s.is_empty())
-            .unwrap_or(&fallback);
-        // textLength prevents long user labels spilling into the adjacent channel.
-        let label_size = (width - 8.0) / label.chars().count().max(1) as f32;
-        let font_size = label_size.clamp(7.0, 13.0);
-        let _ = write!(
-            body,
-            r##"<defs><clipPath id="channel-{index}"><rect width="{width}" height="100"/></clipPath></defs><g transform="translate({x} 0)" clip-path="url(#channel-{index})"><text x="4" y="15" font-size="{font_size}">{}</text>"##,
-            escape(label)
-        );
-        body.push_str(&place_icon(
-            cache,
-            &settings.icon,
-            4.0,
-            21.0,
-            28.0,
-            &mut missing,
-        ));
-        let gain = channel
-            .map(|c| escape(&crate::numbers::gain(c.gain, language)))
-            .unwrap_or_else(|| "—".into());
-        let _ = write!(
-            body,
-            r##"<text x="36" y="40" font-size="16">{gain}</text>"##
-        );
-        if let Some(channel) = channel {
-            let meter_width = width - 8.0;
-            let peaks = snapshot
-                .meter_peaks
-                .iter()
-                .find(|(target, _)| *target == settings.target)
-                .map(|(_, levels)| *levels)
-                .unwrap_or(channel.levels);
-            for (side, level) in channel.levels.iter().enumerate() {
-                let y = 52 + side * 7;
-                draw_meter(&mut body, meter_width, y, *level, peaks[side]);
-            }
-            let mut flags = vec![("M", channel.mute)];
-            flags.extend(
-                channel
-                    .flags
-                    .iter()
-                    .map(|(name, enabled)| (name.as_str(), *enabled)),
-            );
-            let columns = if count == 2 { 5 } else { 8 };
-            for (n, (name, enabled)) in flags.into_iter().enumerate() {
-                let label = match name {
-                    "Solo" => "S",
-                    "Mono" => "MO",
-                    other => other,
-                };
-                let color = if enabled { "#ffffff" } else { "#777777" };
-                let px = 4.0 + (n % columns) as f32 * (width - 8.0) / columns as f32;
-                let py = 77 + (n / columns) * 11;
-                let _ = write!(
-                    body,
-                    r##"<text x="{px}" y="{py}" font-size="9" fill="{color}">{}</text>"##,
-                    escape(label)
-                );
-            }
-        } else {
-            body.push_str(r##"<path d="M8 60h40" stroke="#ffb1b1" stroke-width="2"/>"##);
-        }
-        body.push_str("</g>");
-    }
+    let state = snapshot.macros.get(&settings.macro_button.logical_id);
+    let on = state.copied().unwrap_or(false);
+    let icon = if on {
+        &settings.macro_button.icon_on
+    } else {
+        &settings.macro_button.icon_off
+    };
+    let color = if on {
+        &settings.macro_button.color_on
+    } else {
+        &settings.macro_button.color_off
+    };
+    // Go used a 36px symbol centered in a 72px key image.
+    let path = place_icon(cache, icon, 36.0, 36.0, 72.0, &mut missing);
+    let offline = if state.is_none() {
+        r##"<path d="M8 136L136 8" stroke="#ffb1b1" stroke-width="4"/>"##
+    } else {
+        ""
+    };
     Frame {
         svg: format!(
-            r##"<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100" viewBox="0 0 200 100" fill="#ffffff" font-family="Arial, sans-serif"><rect width="200" height="100" fill="#202020"/>{body}</svg>"##
+            r##"<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="{}"/>{path}{offline}</svg>"##,
+            escape(color)
         ),
         missing_glyph: missing,
     }
 }
-
 pub fn font(style: IconStyle) -> &'static [u8] {
+    static OUTLINED: &[u8] = include_bytes!("../assets/fonts/MaterialSymbolsOutlined.ttf");
+    static ROUNDED: &[u8] = include_bytes!("../assets/fonts/MaterialSymbolsRounded.ttf");
+    static SHARP: &[u8] = include_bytes!("../assets/fonts/MaterialSymbolsSharp.ttf");
     match style {
-        IconStyle::Outlined => include_bytes!("../assets/fonts/MaterialSymbolsOutlined.ttf"),
-        IconStyle::Rounded => include_bytes!("../assets/fonts/MaterialSymbolsRounded.ttf"),
-        IconStyle::Sharp => include_bytes!("../assets/fonts/MaterialSymbolsSharp.ttf"),
+        IconStyle::Outlined => OUTLINED,
+        IconStyle::Rounded => ROUNDED,
+        IconStyle::Sharp => SHARP,
     }
 }
 
@@ -275,9 +140,11 @@ pub fn icon_svg(settings: &IconSettings) -> anyhow::Result<String> {
         .ok_or_else(|| anyhow::anyhow!("missingGlyph"))?;
     let extent = (bounds.width().max(bounds.height())) as f32;
     anyhow::ensure!(extent > 0.0, "missingGlyph");
-    let scale = 88.0 / extent;
-    let x = 50.0 - (bounds.x_min as f32 + bounds.x_max as f32) * scale / 2.0;
-    let y = 50.0 + (bounds.y_min as f32 + bounds.y_max as f32) * scale / 2.0;
+    // Match the Go font-face size, preserving the glyph's designed bearings
+    // instead of independently stretching every symbol to its bounding box.
+    let scale = 100.0 / f32::from(face.units_per_em());
+    let x = 0.0;
+    let y = 100.0;
     Ok(format!(
         r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path fill="#ffffff" transform="translate({x} {y}) scale({scale} -{scale})" d="{}"/></svg>"##,
         path.0
@@ -339,96 +206,22 @@ pub fn glyph_catalog() -> anyhow::Result<BTreeMap<String, BTreeSet<u32>>> {
 mod tests {
     use super::*;
     #[test]
-    fn meter_fills_falling_peak_and_marks_current_without_overflow() {
-        let mut svg = String::new();
-        draw_meter(&mut svg, 144.0, 52, -24.0, 12.0);
-        // 72 cells span 72 dB. Current -24 dB marks cell 36 inside the peak.
-        assert!(svg.contains(r##"x="76" y="52" width="1" height="4" fill="#191b1b""##));
-        assert!(svg.contains(r##"x="78" y="52" width="1" height="4" fill="#1efe5b""##));
-        assert!(svg.contains(r##"x="124" y="52" width="1" height="4" fill="#fa0000""##));
-        assert_eq!(svg.matches("<rect").count(), 73);
-        let mut silence = String::new();
-        draw_meter(&mut silence, 144.0, 52, -120.0, -120.0);
-        assert!(!silence.contains("#1efe5b"));
-        assert!(!silence.contains("#85adb9"));
-        assert!(!silence.contains("#fa0000"));
-    }
-    #[test]
-    fn channel_frames_escape_user_labels_and_keep_stereo_and_combo_values() {
-        use crate::backend::ChannelSnapshot;
-        let settings = Settings::default();
-        let snapshot = Snapshot {
-            channels: vec![
-                (
-                    settings.channels[0].target,
-                    ChannelSnapshot {
-                        label: "<script>&\"日本語".into(),
-                        gain: -12.5,
-                        levels: [-20.0, -6.0],
-                        mute: true,
-                        ..Default::default()
-                    },
-                ),
-                (
-                    settings.channels[1].target,
-                    ChannelSnapshot {
-                        label: "Right".into(),
-                        gain: 3.0,
-                        levels: [-120.0, 0.0],
-                        ..Default::default()
-                    },
-                ),
-            ],
-            ..Default::default()
-        };
-        let output = frame(
-            &snapshot,
-            &settings,
-            ActionKind::Combo,
-            &mut IconCache::default(),
-        );
-        assert!(!output.missing_glyph);
-        assert_eq!(output.svg.matches("<svg").count(), 1);
-        assert!(!output.svg.contains("<script>"));
-        assert!(output.svg.contains("&lt;script&gt;&amp;&quot;日本語"));
-        assert!(output.svg.contains(">-12.5</text>"));
-        assert!(output.svg.contains(">3.0</text>"));
-        #[cfg(windows)]
-        {
-            let localized = localized_frame(
-                &snapshot,
-                &settings,
-                ActionKind::Combo,
-                &mut IconCache::default(),
-                "de-DE",
-            );
-            assert!(localized.svg.contains(">-12,5</text>"));
-            assert!(localized.svg.contains(">3,0</text>"));
-        }
-        assert!(output.svg.contains("#1efe5b"));
-        assert!(output.svg.contains("#1f1715"));
-        assert_eq!(
-            output.svg.matches("height=\"4\" fill=\"#424242\"").count(),
-            4
-        );
-    }
-    #[test]
     fn macro_frames_follow_external_state_and_missing_icons_have_fallbacks() {
         let mut settings = Settings::default();
         let mut snapshot = Snapshot::default();
         let mut cache = IconCache::default();
         snapshot.macros.insert(0, true);
-        let on = frame(&snapshot, &settings, ActionKind::Macro, &mut cache);
+        let on = macro_frame(&snapshot, &settings, &mut cache);
         assert!(on.svg.contains(&settings.macro_button.color_on));
         snapshot.macros.insert(0, false);
-        let off = frame(&snapshot, &settings, ActionKind::Macro, &mut cache);
+        let off = macro_frame(&snapshot, &settings, &mut cache);
         assert!(off.svg.contains(&settings.macro_button.color_off));
         assert_ne!(on.svg, off.svg);
         settings.macro_button.icon_off.code_point = "10ffff".into();
-        assert!(frame(&snapshot, &settings, ActionKind::Macro, &mut cache).missing_glyph);
+        assert!(macro_frame(&snapshot, &settings, &mut cache).missing_glyph);
         snapshot.macros.clear();
         assert!(
-            frame(&snapshot, &settings, ActionKind::Macro, &mut cache)
+            macro_frame(&snapshot, &settings, &mut cache)
                 .svg
                 .contains("M8 136L136 8")
         );

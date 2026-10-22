@@ -68,7 +68,10 @@ impl Default for ChannelSettings {
         Self {
             target: Target::default(),
             gain_step: 3.0,
-            icon: IconSettings::default(),
+            icon: IconSettings {
+                code_point: "f71a".into(),
+                ..Default::default()
+            },
         }
     }
 }
@@ -99,10 +102,12 @@ impl Default for MacroSettings {
             mode: ButtonMode::Push,
             icon_on: IconSettings {
                 code_point: "e837".into(),
+                style: IconStyle::Outlined,
                 ..Default::default()
             },
             icon_off: IconSettings {
                 code_point: "e836".into(),
+                style: IconStyle::Outlined,
                 ..Default::default()
             },
             color_on: "#067ba2".into(),
@@ -129,6 +134,10 @@ impl Default for Settings {
                     target: Target {
                         kind: TargetKind::Bus,
                         index: 0,
+                    },
+                    icon: IconSettings {
+                        code_point: "f70e".into(),
+                        ..Default::default()
                     },
                     ..Default::default()
                 },

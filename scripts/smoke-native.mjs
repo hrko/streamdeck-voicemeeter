@@ -56,14 +56,17 @@ server.on("upgrade", (request, connection, head) => {
           invalidRejected = true;
           send({ event: "didReceiveSettings", action: `${id}.gain-control`, context: "smoke-action", device: "test", payload: { settings: {} } });
         } else if (message.event === "setFeedbackLayout") {
-          assert.equal(message.payload.layout, "layouts/channel.json");
+          assert.equal(message.payload.layout, "layouts/gain.json");
           layoutSelected = true;
         } else if (message.event === "setFeedback") {
           assert.ok(invalidRejected && layoutSelected);
           assert.equal(message.context, "smoke-action");
-          assert.match(message.payload.canvas, /^data:image\/svg\+xml;base64,/);
-          const svg = Buffer.from(message.payload.canvas.split(",")[1], "base64").toString();
-          assert.match(svg, /width="200" height="100" viewBox="0 0 200 100"/);
+          assert.equal(typeof message.payload.title, "string");
+          for (const key of ["icon", "levelMeter", "gainSlider", "status"]) {
+            assert.match(message.payload[key], /^data:image\/svg\+xml;base64,/);
+            const svg = Buffer.from(message.payload[key].split(",")[1], "base64").toString();
+            assert.equal((svg.match(/<svg/g) ?? []).length, 1);
+          }
           resolveMessage();
         }
       }

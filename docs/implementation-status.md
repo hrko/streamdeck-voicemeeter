@@ -14,7 +14,7 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- Rust tests after the meter fix: 26 Rust unit tests, 4 SDK/worker integration
+- Rust tests after the appearance restoration: 28 Rust unit tests, 4 SDK/worker integration
   tests and 13 PI/localization tests
   and 3 locale-validator/dependency-policy script tests.
 - React PI production bundle builds. Shared channel/icon forms, independent
@@ -27,9 +27,11 @@ This is a progress record, not a release acceptance certificate.
   cache. Generated glyph catalogs support missing-glyph warnings in the PI.
 - PI previews use the same bundled fonts, including independent Macro colors.
   Build output contains local TTF assets and requires no font CDN.
-- SVG channel frames include escaped labels, gain, stereo meters and state
-  flags. Macro frames follow external state and use separate icons/colors.
-  SDK callbacks send changed images only; Gain/Combo display is confirmed on Stream Deck +.
+- Go dial layouts are restored as native Stream Deck text plus separate SVG
+  icons, stereo meters, gain sliders and state indicators. Macro frames follow
+  external state and use separate icons/colors with the original centered size.
+  Changed feedback only is sent. See appearance-parity.md for source geometry,
+  automated checks and the pending hardware appearance comparison.
 - Rust-generated defaults and PI validation preserve offline targets, reject
   malformed stored values, and restore missing nested fields without guessing.
 - Raw API adapter retains login across outages, reads UTF-16 names, maps meter
