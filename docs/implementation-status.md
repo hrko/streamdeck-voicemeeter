@@ -14,7 +14,11 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- `mise run test`: 8 Rust tests, 4 localization tests, 1 locale-validator test.
+- `mise run test`: 12 Rust tests, 4 localization tests, 1 locale-validator test.
+- Backend boundary and session engine with deduplicated target snapshots,
+  generation checks, lifecycle macro release and fake-backend tests.
+- Dedicated worker with 10 ms polling, 15 fps snapshots, bounded command queue
+  and 1–10 second reconnect backoff compiles and passes Clippy.
 - Additional locale resources require no application code changes; regional
   fallback, partial translation fallback, long strings and RTL direction tested.
 - One GPT-6 Astra medium subagent reviewed the source-available license.
@@ -22,8 +26,9 @@ This is a progress record, not a release acceptance certificate.
 
 ## Required before release
 
-- VoiceMeeter adapter, single-thread worker, reconnect/backoff, command/session
-  boundaries, snapshot polling and fake-backend tests.
+- Real VoiceMeeter adapter and worker integration tests. Review asynchronous
+  gain writes against the SDK cache before claiming rapid-input correctness on
+  hardware. Verify per-target API errors, reconnect recovery and queue saturation.
 - SDK action registration, lifecycle cleanup, settings and PI messages, event
   integration tests, real WebSocket registration.
 - Bundled fixed Material Symbols fonts with source/version/hash/licenses;
