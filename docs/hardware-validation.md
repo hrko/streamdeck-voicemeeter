@@ -78,7 +78,12 @@ this relaunch. It now requests another graceful plugin stop immediately before
 host termination. A subsequent update logged logout=0 for both the original
 78936 and relaunched 71880 before the host stopped; startup created only 23608.
 The diagnostic installation itself used the old helper, so its indicator baseline
-may have increased once more. Final visual count/stability is still pending.
+may have increased once more. The owner reported six indicators, establishing a
+new baseline. One more update with VM/MacroButtons unchanged logged logout=0 for
+23608 and the auto-relaunched 106996, followed by startup/login=0 for 72316.
+The owner confirmed the display remained at six. Thus one controlled repeated
+update preserved the connection count after the fix; this does not establish
+an extended soak result or identify/remove the older residual indicators.
 
 The subsequent Go appearance restoration (`fe5e769`, title defaults corrected
 in `79bed2c`) was also checked by the owner. Icons, status indicators, gain
