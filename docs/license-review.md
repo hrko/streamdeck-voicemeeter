@@ -63,6 +63,20 @@ additional license is required independently of MIT/Apache files. The aliri
 exception records the inspected source revision, the missing upstream text,
 the Apache-2.0 selection and the original Cargo declaration with its author.
 
-Future optional/peer dependencies and actual bundled module coverage still
-need auditing. The license-expression allowlist is intentionally not described
-as a full SPDX parser.
+## Production bundle review (2026-10-23)
+
+The same reviewer reproduced the production JS byte-for-byte in memory and
+inspected its chunk module IDs. All seven included runtime packages were in
+the inventory: React, react-dom, scheduler, i18next, react-i18next,
+use-sync-external-store and the PI client. No missing optional/peer runtime
+dependency was found in this build.
+
+The audit found a missing generated helper: `rolldown/runtime.js`. Collection
+now resolves Rolldown through Vite's own dependency context and includes both
+its LICENSE and THIRD-PARTY-LICENSE (including upstream Rollup/Evan Wallace
+MIT notices). Vite's module-preload helper was already covered. Both Rolldown
+documents are required before collection succeeds.
+
+Future dependency changes still require bundle-module coverage review; this
+one-build audit is not a permanent guarantee. The license-expression allowlist
+is intentionally not described as a full SPDX parser.

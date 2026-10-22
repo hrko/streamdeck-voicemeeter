@@ -21,7 +21,7 @@ async function documents(directory, prefix = "") {
   for (const item of await readdir(directory, { withFileTypes: true })) {
     if (["node_modules", ".git", "target"].includes(item.name)) continue;
     const relative = path.join(prefix, item.name);
-    if (item.isFile() && /^(license|licence|copying|copyright|notice)([._-]|$)/i.test(item.name)) found.push(relative);
+    if (item.isFile() && /^(license|licence|copying|copyright|notice|third-party-license)([._-]|$)/i.test(item.name)) found.push(relative);
     else if (item.isDirectory()) found.push(...await documents(path.join(directory, item.name), relative));
   }
   return found;
@@ -109,6 +109,14 @@ for (const name of Object.keys(pi.dependencies)) await npmPackage(await resolveP
 const viteManifest = require.resolve("vite/package.json");
 const vite = JSON.parse(await readFile(viteManifest, "utf8"));
 await collect({ name: vite.name, version: vite.version, license: vite.license, directory: path.dirname(viteManifest), ecosystem: "build-helper", source: vite.repository });
+// Vite's production output also contains Rolldown's virtual runtime module.
+// Resolve through Vite so notices match the actual bundler, not another install.
+const rolldownManifest = await resolvePackage(createRequire(viteManifest), "rolldown");
+const rolldown = JSON.parse(await readFile(rolldownManifest, "utf8"));
+for (const document of ["LICENSE", "THIRD-PARTY-LICENSE"]) {
+  await readFile(path.join(path.dirname(rolldownManifest), document));
+}
+await collect({ name: rolldown.name, version: rolldown.version, license: rolldown.license, directory: path.dirname(rolldownManifest), ecosystem: "build-helper", source: rolldown.repository });
 await cp(path.join(root, "assets/fonts"), path.join(output, "material-symbols"), { recursive: true, filter: source => !source.endsWith(".ttf") });
 inventory.push({ ecosystem: "font", name: "Material Symbols", version: "49d4db35df873165d6bd6ba09b063c7dafbac2f4", selectedLicense: "Apache-2.0", documents: ["material-symbols/LICENSE.txt", "material-symbols/source.json"] });
 await cp(path.join(root, "licenses/LEGACY-MIT.txt"), path.join(output, "LEGACY-MIT.txt"));
