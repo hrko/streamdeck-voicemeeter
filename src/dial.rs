@@ -190,7 +190,10 @@ fn status(edition: Edition, target: Target, channel: &ChannelSnapshot) -> String
                 squares.push((flag("EQ"), "#296ffd"));
             }
         } else if edition != Edition::Basic {
-            squares.push((flag("MC") || flag("K"), "#f66051"));
+            squares.push((
+                flag("MC") || flag("K"),
+                if flag("K") { "#68e6f8" } else { "#f66051" },
+            ));
         }
     } else if edition != Edition::Basic {
         squares.push((flag("EQ"), "#296ffd"));
@@ -221,10 +224,13 @@ mod tests {
         channel.flags.insert("K".into(), true);
         let on = status(Edition::Potato, target, &channel);
         assert!(!off.contains("#f66051"));
-        assert!(on.contains(r##"x="20" y="15" width="7" height="7" rx="1.5" fill="#f66051""##));
+        assert!(on.contains(r##"x="20" y="15" width="7" height="7" rx="1.5" fill="#68e6f8""##));
         channel.flags.clear();
         channel.flags.insert("MC".into(), true);
-        assert_eq!(on, status(Edition::Potato, target, &channel));
+        assert!(
+            status(Edition::Potato, target, &channel)
+                .contains(r##"x="20" y="15" width="7" height="7" rx="1.5" fill="#f66051""##)
+        );
     }
     #[test]
     fn go_meter_and_fader_dimensions_and_thresholds() {
