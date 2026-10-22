@@ -16,7 +16,7 @@ This is a progress record, not a release acceptance certificate.
   contract consistency, TS type checking, en/ja locale consistency.
 - `mise run test`: subsequent runs: 21 Rust unit tests, 3 SDK/worker integration
   tests and 13 PI/localization tests
-  and 1 locale-validator test.
+  and 3 locale-validator/dependency-policy script tests.
 - React PI production bundle builds. Shared channel/icon forms, independent
   Combo settings, Macro controls, explicit invalid-setting reset, translated
   status/errors and local standard-style CSS are implemented. Form interaction
@@ -32,8 +32,6 @@ This is a progress record, not a release acceptance certificate.
   SDK callbacks send changed images only; hardware layout validation is pending.
 - Rust-generated defaults and PI validation preserve offline targets, reject
   malformed stored values, and restore missing nested fields without guessing.
-- Subsequent `mise run test:rust` and `check:rust`: 15 Rust tests and static
-  checks pass with the real API adapter and SDK action implementations.
 - Raw API adapter retains login across outages, reads UTF-16 names, maps meter
   offsets by edition, and bridges asynchronous writes with expiring pending values.
 - Gain, Combo and Macro SDK callbacks dispatch through the shared worker;
@@ -69,22 +67,28 @@ This is a progress record, not a release acceptance certificate.
   recent, undated, prerelease and different-major update candidates.
 - Development PI preview visually checked for Japanese, synthetic long text,
   RTL, invalid-input placement and keyboard focus. See visual-validation.md.
+- Clean installation of commit `78d51155f1b8b4a45e4935d0ba2a4d8ef6909e88`
+  passed on 2026-10-23 JST with isolated mise, Rust and pnpm stores. Setup,
+  check, test and package succeeded without changing any of the three lockfiles.
+  This also caught and fixed first-install PATH reuse: setup now enters a fresh
+  `mise exec` environment after installing tools. Repeat with
+  `scripts/validate-clean.ps1`; `-Update` additionally exercises dependency updates.
+- Manual draft-release workflow added; its local checksum/tag dry run passed.
+  No GitHub release has been created and the workflow has not run remotely.
 
 ## Required before release
 
 - Real VoiceMeeter adapter and worker integration tests. Review asynchronous
   gain writes against the SDK cache before claiming rapid-input correctness on
   hardware. Verify per-target API errors, reconnect recovery and queue saturation.
-- SDK action registration, lifecycle cleanup, settings and PI messages, event
-  integration tests, real WebSocket registration.
 - Real PI appearance/keyboard checks and rendered SVG visual verification.
 - Actual Stream Deck dev-link test.
-- Exercise deps:update in an isolated checkout and verify clean locked installs.
-- Run the Windows workflow on GitHub; add release publication support.
+- Exercise deps:update in an isolated checkout.
+- Run the Windows build and draft-release workflows on GitHub.
 - Final dependency/bundle license coverage audit, including future optional/peer
   dependencies and generated helpers. Do not treat allowlisted expressions as
   a full SPDX parser.
-- Clean-install verification and release-age policy verification for updates.
+- Release-age policy verification for updates.
 - Real Stream Deck PI and hardware, VoiceMeeter Basic/Banana/Potato behavior,
   restarts, offline behavior, overlapping actions, long labels, meter performance.
 - Record tested Windows/Stream Deck versions; do not claim untested support.

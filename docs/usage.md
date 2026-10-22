@@ -32,6 +32,20 @@ installation; it has not yet been validated against the actual host UI.
 EXE without opening Stream Deck. It validates registration, rejection of malformed
 settings and clean shutdown. Test logs are isolated under `target/smoke-runtime`.
 
+## Prepare a GitHub release
+
+The `Prepare draft release` workflow is manually dispatched with a tag matching
+the Cargo package version, such as `rust-v0.1.0`. It first runs the reusable
+Windows build workflow, downloads that run's artifacts, verifies the package
+checksum, and creates a draft prerelease with the package and checksum attached.
+It does not publish the release. Existing releases are not overwritten; if an
+upload fails, inspect the draft before retrying.
+
+Before publishing, review the hardware acceptance record and included license
+texts. The current development candidate has not completed hardware acceptance.
+For a local check without creating a release, set `RELEASE_TAG` and run
+`mise exec node -- node scripts/draft-release.mjs --dry-run` after packaging.
+
 ## Collect logs
 
 Logs are in `%LOCALAPPDATA%\jp.hrko.streamdeck.voicemeeter.rust\logs`:
