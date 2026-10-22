@@ -158,7 +158,7 @@ This is a progress record, not a release acceptance certificate.
   `2ef6d3197937b5288aa12d891882bba8c2282c43fc44dbcb0f49305173a7a34a`.
   The draft remains unpublished.
 
-## Required before release
+## Hardware coverage and public-release considerations
 
 All commits were signed before the first push; subsequent fixes are signed.
 The confirmed hardware environment is Windows 11,
@@ -190,6 +190,8 @@ the owner subsequently confirmed the requested system-ui correction.
 The corrected 0.1.5 candidate and its downloaded assets are verified above.
 Outstanding hardware checks prevent treating it as a fully accepted stable
 release; they do not invalidate the completed packaging checks.
+Implementation and distribution-candidate scope are complete; see
+[delivery-audit.md](delivery-audit.md). Public release is a separate decision.
 
 ## Implementation notes
 

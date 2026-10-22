@@ -6,7 +6,8 @@ Windows 11 / Stream Deck + / VoiceMeeter Potato. Release acceptance is still in
 progress; see the [hardware validation record](docs/hardware-validation.md) for
 confirmed behavior and untested environments.
 
-The original Go implementation remains on `main`, at commit
+The original Go implementation remains on `main` and the signed
+`legacy-go-before-rust` tag, at commit
 `8ab6ae9522423747bd3be7f9a667c82200d583dd`.
 
 ## Target
@@ -67,8 +68,8 @@ English/Japanese switching and settings retention. Basic/Banana startup, edition
 detection and channel choices have been checked; their full feature matrix is
 not verified. Windows 10 and the minimum Stream Deck 6.4 version remain untested.
 Extended stability observation is deferred to daily use at the owner's request.
-See [implementation status](docs/implementation-status.md) for remaining release
-checks.
+See the [delivery audit](docs/delivery-audit.md) for completed scope and the
+[implementation status](docs/implementation-status.md) for verification details.
 
 Installation, action behavior, development linking and log locations are in
 [usage and diagnostics](docs/usage.md).
