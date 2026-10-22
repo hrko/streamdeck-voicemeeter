@@ -14,7 +14,7 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- `mise run test`: subsequent runs: 21 Rust unit tests, 3 SDK/worker integration
+- `mise run test`: subsequent runs: 21 Rust unit tests, 4 SDK/worker integration
   tests and 13 PI/localization tests
   and 3 locale-validator/dependency-policy script tests.
 - React PI production bundle builds. Shared channel/icon forms, independent
@@ -85,9 +85,15 @@ This is a progress record, not a release acceptance certificate.
 - Production bundle module review found and corrected missing Rolldown helper
   notices. Its LICENSE and THIRD-PARTY-LICENSE are now required and packaged.
   Current optional/peer runtime packages are covered; see license-review.md.
+- SDK/worker outage integration test passes: an interrupted Push, offline input,
+  a delayed old-generation request and a release after recovery cause no writes
+  in the new session. A fresh press/release then works. This uses a fake backend
+  with the real worker thread and SDK dispatch; actual VoiceMeeter restart remains
+  a hardware acceptance item.
 
 ## Required before release
 
+- Complete host-locale-aware gain display; SVG gain currently uses a decimal point.
 - Real VoiceMeeter adapter and worker integration tests. Review asynchronous
   gain writes against the SDK cache before claiming rapid-input correctness on
   hardware. Verify per-target API errors, reconnect recovery and queue saturation.

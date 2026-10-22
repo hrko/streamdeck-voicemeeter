@@ -17,6 +17,7 @@ use streamdeck_voicemeeter::{
 
 #[derive(Default)]
 struct State {
+    unavailable: bool,
     channels: BTreeMap<Target, ChannelSnapshot>,
     macros: BTreeMap<u8, bool>,
     writes: Vec<String>,
@@ -24,9 +25,10 @@ struct State {
 struct Fake(Arc<Mutex<State>>);
 impl Backend for Fake {
     fn connect(&mut self) -> anyhow::Result<Option<Edition>> {
-        Ok(Some(Edition::Potato))
+        Ok((!self.0.lock().unwrap().unavailable).then_some(Edition::Potato))
     }
     fn poll(&mut self) -> anyhow::Result<()> {
+        anyhow::ensure!(!self.0.lock().unwrap().unavailable, "simulated outage");
         Ok(())
     }
     fn channel(&mut self, target: Target) -> anyhow::Result<ChannelSnapshot> {
@@ -60,6 +62,72 @@ impl Backend for Fake {
         state.writes.push(format!("macro:{id}:{value}"));
         Ok(())
     }
+}
+
+async fn wait_connected(worker: &Worker, connected: bool) {
+    let mut snapshots = worker.client.snapshots.clone();
+    tokio::time::timeout(Duration::from_secs(4), async {
+        loop {
+            if snapshots.borrow_and_update().edition.is_some() == connected {
+                break;
+            }
+            snapshots.changed().await.unwrap();
+        }
+    })
+    .await
+    .expect("worker did not reach expected connection state");
+}
+
+#[tokio::test]
+async fn outage_discards_offline_input_and_original_push_release() {
+    use streamdeck_voicemeeter::worker::Request;
+    let (worker, mut action, sender, _output, state) = setup::<2>(json!({})).await;
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().writes, vec!["macro:0:true"]);
+    state.lock().unwrap().unavailable = true;
+    wait_connected(&worker, false).await;
+    let offline_generation = worker.client.generation();
+    action
+        .handle(event("keyUp", json!({})), sender.clone())
+        .await
+        .unwrap();
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    state.lock().unwrap().unavailable = false;
+    wait_connected(&worker, true).await;
+    // Even a delayed offline request delivered after recovery must be discarded.
+    worker
+        .client
+        .send(Request::Press {
+            context: "ctx".into(),
+            generation: offline_generation,
+        })
+        .unwrap();
+    action
+        .handle(event("keyUp", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().writes, vec!["macro:0:true"]);
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    action
+        .handle(event("keyUp", json!({})), sender)
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(
+        state.lock().unwrap().writes,
+        vec!["macro:0:true", "macro:0:true", "macro:0:false"]
+    );
 }
 async fn settle(worker: &Worker) {
     let mut receiver = worker.client.snapshots.clone();
