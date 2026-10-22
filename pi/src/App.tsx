@@ -31,6 +31,28 @@ function Input({ label, value, onCommit, validate, numeric = false }: {
     }} />{error && <span id={`${id}-error`} className="error" role="alert">{t(`error.${error}`)}</span>}</Row>;
 }
 
+function ColorEditor({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  const { t } = useTranslation();
+  const id = useId();
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  const invalid = !/^#[\da-f]{6}$/i.test(draft);
+  return <Row label={label}>
+    <div className="color-editor">
+      <input type="color" aria-label={t("field.colorPicker", { label })} value={value.toLowerCase()} onChange={event => {
+        setDraft(event.target.value);
+        onChange(event.target.value);
+      }} />
+      <input type="text" dir="ltr" aria-label={label} aria-invalid={invalid} aria-describedby={invalid ? `${id}-error` : undefined} value={draft} spellCheck={false} onChange={event => {
+        const next = event.target.value;
+        setDraft(next);
+        if (/^#[\da-f]{6}$/i.test(next)) onChange(next);
+      }} />
+    </div>
+    {invalid && <span id={`${id}-error`} className="error" role="alert">{t("error.invalidColor")}</span>}
+  </Row>;
+}
+
 function Select<T extends string | number>({ label, value, options, onChange }: {
   label: string; value: T; options: [T, string][]; onChange: (value: T) => void;
 }) {
@@ -115,7 +137,7 @@ export function App({ client }: { client: StreamDeckPiApi }) {
       <p className="help">{t("help.macro")}</p>
       {(["On", "Off"] as const).map(state => <fieldset key={state}><legend>{t(`field.icon${state}`)}</legend>
         <IconEditor value={settings.macroButton[`icon${state}`]} background={settings.macroButton[`color${state}`]} onChange={icon => save({ ...settings, macroButton: { ...settings.macroButton, [`icon${state}`]: icon } })} />
-        <Input label={t(`field.color${state}`)} value={settings.macroButton[`color${state}`]} validate={text => /^#[\da-f]{6}$/i.test(text) ? undefined : "invalidColor"} onCommit={color => save({ ...settings, macroButton: { ...settings.macroButton, [`color${state}`]: color } })} />
+        <ColorEditor label={t(`field.color${state}`)} value={settings.macroButton[`color${state}`]} onChange={color => save({ ...settings, macroButton: { ...settings.macroButton, [`color${state}`]: color } })} />
       </fieldset>)}
     </> : <>
       {(action === "gain-control-combo" ? [0, 1] as const : [0] as const).map(index => <ChannelEditor key={index} edition={status.connected ? status.edition : undefined} title={t(action === "gain-control-combo" ? (index === 0 ? "section.left" : "section.right") : "section.target")} value={settings.channels[index]} onChange={channel => {

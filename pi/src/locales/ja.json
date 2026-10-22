@@ -22,6 +22,7 @@
     "field.opticalSize": "オプティカルサイズ",
     "field.colorOn": "ONの背景色",
     "field.colorOff": "OFFの背景色",
+    "field.colorPicker": "{{label}}のカラーピッカー",
     "field.iconOn": "ONのアイコン",
     "field.iconOff": "OFFのアイコン",
     "kind.strip": "Strip",

@@ -14,6 +14,9 @@ legend { padding-inline-end: 8px; font-weight: 600; }
 input, select, button { font: inherit; color: inherit; border: 1px solid #454545; border-radius: 3px; background: #3d3d3d; min-block-size: 26px; padding: 4px 6px; }
 input:not([type=checkbox]), select { inline-size: 100%; }
 input[type=checkbox] { min-block-size: auto; margin-inline: 0; accent-color: #1688ce; }
+.color-editor { display: flex; align-items: center; gap: 6px; }
+.color-editor input[type=color] { flex: 0 0 34px; inline-size: 34px; block-size: 28px; padding: 2px; cursor: pointer; }
+.color-editor input[type=text] { flex: 1; min-inline-size: 0; }
 input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid #1688ce; outline-offset: 1px; }
 input[aria-invalid=true] { border-color: #ff9393; }
 .error { display: block; color: #ffb1b1; line-height: 1.5; overflow-wrap: anywhere; margin-block: 4px; }

@@ -41,6 +41,13 @@ Code points can be searched in the picker; there is no separate input field.
 All catalog data and fonts are bundled,
 so searching does not require network access.
 
+## Choose a background color
+
+Macro ON/OFF backgrounds each have a color swatch that opens the native color
+picker and a text field for `#RRGGBB` input. Both update the same setting and icon
+preview. Incomplete or invalid text is not saved; the picker keeps the last valid
+color until a valid value is selected or entered.
+
 ## Collect logs
 
 Logs are in `%LOCALAPPDATA%\jp.hrko.streamdeck.voicemeeter.rust\logs`:

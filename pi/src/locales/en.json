@@ -22,6 +22,7 @@
     "field.opticalSize": "Optical size",
     "field.colorOn": "ON background",
     "field.colorOff": "OFF background",
+    "field.colorPicker": "{{label}} color picker",
     "field.iconOn": "ON icon",
     "field.iconOff": "OFF icon",
     "kind.strip": "Strip",

@@ -25,6 +25,37 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("synchronizes native color pickers, hex input and previews without saving invalid text", async () => {
+    const { client, emit } = await setup("macro");
+    const on = screen.getByRole("group", { name: "ON icon" });
+    const picker = within(on).getByLabelText("ON background color picker") as HTMLInputElement;
+    const code = within(on).getByRole("textbox", { name: "ON background" }) as HTMLInputElement;
+    expect(picker.type).toBe("color");
+    fireEvent.change(picker, { target: { value: "#123456" } });
+    expect(code.value).toBe("#123456");
+    expect(within(on).getByRole("img").style.backgroundColor).toBe("rgb(18, 52, 86)");
+    let saved = vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.macroButton.colorOn).toBe("#123456");
+    expect(saved.macroButton.colorOff).toBe(defaultSettings.macroButton.colorOff);
+    fireEvent.change(code, { target: { value: "#AABBCC" } });
+    expect(picker.value).toBe("#aabbcc");
+    expect(within(on).getByRole("img").style.backgroundColor).toBe("rgb(170, 187, 204)");
+    vi.mocked(client.setSettings).mockClear();
+    for (const value of ["", "#12", "not-a-color"]) {
+      fireEvent.change(code, { target: { value } });
+      expect(within(on).getByRole("alert").textContent).toContain("#RRGGBB");
+      expect(picker.value).toBe("#aabbcc");
+      expect(client.setSettings).not.toHaveBeenCalled();
+    }
+    fireEvent.change(picker, { target: { value: "#010203" } });
+    expect(code.value).toBe("#010203");
+    expect(within(on).queryByRole("alert")).toBeNull();
+    saved = structuredClone(defaultSettings);
+    saved.macroButton.colorOn = "#fedcba";
+    emit("didReceiveSettings", saved);
+    expect(code.value).toBe("#fedcba");
+    expect(picker.value).toBe("#fedcba");
+  });
   it("opens a searchable picker, cancels without saving and applies only the selected Macro icon", async () => {
     const { client } = await setup("macro");
     const on = screen.getByRole("group", { name: "ON icon" });
