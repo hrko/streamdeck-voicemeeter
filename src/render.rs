@@ -33,11 +33,18 @@ fn place_icon(
     missing: &mut bool,
 ) -> String {
     match cache.get(settings) {
-        Ok(svg) => svg.replacen(
-            "viewBox=",
-            &format!("x=\"{x}\" y=\"{y}\" width=\"{size}\" height=\"{size}\" viewBox="),
-            1,
-        ),
+        Ok(svg) => {
+            // Stream Deck uses a native SVG renderer rather than a browser.
+            // Keep one viewport and place cached outlines with group transforms.
+            let inner = svg
+                .split_once('>')
+                .unwrap()
+                .1
+                .strip_suffix("</svg>")
+                .unwrap();
+            let scale = size / 100.0;
+            format!(r#"<g transform="translate({x} {y}) scale({scale})">{inner}</g>"#)
+        }
         Err(_) => {
             *missing = true;
             format!(
@@ -112,7 +119,7 @@ pub fn localized_frame(
         let font_size = label_size.clamp(7.0, 13.0);
         let _ = write!(
             body,
-            r##"<svg x="{x}" width="{width}" height="100" viewBox="0 0 {width} 100"><text x="4" y="15" font-size="{font_size}">{}</text>"##,
+            r##"<defs><clipPath id="channel-{index}"><rect width="{width}" height="100"/></clipPath></defs><g transform="translate({x} 0)" clip-path="url(#channel-{index})"><text x="4" y="15" font-size="{font_size}">{}</text>"##,
             escape(label)
         );
         body.push_str(&place_icon(
@@ -178,7 +185,7 @@ pub fn localized_frame(
         } else {
             body.push_str(r##"<path d="M8 60h40" stroke="#ffb1b1" stroke-width="2"/>"##);
         }
-        body.push_str("</svg>");
+        body.push_str("</g>");
     }
     Frame {
         svg: format!(
@@ -340,6 +347,7 @@ mod tests {
             &mut IconCache::default(),
         );
         assert!(!output.missing_glyph);
+        assert_eq!(output.svg.matches("<svg").count(), 1);
         assert!(!output.svg.contains("<script>"));
         assert!(output.svg.contains("&lt;script&gt;&amp;&quot;日本語"));
         assert!(output.svg.contains(">-12.5</text>"));

@@ -57,7 +57,12 @@ This is a progress record, not a release acceptance certificate.
 - Rebuilding always regenerates licenses. Pinned upstream license overrides
   verify package version, source commit and document hash. Unicode's additional
   license is explicitly required. Reviewer findings are recorded separately.
-- SHA-pinned Windows workflow added with mise 2026.10.3; remote execution pending.
+- SHA-pinned Windows workflow uses mise 2026.10.3. Remote run
+  [39811405913](https://github.com/hrko/streamdeck-voicemeeter/actions/runs/39811405913)
+  passed on commit `12206c8`, including tests, packaging and artifact upload.
+  CI exposed missing rustfmt/Clippy under minimal rustup profiles and checkout
+  EOL conversion of generated contracts/upstream notices. Setup now explicitly
+  installs components for locked Rust; Git attributes preserve required bytes.
 - Native debug and release EXEs register against a real loopback WebSocket server, report
   malformed settings and exits cleanly. Startup argument parsing excludes argv[0].
 - Rotating logs cap each file at 1 MiB and retain three generations; oversized
@@ -98,8 +103,8 @@ This is a progress record, not a release acceptance certificate.
 
 ## Required before release
 
-The user will sign local commits before the first push. GitHub execution is
-pending that handoff. The confirmed hardware environment is Windows 11,
+All commits were signed before the first push; subsequent fixes are signed.
+The confirmed hardware environment is Windows 11,
 Stream Deck + and Potato; the procedure and pending results are in
 [hardware-validation.md](hardware-validation.md).
 
@@ -108,7 +113,7 @@ Stream Deck + and Potato; the procedure and pending results are in
   hardware. Verify per-target API errors, reconnect recovery and queue saturation.
 - Real PI appearance/keyboard checks and rendered SVG visual verification.
 - Actual Stream Deck dev-link test.
-- Run the Windows build and draft-release workflows on GitHub.
+- Validate the draft-release path on GitHub; Windows build CI has passed.
 - Real Stream Deck PI and hardware, VoiceMeeter Basic/Banana/Potato behavior,
   restarts, offline behavior, overlapping actions, long labels, meter performance.
 - Record tested Windows/Stream Deck versions; do not claim untested support.

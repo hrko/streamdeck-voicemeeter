@@ -3,6 +3,15 @@
 Status: pending. Automated fake-backend and loopback tests do not constitute
 hardware acceptance. Do not mark a row passed without observing its result.
 
+## Initial observations (2026-10-23)
+
+Installation succeeded, and the user supplied a screenshot showing the PI with
+Potato connected. Gain/Combo touch-strip rendering remained blank both in the
+application and on hardware. Explicit layout selection and SVG dimensions did
+not resolve it after the installed EXE was hash-verified and Stream Deck restarted.
+A single-viewport SVG revision is under test. Do not treat the earlier render
+unit tests or the successful CI run as proof that hardware rendering works.
+
 ## Available environment
 
 - User-confirmed: Windows 11, Stream Deck +, VoiceMeeter Potato.
