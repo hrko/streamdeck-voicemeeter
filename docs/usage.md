@@ -49,7 +49,8 @@ Alternatively unlink the development installation and install a new package.
 
 `mise run test:native` uses a loopback test WebSocket server and launches the
 EXE without opening Stream Deck. It validates registration, rejection of malformed
-settings and clean shutdown. Test logs are isolated under `target/smoke-runtime`.
+settings and clean shutdown. Each run gets a new directory under
+`target/smoke-runtime`, so old log records cannot satisfy a later check.
 
 ## Prepare a GitHub release
 
@@ -81,6 +82,11 @@ Logs are in `%LOCALAPPDATA%\jp.hrko.streamdeck.voicemeeter.rust\logs`:
 Startup failures and panics are recorded, with timestamps, levels and fields.
 The default level is info; `RUST_LOG` can override it for a process launched from
 a diagnostic shell. This does not change settings saved in Stream Deck.
+Stream Deck also passes its inherited environment to plugins: for example,
+`RUST_LOG=warn` suppresses startup and normal-shutdown INFO records. For a full
+diagnostic session, close Stream Deck and launch it from a shell with
+`$env:RUST_LOG = 'info'`, then reproduce the issue. Changing the variable after
+Stream Deck has started does not change its existing child processes.
 
 When reporting a problem, provide the logs, Windows/Stream Deck/VoiceMeeter
 versions and edition, the action type, and reproduction steps. Inspect logs

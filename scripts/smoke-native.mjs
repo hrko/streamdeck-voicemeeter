@@ -1,15 +1,17 @@
 import { createServer } from "node:http";
 import { createHash } from "node:crypto";
-import { spawn } from "node:child_process";
-import { mkdir, readFile } from "node:fs/promises";
+import { spawn, spawnSync } from "node:child_process";
+import { mkdir, mkdtemp, readFile } from "node:fs/promises";
 import path from "node:path";
 import assert from "node:assert/strict";
 import { root, id, destination } from "./build-plugin.mjs";
 
 const profile = process.argv[2] ?? "debug";
 assert.ok(["debug", "release"].includes(profile));
-const runtime = path.join(root, "target", "smoke-runtime");
-await mkdir(runtime, { recursive: true });
+const runtimeRoot = path.join(root, "target", "smoke-runtime");
+await mkdir(runtimeRoot, { recursive: true });
+// Never accept startup/shutdown records left by an earlier successful run.
+const runtime = await mkdtemp(path.join(runtimeRoot, `${profile}-`));
 const server = createServer();
 let socket, child, registered = false, invalidRejected = false, layoutSelected = false;
 let resolveMessage, rejectMessage;
@@ -93,7 +95,20 @@ try {
   const log = await readFile(path.join(runtime, id, "logs/plugin.log"), "utf8");
   assert.match(log, /Plugin starting/);
   assert.match(log, /Plugin stopped/);
-  console.log("Native EXE registered, rejected malformed settings, selected its layout, sent SVG feedback and shut down cleanly with logs.");
+  assert.equal((log.match(/Plugin starting/g) ?? []).length, 1);
+  assert.equal((log.match(/Plugin stopped/g) ?? []).length, 1);
+  const failureRuntime = await mkdtemp(path.join(runtimeRoot, `${profile}-invalid-`));
+  const invalid = spawnSync(path.join(root, "target", profile, "streamdeck-voicemeeter.exe"), [], {
+    cwd: root, windowsHide: true, timeout: 5000,
+    env: { ...process.env, APPDATA: failureRuntime, LOCALAPPDATA: failureRuntime, RUST_LOG: "info" },
+  });
+  assert.ifError(invalid.error);
+  assert.equal(invalid.status, 1);
+  const failureLog = await readFile(path.join(failureRuntime, id, "logs/plugin.log"), "utf8");
+  assert.match(failureLog, /Plugin starting/);
+  assert.match(failureLog, /ERROR.*Plugin terminated with an error/);
+  assert.doesNotMatch(failureLog, /Plugin stopped/);
+  console.log("Native EXE registered, rejected malformed settings, sent SVG feedback and recorded fresh startup, shutdown and invalid-launch logs.");
 } finally {
   clearTimeout(timer);
   if (child && child.exitCode === null) child.kill();

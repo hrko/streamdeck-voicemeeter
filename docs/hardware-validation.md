@@ -94,7 +94,7 @@ manually when necessary.
 | PI appearance | Compare with a built-in PI at the same window size: colors, font size, label width, control height, spacing and focus. Record differences. | Pending |
 | Localization | Switch host language between Japanese and English and restart the plugin. Confirm translated PI/action labels and unchanged saved targets. | Pending |
 | Lifecycle/performance | Change pages repeatedly and operate multiple actions. No updates to disappeared actions, stale meter backlog or sustained excessive CPU usage. Record observed CPU and responsiveness. | Pending |
-| Diagnostics | Confirm startup/errors/shutdown in the documented rotating log directory; attach relevant excerpts to failures. | Pending |
+| Diagnostics | Confirm startup/errors/shutdown in the documented rotating log directory; attach relevant excerpts to failures. | Actual host WARN record observed in the documented directory; inherited `RUST_LOG=warn` suppresses INFO. Fresh isolated debug/release runs verify startup, normal shutdown and invalid-launch ERROR records. Normal host shutdown with INFO enabled is not separately recorded. |
 
 ## Coverage outside this machine
 
