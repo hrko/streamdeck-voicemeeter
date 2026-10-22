@@ -73,6 +73,9 @@ impl<const KIND: u8> DeckAction<KIND> {
             return Ok(());
         }
         let sender = ctx.sender().clone();
+        if Self::kind() != ActionKind::Macro {
+            ctx.set_feedback_layout("layouts/channel.json")?;
+        }
         let mut snapshots = self.client.snapshots.clone();
         let language = self.client.language.clone();
         let active = Arc::new(AtomicBool::new(true));
@@ -119,7 +122,10 @@ impl<const KIND: u8> DeckAction<KIND> {
                             None,
                         );
                     } else {
-                        let _ = sender.set_feedback(&context, &json!({"canvas":image}));
+                        if let Err(error) = sender.set_feedback(&context, &json!({"canvas":image}))
+                        {
+                            tracing::warn!(%error, "Could not send dial feedback");
+                        }
                     }
                     previous_image = frame.svg;
                 }

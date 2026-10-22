@@ -11,7 +11,7 @@ assert.ok(["debug", "release"].includes(profile));
 const runtime = path.join(root, "target", "smoke-runtime");
 await mkdir(runtime, { recursive: true });
 const server = createServer();
-let socket, child, registered = false;
+let socket, child, registered = false, invalidRejected = false, layoutSelected = false;
 let resolveMessage, rejectMessage;
 const completed = new Promise((resolve, reject) => { resolveMessage = resolve; rejectMessage = reject; });
 function send(payload) {
@@ -52,7 +52,20 @@ server.on("upgrade", (request, connection, head) => {
           registered = true;
           send({ event: "willAppear", action: `${id}.gain-control`, context: "smoke-action", device: "test", payload: { controller: "Encoder", settings: { channels: "invalid" } } });
           send({ event: "propertyInspectorDidAppear", action: `${id}.gain-control`, context: "smoke-action", device: "test", payload: {} });
-        } else if (message.event === "sendToPropertyInspector" && message.payload?.error?.code === "invalidSettings") resolveMessage();
+        } else if (!invalidRejected && message.event === "sendToPropertyInspector" && message.payload?.error?.code === "invalidSettings") {
+          invalidRejected = true;
+          send({ event: "didReceiveSettings", action: `${id}.gain-control`, context: "smoke-action", device: "test", payload: { settings: {} } });
+        } else if (message.event === "setFeedbackLayout") {
+          assert.equal(message.payload.layout, "layouts/channel.json");
+          layoutSelected = true;
+        } else if (message.event === "setFeedback") {
+          assert.ok(invalidRejected && layoutSelected);
+          assert.equal(message.context, "smoke-action");
+          assert.match(message.payload.canvas, /^data:image\/svg\+xml;base64,/);
+          const svg = Buffer.from(message.payload.canvas.split(",")[1], "base64").toString();
+          assert.match(svg, /width="200" height="100" viewBox="0 0 200 100"/);
+          resolveMessage();
+        }
       }
     } catch (error) { rejectMessage(error); }
   });
@@ -77,7 +90,7 @@ try {
   const log = await readFile(path.join(runtime, id, "logs/plugin.log"), "utf8");
   assert.match(log, /Plugin starting/);
   assert.match(log, /Plugin stopped/);
-  console.log("Native EXE registered over WebSocket, rejected malformed settings and shut down cleanly with logs.");
+  console.log("Native EXE registered, rejected malformed settings, selected its layout, sent SVG feedback and shut down cleanly with logs.");
 } finally {
   clearTimeout(timer);
   if (child && child.exitCode === null) child.kill();

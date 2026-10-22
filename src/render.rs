@@ -85,7 +85,7 @@ pub fn localized_frame(
         };
         return Frame {
             svg: format!(
-                r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144"><rect width="144" height="144" fill="{}"/>{path}{offline}</svg>"##,
+                r##"<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144"><rect width="144" height="144" fill="{}"/>{path}{offline}</svg>"##,
                 escape(color)
             ),
             missing_glyph: missing,
@@ -182,7 +182,7 @@ pub fn localized_frame(
     }
     Frame {
         svg: format!(
-            r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" fill="#ffffff" font-family="Arial, sans-serif"><rect width="200" height="100" fill="#202020"/>{body}</svg>"##
+            r##"<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100" viewBox="0 0 200 100" fill="#ffffff" font-family="Arial, sans-serif"><rect width="200" height="100" fill="#202020"/>{body}</svg>"##
         ),
         missing_glyph: missing,
     }
