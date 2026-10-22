@@ -161,7 +161,9 @@ Stream Deck + and Potato; the procedure and pending results are in
 - Confirm normal shutdown during Push, restart during Push, invalid
   targets and the exact Combo tap boundary. Fake-backend tests cover several
   of these invariants but do not establish actual DLL/hardware behavior.
-- Confirm Japanese/English host-language switching. Browser preview
+- English PI/action names for all three actions were confirmed by the owner
+  with screenshots, complementing the earlier Japanese checks. Confirm unchanged
+  saved targets across switching and the return to Japanese. Browser preview
   results are recorded separately in `visual-validation.md`.
 - Complete the representative
   physical/virtual target and state-flag matrix, and sustained responsiveness/
