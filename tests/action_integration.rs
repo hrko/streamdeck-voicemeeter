@@ -21,8 +21,15 @@ struct State {
     channels: BTreeMap<Target, ChannelSnapshot>,
     macros: BTreeMap<u8, bool>,
     writes: Vec<String>,
+    writes_at_drop: Option<Vec<String>>,
 }
 struct Fake(Arc<Mutex<State>>);
+impl Drop for Fake {
+    fn drop(&mut self) {
+        let mut state = self.0.lock().unwrap();
+        state.writes_at_drop = Some(state.writes.clone());
+    }
+}
 impl Backend for Fake {
     fn connect(&mut self) -> anyhow::Result<Option<Edition>> {
         Ok((!self.0.lock().unwrap().unavailable).then_some(Edition::Potato))
@@ -342,6 +349,27 @@ async fn sdk_shared_push_remains_on_until_last_action_disappears() {
         state.lock().unwrap().writes,
         vec!["macro:0:true", "macro:0:false"]
     );
+}
+
+#[tokio::test]
+async fn worker_shutdown_releases_held_push_before_backend_drop() {
+    let (worker, mut action, sender, _output, state) = setup::<2>(json!({})).await;
+    action
+        .handle(event("keyDown", json!({})), sender)
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().writes, vec!["macro:0:true"]);
+    // Keep the SDK action/client alive: shutdown must not depend on their drop.
+    drop(worker);
+    let expected = vec!["macro:0:true".to_owned(), "macro:0:false".to_owned()];
+    {
+        let state = state.lock().unwrap();
+        assert_eq!(state.writes, expected);
+        assert_eq!(state.writes_at_drop.as_ref(), Some(&expected));
+    }
+    drop(action);
+    assert_eq!(state.lock().unwrap().writes, expected);
 }
 
 #[tokio::test]

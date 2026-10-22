@@ -45,7 +45,14 @@ real mixer login, and CI tests event-driven exit with the WebSocket still open.
 The owner stopped VoiceMeeter for the one-time upgrade of the old binary.
 The installed replacement (`be11243a2520d99d9aa4ed5029021ec803e7c2deae0908750b8301a24ce7e79b`)
 then stopped gracefully through the helper and restarted successfully.
-Mixer restart/recovery and stable connection count await owner confirmation.
+The owner confirmed that meters and gain/mute operations recovered after mixer
+restart, but the full R-indicator display remained. Process start times confirmed
+that the mixer restarted; MacroButtons remained running across that restart.
+Readable process-module inspection found the Remote DLL only in the single Rust
+plugin process (this is not a complete inventory of all possible clients).
+The crate documents stale visual indicators when applications exit without logout;
+we have not proven whether the remaining display represents live or stale slots.
+A fully quiescent mixer/client restart and stable connection count remain pending.
 
 The subsequent Go appearance restoration (`fe5e769`, title defaults corrected
 in `79bed2c`) was also checked by the owner. Icons, status indicators, gain

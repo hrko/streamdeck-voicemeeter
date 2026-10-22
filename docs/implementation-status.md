@@ -14,7 +14,7 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- Rust tests after the appearance restoration: 28 Rust unit tests, 6 SDK/worker integration
+- Rust tests after the appearance restoration: 28 Rust unit tests, 7 SDK/worker integration
   tests and 13 PI/localization tests
   and 3 locale-validator/dependency-policy script tests.
 - React PI production bundle builds. Shared channel/icon forms, independent
@@ -51,6 +51,10 @@ This is a progress record, not a release acceptance certificate.
   action instances, final release on disappearance, rapid gain event accumulation,
   both gain limits and immediate reversal away from a limit. These tests use a
   fake backend and do not establish the real DLL's asynchronous write behavior.
+- Worker shutdown is tested with SDK clients still alive: held Push release
+  precedes backend destruction, and dropping the remaining action causes no
+  later writes. Development shutdown now uses an explicit Windows event instead
+  of force termination; native smoke tests never log into the real mixer.
 - Additional locale resources require no application code changes; regional
   fallback, partial translation fallback, long strings and RTL direction tested.
 - One GPT-6 Astra medium subagent reviewed the source-available license.
