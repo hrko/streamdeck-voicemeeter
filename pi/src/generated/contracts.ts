@@ -10,3 +10,61 @@ export type Settings = { schemaVersion: number, channels: [ChannelSettings, Chan
 export type ValidationError = { code: string, field: string, };
 
 export type Edition = "basic" | "banana" | "potato";
+
+export const defaultSettings: Settings = {
+  "schemaVersion": 1,
+  "channels": [
+    {
+      "target": {
+        "kind": "strip",
+        "index": 0
+      },
+      "gainStep": 3.0,
+      "icon": {
+        "codePoint": "e050",
+        "style": "rounded",
+        "weight": 400,
+        "fill": false,
+        "grade": 0,
+        "opticalSize": 48
+      }
+    },
+    {
+      "target": {
+        "kind": "bus",
+        "index": 0
+      },
+      "gainStep": 3.0,
+      "icon": {
+        "codePoint": "e050",
+        "style": "rounded",
+        "weight": 400,
+        "fill": false,
+        "grade": 0,
+        "opticalSize": 48
+      }
+    }
+  ],
+  "macroButton": {
+    "logicalId": 0,
+    "mode": "push",
+    "iconOn": {
+      "codePoint": "e837",
+      "style": "rounded",
+      "weight": 400,
+      "fill": false,
+      "grade": 0,
+      "opticalSize": 48
+    },
+    "iconOff": {
+      "codePoint": "e836",
+      "style": "rounded",
+      "weight": 400,
+      "fill": false,
+      "grade": 0,
+      "opticalSize": 48
+    },
+    "colorOn": "#067ba2",
+    "colorOff": "#004162"
+  }
+};

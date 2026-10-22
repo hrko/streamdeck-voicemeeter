@@ -14,7 +14,9 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- `mise run test`: 12 Rust tests, 4 localization tests, 1 locale-validator test.
+- `mise run test`: 15 Rust tests, 8 PI/localization tests, 1 locale-validator test.
+- Rust-generated defaults and PI validation preserve offline targets, reject
+  malformed stored values, and restore missing nested fields without guessing.
 - Subsequent `mise run test:rust` and `check:rust`: 15 Rust tests and static
   checks pass with the real API adapter and SDK action implementations.
 - Raw API adapter retains login across outages, reads UTF-16 names, maps meter
