@@ -36,12 +36,21 @@ settings and clean shutdown. Test logs are isolated under `target/smoke-runtime`
 
 ## Prepare a GitHub release
 
-The `Prepare draft release` workflow is manually dispatched with a tag matching
-the Cargo package version, such as `rust-v0.1.0`. It first runs the reusable
+The `Prepare draft release` workflow runs when a `rust-v*` tag is pushed. The
+tag must match the Cargo package version, such as `rust-v0.1.0`. This supports
+the independent `rust` branch without changing the repository's default branch.
+Create a signed release tag only when the desired commit is ready for review,
+then push that specific tag. The tag workflow first runs the reusable
 Windows build workflow, downloads that run's artifacts, verifies the package
 checksum, and creates a draft prerelease with the package and checksum attached.
 It does not publish the release. Existing releases are not overwritten; if an
 upload fails, inspect the draft before retrying.
+
+Manual dispatch is also supported once GitHub recognizes the workflow. Its UI
+requires the workflow on the default branch; see
+[GitHub's manual-trigger documentation](https://docs.github.com/en/actions/how-tos/manage-workflows/manually-running-a-workflow).
+Pass the same version-matching tag when using manual dispatch. Ordinary branch
+pushes run CI only and do not create releases.
 
 Before publishing, review the hardware acceptance record and included license
 texts. The current development candidate has not completed hardware acceptance.

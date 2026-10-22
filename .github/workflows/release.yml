@@ -1,5 +1,7 @@
 name: Prepare draft release
 on:
+  push:
+    tags: ['rust-v*']
   workflow_dispatch:
     inputs:
       tag:
@@ -36,5 +38,5 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: mise exec node -- node scripts/draft-release.mjs
