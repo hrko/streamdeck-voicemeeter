@@ -26,7 +26,7 @@ Stream Deck +のダイヤルでチャンネルを操作し、タッチディス�
 - ダイヤル操作にはStream Deck +、Macro操作にはStream Deckのキーが必要です。
 - Macroで使うボタンは、VoiceMeeter MacroButtons側でも設定してください。
 
-現在のバージョンは開発版で、安定版としては公開していません。
+バージョン0.1.5を[プレリリースとして公開しています](https://github.com/hrko/streamdeck-voicemeeter/releases/tag/rust-v0.1.5)。安定版ではありません。
 主な実機検証環境はWindows 11／Stream Deck +／Potatoです。
 Basic／Bananaでは起動・種別判定・チャンネルの選択肢を確認していますが、全機能の検証は完了していません。
 Windows 10とStream Deck 6.4は未検証です。詳細は[実機検証記録](docs/hardware-validation.md)を参照してください。
@@ -34,7 +34,7 @@ Windows 10とStream Deck 6.4は未検証です。詳細は[実機検証記録](d
 ## インストール
 
 1. VoiceMeeterとStream Deckソフトウェアを別途インストールします。VoiceMeeter DLLは同梱していません。
-2. このバージョンの検証済み`.streamDeckPlugin`パッケージを入手します。リリースのドラフトは一般公開されておらず、過去の公開リリースには旧実装が含まれる場合があります。ソースからビルドする場合は[開発ガイド](docs/development.md)を参照してください。
+2. [0.1.5のリリースページ](https://github.com/hrko/streamdeck-voicemeeter/releases/tag/rust-v0.1.5)から`.streamDeckPlugin`ファイルをダウンロードします。チェックサム確認用の`.sha256`ファイルも添付しています。ソースからビルドする場合は[開発ガイド](docs/development.md)を参照してください。
 3. パッケージをStream Deckで開き、インストールを承認します。
 4. Stream Deck上の現在の表示名である**VoiceMeeter (Rust)**からアクションを追加し、設定画面でチャンネルまたはMacroButton IDを選択します。
 

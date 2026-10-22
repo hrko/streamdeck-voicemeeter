@@ -26,7 +26,7 @@ or assign MacroButtons to keys.
 - Stream Deck + for dial actions; Stream Deck keys for Macro actions.
 - VoiceMeeter MacroButtons configured for the buttons used by Macro actions.
 
-This version is a development candidate, not a published stable release.
+Version 0.1.5 is available as a [public prerelease](https://github.com/hrko/streamdeck-voicemeeter/releases/tag/rust-v0.1.5), not a stable release.
 The main hardware testing used Windows 11 / Stream Deck + / Potato.
 Basic/Banana startup, edition detection and channel choices were checked, but
 their full feature matrix was not. Windows 10 and Stream Deck 6.4 remain untested.
@@ -35,7 +35,7 @@ See the [hardware validation record](docs/hardware-validation.md) for details.
 ## Installation
 
 1. Install VoiceMeeter and Stream Deck software separately. The plugin does not include the VoiceMeeter DLL.
-2. Obtain a reviewed `.streamDeckPlugin` package for this version. Draft releases are not publicly downloadable; older releases may contain the previous implementation. To build from source, see the [development guide](docs/development.md).
+2. Download the `.streamDeckPlugin` file from the [0.1.5 release](https://github.com/hrko/streamdeck-voicemeeter/releases/tag/rust-v0.1.5). Its `.sha256` file is available for checksum verification. To build from source, see the [development guide](docs/development.md).
 3. Open the package with Stream Deck and approve installation.
 4. Add an action from **VoiceMeeter (Rust)**, its current name in Stream Deck, and select the channel or MacroButton ID in its settings.
 

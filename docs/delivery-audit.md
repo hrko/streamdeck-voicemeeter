@@ -1,8 +1,9 @@
 # Rust rewrite delivery audit
 
 Recorded on 2026-10-23. Implementation and preparation of the GitHub distribution
-candidate are complete. Public publication and Marketplace submission have not
-been performed. This record does not certify every supported environment.
+candidate are complete. Version 0.1.5 was subsequently published as a prerelease
+at the owner's request on 2026-10-23. Marketplace submission has not been
+performed. This record does not certify every supported environment.
 
 | Planned area | Evidence |
 | --- | --- |
@@ -16,7 +17,7 @@ been performed. This record does not certify every supported environment.
 
 The 0.1.5 package SHA-256 is
 `2ef6d3197937b5288aa12d891882bba8c2282c43fc44dbcb0f49305173a7a34a`.
-Its GitHub release remains a draft. The existing installed development build
+Its GitHub release is now a public prerelease. The existing installed development build
 contains the accepted fixes; the release version bump did not require another
 hardware restart.
 

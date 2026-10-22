@@ -2,6 +2,10 @@
 
 This is a progress record, not a release acceptance certificate.
 
+Publication update (2026-10-23): at the owner's request, `rust-v0.1.5` is now
+a public prerelease with the verified package and checksum. Earlier draft
+observations below describe their status at the time of verification.
+
 ## Verified
 
 - Independent root commit on `rust` (renamed to default `main` on 2026-10-23);

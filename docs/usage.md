@@ -1,6 +1,6 @@
 # Installation and diagnostics
 
-The current artifact is for development validation. Hardware acceptance is not
+Version 0.1.5 is a [public prerelease](https://github.com/hrko/streamdeck-voicemeeter/releases/tag/rust-v0.1.5). Hardware acceptance is not
 complete; see implementation-status.md before treating it as a stable release.
 Use [hardware-validation.md](hardware-validation.md) to record actual device
 results and untested environments.
