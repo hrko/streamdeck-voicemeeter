@@ -136,6 +136,14 @@ This is a progress record, not a release acceptance certificate.
   The draft notes explicitly identify that omission. The fix is installed locally;
   its SDK test covers page reentry without a slash and real outages with a slash.
 
+- Signed tag `rust-v0.1.3` points to `c02f831` and includes the Macro page-entry
+  and development shutdown fixes. GitHub workflow `39826438315` completed
+  successfully. The draft package was downloaded independently; its SHA-256
+  matched both the sidecar and GitHub asset digest:
+  `a4fbcbf002a3103b4895e55022fb955cb853d105bd613957fb4e80093f63cb0e`.
+  It remains unpublished. This packaging verification does not replace the
+  outstanding hardware checks recorded in `hardware-validation.md`.
+
 ## Required before release
 
 All commits were signed before the first push; subsequent fixes are signed.
