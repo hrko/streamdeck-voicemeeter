@@ -2,5 +2,8 @@
   "name": "streamdeck-voicemeeter",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
-  "packageManager": "pnpm@11.25.0"
+  "packageManager": "pnpm@11.28.6",
+  "devDependencies": {
+    "@elgato/cli": "1.10.2"
+  }
 }
