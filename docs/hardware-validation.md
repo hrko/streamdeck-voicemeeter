@@ -148,6 +148,18 @@ manually when necessary.
 | Lifecycle/performance | Change pages repeatedly and operate multiple actions. No updates to disappeared actions, stale meter backlog or sustained excessive CPU usage. Record observed CPU and responsiveness. | Pending |
 | Diagnostics | Confirm startup/errors/shutdown in the documented rotating log directory; attach relevant excerpts to failures. | Actual host WARN record observed in the documented directory; inherited `RUST_LOG=warn` suppresses INFO. Fresh isolated debug/release runs verify startup, normal shutdown and invalid-launch ERROR records. Normal host shutdown with INFO enabled is not separately recorded. |
 
+## Read-only runtime sample
+
+On 2026-10-23, the installed development process (PID 72316, started at
+02:49:26 JST) remained the only matching plugin process. A 30.008-second sample
+without scripted input consumed 2.125 CPU seconds: 7.08% of one logical CPU,
+or approximately 0.22% of the 32-logical-processor machine's total capacity.
+Working set at the end was 31,068,160 bytes. The log tail contained successful
+login and the preceding normal shutdown/logout records, with no subsequent
+error entries in that tail. This is a short observation of the current user
+configuration, not a controlled idle benchmark, release-build benchmark or
+long-duration responsiveness/connection-leak test.
+
 ## Coverage outside this machine
 
 | Environment | Status |
