@@ -22,5 +22,9 @@ Other test choices: `lang=ar`, `lang=long`, and `action=gain-control-combo`.
 Synthetic resources exist only in the preview entry. Package validation rejects
 the preview HTML and its long-translation marker in production JavaScript.
 
-Still required: compare with built-in plugin inspectors inside Stream Deck,
-verify CEF-version behavior, and inspect rendered touch-strip SVGs on hardware.
+The owner subsequently confirmed touch-strip rendering, Japanese labels and
+font-detail controls in Stream Deck 7.0.3 on Windows 11, plus corrected falling
+peak meters on Gain/Combo. See hardware-validation.md for the exact tested build.
+Still required: a side-by-side built-in inspector comparison and validation on
+the minimum supported Stream Deck/CEF version. The browser-only long-text/RTL
+checks above do not establish embedded-browser results on other versions.

@@ -29,7 +29,7 @@ This is a progress record, not a release acceptance certificate.
   Build output contains local TTF assets and requires no font CDN.
 - SVG channel frames include escaped labels, gain, stereo meters and state
   flags. Macro frames follow external state and use separate icons/colors.
-  SDK callbacks send changed images only; hardware layout validation is pending.
+  SDK callbacks send changed images only; Gain/Combo display is confirmed on Stream Deck +.
 - Rust-generated defaults and PI validation preserve offline targets, reject
   malformed stored values, and restore missing nested fields without guessing.
 - Raw API adapter retains login across outages, reads UTF-16 names, maps meter
@@ -111,7 +111,8 @@ This is a progress record, not a release acceptance certificate.
   is shared per target and cleared on disconnect/read failure/removal. Regression
   tests cover elapsed-time decay, independent stereo levels, shared subscriptions,
   reset, silence and the current-level marker. Rust checks and package validation
-  passed; installed hardware confirmation remains pending.
+  passed. The user confirmed corrected decay/current markers on Gain/Combo and
+  normal operation with multiple meters for the same target (`04ab431`).
 - Draft assets were downloaded independently and their actual package SHA-256
   matched both the sidecar and GitHub asset digest recorded above.
 

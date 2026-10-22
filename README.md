@@ -1,7 +1,10 @@
 # VoiceMeeter for Stream Deck — Rust rewrite
 
-This branch is an independent Rust reimplementation. It is under development
-and is not yet a usable plugin release.
+This branch is an independent Rust reimplementation with installable development
+packages. Gain Control, Gain Control Combo and Macro have been exercised on
+Windows 11 / Stream Deck + / VoiceMeeter Potato. Release acceptance is still in
+progress; see the [hardware validation record](docs/hardware-validation.md) for
+confirmed behavior and untested environments.
 
 The original Go implementation remains on `main`, at commit
 `8ab6ae9522423747bd3be7f9a667c82200d583dd`.
@@ -56,9 +59,12 @@ layout with Elgato's CLI and compares every archived file with its staged source
 The plugin contains no VoiceMeeter DLL. `mise run ci` runs checks, tests and this
 same packaging flow and rejects lockfile changes.
 
-These are development artifacts, not a hardware-validated release. Runtime
-integration, visual checks, and hardware acceptance remain in progress;
-see [implementation status](docs/implementation-status.md).
+These are development artifacts. Normal actions, recovery without replaying
+offline input, Push release on page/target changes, shared-target synchronization,
+meter decay, Japanese labels and font controls have passed the recorded Potato
+checks. Basic/Banana, Windows 10 and the minimum Stream Deck 6.4 version remain
+untested. See [implementation status](docs/implementation-status.md) for remaining
+release checks.
 
 Installation, action behavior, development linking and log locations are in
 [usage and diagnostics](docs/usage.md).

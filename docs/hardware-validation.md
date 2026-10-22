@@ -26,7 +26,10 @@ target on page/target changes, shared-target display synchronization, state
 flags and Japanese labels. The user separately confirmed all icon font detail
 controls. Meter decay differed from the Go version: the Rust renderer lacked
 its 12 dB/second filled falling peak and instantaneous-level marker. The fix
-restores these with shared per-target history; hardware recheck is pending.
+restores these with shared per-target history. The user confirmed the corrected
+decay and current-level marker on Gain/Combo, including multiple meters for the
+same target. Tested EXE from `04ab431` has SHA-256
+`fd553dfdde4b24ce1f1ab1b3a1f4ee9c9ae6f929c3572d687f6d87720909f46b`.
 
 ## Available environment
 
@@ -49,12 +52,12 @@ the development link. The new plugin ID does not migrate existing settings.
 
 | Field | Observed value |
 | --- | --- |
-| Commit / package SHA-256 | Pending |
+| Commit / package SHA-256 | Installed EXE from `04ab431`, hash above; package was followed by an EXE replacement. |
 | Windows build | Windows 11, 26H2, 26300.9711 |
-| Stream Deck / firmware | Pending |
-| VoiceMeeter edition/version | Pending |
-| Install or development link | Pending |
-| Date / tester | Pending |
+| Stream Deck / firmware | App 7.0.3.22071; firmware not recorded |
+| VoiceMeeter edition/version | Potato 3.1.2.2 |
+| Install or development link | Package installation, then verified EXE replacement |
+| Date / tester | 2026-10-23 JST / repository owner |
 
 ## Single-session procedure
 
@@ -76,7 +79,7 @@ manually when necessary.
 | Overlapping Push | Hold two actions pointing at one MacroButton; releasing the first keeps it ON, releasing the last turns it OFF. | Pending |
 | Restart during Push | Restart VoiceMeeter during a hold. The old press/release must not be replayed in the new session; a fresh press/release works. | Pending |
 | Invalid target | Configure an out-of-range Strip/Bus or Macro ID; show an error and never operate on target zero. | Pending |
-| State and meters | Compare stereo meters, mute, solo, routing, Mono/MC and EQ against VoiceMeeter on representative physical/virtual strips and buses. | Mute/Solo/routing and other state displays synchronize per user. Meter decay discrepancy reported; fix awaiting hardware recheck. Full target/flag matrix not individually recorded. |
+| State and meters | Compare stereo meters, mute, solo, routing, Mono/MC and EQ against VoiceMeeter on representative physical/virtual strips and buses. | State synchronization passed. Corrected meter decay/current marker and shared-meter behavior passed per user on `04ab431`. Full target/flag matrix not individually recorded. |
 | Rendering | Use long and non-ASCII labels, three icon styles and extreme supported axes. No cross-channel overlap; missing codepoints show a warning/fallback. | Japanese labels and font-detail controls passed per user. Long-label/extreme-axis/missing-codepoint cases not separately recorded. |
 | PI | Restore settings, edit independent Combo values and Macro colors/icons, expand details, enter invalid numbers and navigate by keyboard. Invalid intermediate values are not saved. | Pending |
 | PI appearance | Compare with a built-in PI at the same window size: colors, font size, label width, control height, spacing and focus. Record differences. | Pending |
