@@ -13,7 +13,7 @@ pnpm = "11"
 rust = "1.99"
 
 [tasks.setup]
-run = ["mise install --locked node pnpm rust", "pnpm install --frozen-lockfile", "node scripts/doctor.mjs"]
+run = ["mise install --locked node pnpm rust", "mise exec node pnpm rust -- pnpm install --frozen-lockfile", "mise exec node pnpm rust -- node scripts/doctor.mjs"]
 
 [tasks."check:locales"]
 run = "node scripts/check-locales.mjs"
