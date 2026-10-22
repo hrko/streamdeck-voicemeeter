@@ -98,6 +98,11 @@ This is a progress record, not a release acceptance certificate.
 
 ## Required before release
 
+The user will sign local commits before the first push. GitHub execution is
+pending that handoff. The confirmed hardware environment is Windows 11,
+Stream Deck + and Potato; the procedure and pending results are in
+[hardware-validation.md](hardware-validation.md).
+
 - Real VoiceMeeter adapter and worker integration tests. Review asynchronous
   gain writes against the SDK cache before claiming rapid-input correctness on
   hardware. Verify per-target API errors, reconnect recovery and queue saturation.
