@@ -10,7 +10,8 @@ const filenames = [`${id}.streamDeckPlugin`, `${id}.streamDeckPlugin.sha256`];
 const files = await Promise.all(filenames.map(async name => ({ name, bytes: await readFile(path.join(root, "dist", name)) })));
 const digest = createHash("sha256").update(files[0].bytes).digest("hex");
 if (files[1].bytes.toString().trim() !== `${digest}  ${filenames[0]}`) throw new Error("Release checksum does not match package");
-const body = "Rust rewrite development candidate. Review the hardware acceptance record before publishing.\n\nThe plugin uses a new ID and requires reconfiguration; old settings are not migrated. Windows x64 and VoiceMeeter installed separately are required. Third-party notices and license texts are included in the plugin archive. See docs/usage.md, docs/implementation-status.md and LICENSE for installation, validation limits and distribution terms.";
+const notes = await readFile(path.join(root, "docs", "release-notes", `${version}.md`), "utf8");
+const body = notes + "\n\nThe plugin uses a new ID and requires reconfiguration; old settings are not migrated. Windows x64 and VoiceMeeter installed separately are required. Third-party notices and license texts are included in the plugin archive. See docs/usage.md, docs/hardware-validation.md and LICENSE for installation, validation limits and distribution terms.";
 if (process.argv.includes("--dry-run")) {
   console.log(JSON.stringify({ tag, draft: true, assets: files.map(file => ({ name: file.name, bytes: file.bytes.length })), sha256: digest }, null, 2));
 } else {
