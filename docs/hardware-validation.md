@@ -14,13 +14,20 @@ The user confirmed that display appeared after the single-viewport SVG revision
 the existing icon paths and settings remain intact. This confirms resolution of
 the blank display, not every rendering/state/meter acceptance item below.
 
+The user then confirmed all requested normal-operation checks: Gain rotation
+with a 3 dB step and push/tap mute, independent Combo steps with normal/pressed
+rotation and left/right tap mute, and Macro Toggle/Push with external-state
+synchronization. These observations apply to Windows 11 / Stream Deck + /
+Potato only. Limits, restart/lifecycle cases and visual details remain separate.
+
 ## Available environment
 
 - User-confirmed: Windows 11, Stream Deck +, VoiceMeeter Potato.
 - Installed Stream Deck executable: 7.0.3.22071 (file metadata).
 - Installed Potato executable: 3.1.2.2 (file metadata).
-- Exact Windows build, connected device firmware and running application
-  versions: not yet recorded.
+- Windows release/build read from the registry: 26H2 / 26300.9711. The user
+  identifies the OS as Windows 11 (the legacy ProductName registry value says
+  Windows 10 Pro). Device firmware is not yet recorded.
 - Basic and Banana executables exist locally, but neither edition has been
   confirmed as an available test environment. Windows 10 is also unverified.
 
@@ -35,7 +42,7 @@ the development link. The new plugin ID does not migrate existing settings.
 | Field | Observed value |
 | --- | --- |
 | Commit / package SHA-256 | Pending |
-| Windows build | Pending |
+| Windows build | Windows 11, 26H2, 26300.9711 |
 | Stream Deck / firmware | Pending |
 | VoiceMeeter edition/version | Pending |
 | Install or development link | Pending |
@@ -50,14 +57,14 @@ manually when necessary.
 
 | Check | Procedure and expected behavior | Result |
 | --- | --- | --- |
-| Installation | Install or dev-link; all three actions appear without replacing the old plugin. | Pending |
+| Installation | Install or dev-link; all three actions appear without replacing the old plugin. | Package installed; all three actions exercised. Development link untested. |
 | Offline PI | Open PI with VoiceMeeter stopped; forms and saved settings remain usable and status reports disconnected. | Pending |
 | Startup recovery | Start Potato; status and displays recover without reloading the plugin. Offline operations are not replayed. | Pending |
-| Gain | Rotate slowly and rapidly with a 3 dB step; values accumulate and stop at -60/+12 dB. Press and tap toggle mute. | Pending |
-| Combo | Set left step 3 and right step 0.5. Rotate normally and while pressed; each side uses its own target/step. Tap either half and the center boundary; only the expected target toggles. | Pending |
+| Gain | Rotate slowly and rapidly with a 3 dB step; values accumulate and stop at -60/+12 dB. Press and tap toggle mute. | 3 dB rotation and press/tap mute passed per user; rapid input/limits not separately confirmed. |
+| Combo | Set left step 3 and right step 0.5. Rotate normally and while pressed; each side uses its own target/step. Tap either half and the center boundary; only the expected target toggles. | Independent steps, normal/pressed rotation and left/right mute passed per user; exact center boundary not separately confirmed. |
 | Shared targets | Put the same target on multiple actions. Operate either and change gain/mute in VoiceMeeter; all displays converge. | Pending |
-| Toggle | Press a Macro Toggle repeatedly, then change its state externally; state, icon and color synchronize. | Pending |
-| Push | Hold/release a Macro Push. Repeat while changing its target/settings, changing page and normally closing the plugin; original target is released when communication remains available. | Pending |
+| Toggle | Press a Macro Toggle repeatedly, then change its state externally; state, icon and color synchronize. | Passed per user. |
+| Push | Hold/release a Macro Push. Repeat while changing its target/settings, changing page and normally closing the plugin; original target is released when communication remains available. | Normal Push passed per user; lifecycle cases pending. |
 | Overlapping Push | Hold two actions pointing at one MacroButton; releasing the first keeps it ON, releasing the last turns it OFF. | Pending |
 | Restart during Push | Restart VoiceMeeter during a hold. The old press/release must not be replayed in the new session; a fresh press/release works. | Pending |
 | Invalid target | Configure an out-of-range Strip/Bus or Macro ID; show an error and never operate on target zero. | Pending |
