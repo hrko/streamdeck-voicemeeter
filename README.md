@@ -62,9 +62,13 @@ same packaging flow and rejects lockfile changes.
 These are development artifacts. Normal actions, recovery without replaying
 offline input, Push release on page/target changes, shared-target synchronization,
 meter decay, Japanese labels and font controls have passed the recorded Potato
-checks. Basic/Banana, Windows 10 and the minimum Stream Deck 6.4 version remain
-untested. See [implementation status](docs/implementation-status.md) for remaining
-release checks.
+checks. Subsequent checks confirmed normal-exit Push release, Karaoke indication,
+English/Japanese switching and settings retention. Basic/Banana startup, edition
+detection and channel choices have been checked; their full feature matrix is
+not verified. Windows 10 and the minimum Stream Deck 6.4 version remain untested.
+Extended stability observation is deferred to daily use at the owner's request.
+See [implementation status](docs/implementation-status.md) for remaining release
+checks.
 
 Installation, action behavior, development linking and log locations are in
 [usage and diagnostics](docs/usage.md).

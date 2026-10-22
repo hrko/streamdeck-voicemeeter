@@ -151,6 +151,13 @@ This is a progress record, not a release acceptance certificate.
   `57eb9e6ce92de603d094cdef79e28f89057c195e20ddb8e5fa70d3874947bc3b`.
   The release remains an unpublished development candidate.
 
+- Signed tag `rust-v0.1.5` points to `946c463`, including the owner-confirmed
+  Karaoke, edition-choice and Macro shutdown fixes. Workflow `39843231127`
+  passed build and draft creation. Downloaded package size is 33,672,617 bytes;
+  actual SHA-256 matched the sidecar and GitHub asset digest:
+  `2ef6d3197937b5288aa12d891882bba8c2282c43fc44dbcb0f49305173a7a34a`.
+  The draft remains unpublished.
+
 ## Required before release
 
 All commits were signed before the first push; subsequent fixes are signed.
@@ -180,7 +187,7 @@ Tab navigation/editing, invalid-save suppression and missing-glyph warning/
 fallback. PI appearance was broadly acceptable except for the text font;
 the owner subsequently confirmed the requested system-ui correction.
 
-The corrected 0.1.4 candidate and its downloaded assets are verified above.
+The corrected 0.1.5 candidate and its downloaded assets are verified above.
 Outstanding hardware checks prevent treating it as a fully accepted stable
 release; they do not invalidate the completed packaging checks.
 
