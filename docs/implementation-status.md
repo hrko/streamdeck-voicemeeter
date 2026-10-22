@@ -14,7 +14,12 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- `mise run test`: 15 Rust tests, 8 PI/localization tests, 1 locale-validator test.
+- `mise run test`: 15 Rust tests; subsequent PI run: 12 PI/localization tests
+  and 1 locale-validator test.
+- React PI production bundle builds. Shared channel/icon forms, independent
+  Combo settings, Macro controls, explicit invalid-setting reset, translated
+  status/errors and local standard-style CSS are implemented. Form interaction
+  tests cover invalid-input suppression, independent values and settings refresh.
 - Rust-generated defaults and PI validation preserve offline targets, reject
   malformed stored values, and restore missing nested fields without guessing.
 - Subsequent `mise run test:rust` and `check:rust`: 15 Rust tests and static

@@ -1,6 +1,7 @@
 {
   "translation": {
     "app.name": "VoiceMeeter",
+    "settings.reset": "Reset invalid settings",
     "action.gain": "Gain Control",
     "action.combo": "Gain Control Combo",
     "action.macro": "Macro",

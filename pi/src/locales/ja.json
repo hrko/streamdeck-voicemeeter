@@ -1,6 +1,7 @@
 {
   "translation": {
     "app.name": "VoiceMeeter",
+    "settings.reset": "不正な設定を初期化",
     "action.gain": "ゲイン操作",
     "action.combo": "2チャンネルのゲイン操作",
     "action.macro": "マクロ",

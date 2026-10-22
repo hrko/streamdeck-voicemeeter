@@ -1,0 +1,21 @@
+:root { color-scheme: dark; font-family: Arial, "Segoe UI", sans-serif; font-size: 12px; color: #d8d8d8; background: #2d2d2d; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 8px 12px; }
+main { max-inline-size: 520px; margin-inline: auto; }
+fieldset { min-inline-size: 0; border: 0; border-block-start: 1px solid #454545; padding: 10px 0 4px; margin: 12px 0 0; }
+legend { padding-inline-end: 8px; font-weight: 600; }
+.row { display: flex; align-items: baseline; gap: 8px; margin-block: 6px; }
+.row-label { flex: 0 0 94px; text-align: end; overflow-wrap: anywhere; line-height: 1.5; }
+.row-value { flex: 1; min-inline-size: 0; }
+input, select, button { font: inherit; color: inherit; border: 1px solid #454545; border-radius: 3px; background: #3d3d3d; min-block-size: 26px; padding: 4px 6px; }
+input:not([type=checkbox]), select { inline-size: 100%; }
+input[type=checkbox] { min-block-size: auto; margin-inline: 0; accent-color: #1688ce; }
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid #1688ce; outline-offset: 1px; }
+input[aria-invalid=true] { border-color: #ff9393; }
+.error { display: block; color: #ffb1b1; line-height: 1.5; overflow-wrap: anywhere; margin-block: 4px; }
+.help { color: #aaa; line-height: 1.5; margin-block: 8px; overflow-wrap: anywhere; }
+.status { line-height: 1.5; margin-block: 4px 10px; }
+details { margin-block: 8px; }
+summary { cursor: pointer; padding-block: 4px; }
+button { cursor: pointer; }
+@media (max-width: 260px) { .row { flex-wrap: wrap; } .row-label { flex-basis: 100%; text-align: start; } }
