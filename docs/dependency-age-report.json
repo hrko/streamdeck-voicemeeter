@@ -1,0 +1,142 @@
+{
+  "checkedAt": "2026-10-22T15:23:42.477Z",
+  "minimumReleaseAge": "7d",
+  "mode": "audit",
+  "records": [
+    {
+      "name": "node",
+      "version": "24.22.0",
+      "publishedAt": "2026-10-14",
+      "status": "eligible",
+      "source": "https://nodejs.org/dist/index.json"
+    },
+    {
+      "name": "pnpm",
+      "version": "11.28.6",
+      "publishedAt": "2026-10-15T13:39:30.647Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/pnpm"
+    },
+    {
+      "name": "rust",
+      "version": "1.99.0",
+      "publishedAt": "2026-10-01",
+      "status": "eligible",
+      "source": "https://static.rust-lang.org/dist/channel-rust-1.99.0.toml"
+    },
+    {
+      "name": "mise-bootstrap",
+      "version": "2026.10.3",
+      "publishedAt": "2026-10-05T10:35:27Z",
+      "status": "eligible",
+      "source": "https://api.github.com/repos/jdx/mise/releases/tags/v2026.10.3"
+    },
+    {
+      "name": "@elgato/cli",
+      "version": "1.10.2",
+      "publishedAt": "2026-10-08T16:02:58.386Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/%40elgato%2Fcli"
+    },
+    {
+      "name": "@mikanseilaboratory/streamdeck-pi-client",
+      "version": "0.1.0",
+      "publishedAt": "2026-09-12T07:03:03.739Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/%40mikanseilaboratory%2Fstreamdeck-pi-client"
+    },
+    {
+      "name": "i18next",
+      "version": "26.4.5",
+      "publishedAt": "2026-10-14T14:28:21.868Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/i18next"
+    },
+    {
+      "name": "react",
+      "version": "19.3.1",
+      "publishedAt": "2026-10-14T16:47:15.290Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/react"
+    },
+    {
+      "name": "react-dom",
+      "version": "19.3.1",
+      "publishedAt": "2026-10-14T16:49:10.081Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/react-dom"
+    },
+    {
+      "name": "react-i18next",
+      "version": "17.0.16",
+      "publishedAt": "2026-10-06T12:19:42.259Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/react-i18next"
+    },
+    {
+      "name": "@testing-library/react",
+      "version": "16.3.3",
+      "publishedAt": "2026-08-27T17:41:18.735Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/%40testing-library%2Freact"
+    },
+    {
+      "name": "@testing-library/user-event",
+      "version": "14.6.8",
+      "publishedAt": "2026-10-13T06:41:22.306Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/%40testing-library%2Fuser-event"
+    },
+    {
+      "name": "@types/react",
+      "version": "19.3.0",
+      "publishedAt": "2026-09-09T18:08:49.750Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/%40types%2Freact"
+    },
+    {
+      "name": "@types/react-dom",
+      "version": "19.3.0",
+      "publishedAt": "2026-09-09T18:07:51.886Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/%40types%2Freact-dom"
+    },
+    {
+      "name": "@vitejs/plugin-react",
+      "version": "6.1.2",
+      "publishedAt": "2026-10-05T10:08:27.143Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/%40vitejs%2Fplugin-react"
+    },
+    {
+      "name": "jsdom",
+      "version": "30.1.3",
+      "publishedAt": "2026-10-15T09:24:38.912Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/jsdom"
+    },
+    {
+      "name": "typescript",
+      "version": "7.0.2",
+      "publishedAt": "2026-07-08T15:55:18.431Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/typescript"
+    },
+    {
+      "name": "vite",
+      "version": "8.3.4",
+      "publishedAt": "2026-10-08T12:07:04.441Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/vite"
+    },
+    {
+      "name": "vitest",
+      "version": "5.0.4",
+      "publishedAt": "2026-10-12T09:47:02.826Z",
+      "status": "eligible",
+      "source": "https://registry.npmjs.org/vitest"
+    }
+  ],
+  "cargoLibraryPolicy": "Cargo library resolution is not governed by mise minimum_release_age. Cargo updates require separate review.",
+  "result": "passed"
+}

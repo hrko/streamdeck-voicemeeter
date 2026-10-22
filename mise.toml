@@ -34,7 +34,7 @@ depends = ["check:rust", "check:pi", "check:locales"]
 run = "cargo test --locked"
 
 [tasks."test:pi"]
-run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test scripts/check-locales.test.mjs scripts/build-plugin.test.mjs"]
+run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test scripts/check-locales.test.mjs scripts/build-plugin.test.mjs scripts/dependency-policy.test.mjs"]
 
 [tasks.test]
 depends = ["test:rust", "test:pi", "test:native"]
@@ -59,3 +59,9 @@ run = ["cargo build --locked --bin streamdeck-voicemeeter", "pnpm --filter @stre
 
 [tasks.ci]
 run = ["mise run check", "mise run test", "mise run package", "git diff --exit-code -- mise.lock pnpm-lock.yaml Cargo.lock"]
+
+[tasks."deps:update"]
+run = "node scripts/update-dependencies.mjs"
+
+[tasks."deps:audit"]
+run = "node scripts/update-dependencies.mjs --audit"
