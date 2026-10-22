@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
 import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError } from "./generated/contracts";
 import { restoreSettings, validateSettings } from "./settings";
+import glyphs from "./generated/glyphs.json";
 
 export interface Status { connected: boolean; edition?: Edition; error?: ValidationError | null }
 
@@ -38,10 +39,14 @@ function Select<T extends string | number>({ label, value, options, onChange }: 
   }}>{options.map(([value, title]) => <option key={value} value={value}>{title}</option>)}</select></Row>;
 }
 
-function IconEditor({ value, onChange }: { value: IconSettings; onChange: (value: IconSettings) => void }) {
+function IconEditor({ value, onChange, background }: { value: IconSettings; onChange: (value: IconSettings) => void; background?: string }) {
   const { t } = useTranslation();
   const patch = (next: Partial<IconSettings>) => onChange({ ...value, ...next });
+  const codePoint = Number.parseInt(value.codePoint, 16);
+  const present = glyphs[value.style].includes(codePoint);
   return <>
+    <div className="icon-preview" role="img" aria-label={t("preview.icon")} style={{ backgroundColor: background, fontFamily: `Symbols-${value.style}`, fontVariationSettings: `'FILL' ${Number(value.fill)}, 'wght' ${value.weight}, 'GRAD' ${value.grade}, 'opsz' ${value.opticalSize}` }}>{present ? String.fromCodePoint(codePoint) : "□"}</div>
+    {!present && <p className="error" role="alert">{t("error.missingGlyph")}</p>}
     <Input label={t("field.codePoint")} value={value.codePoint} onCommit={codePoint => patch({ codePoint })} validate={text => {
       const code = Number.parseInt(text, 16);
       return /^[\da-f]{1,6}$/i.test(text) && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? undefined : "invalidCodePoint";
@@ -100,7 +105,7 @@ export function App({ client }: { client: StreamDeckPiApi }) {
       <Select label={t("field.mode")} value={settings.macroButton.mode} options={[["push", t("mode.push")], ["toggle", t("mode.toggle")]]} onChange={mode => save({ ...settings, macroButton: { ...settings.macroButton, mode } })} />
       <p className="help">{t("help.macro")}</p>
       {(["On", "Off"] as const).map(state => <fieldset key={state}><legend>{t(`field.icon${state}`)}</legend>
-        <IconEditor value={settings.macroButton[`icon${state}`]} onChange={icon => save({ ...settings, macroButton: { ...settings.macroButton, [`icon${state}`]: icon } })} />
+        <IconEditor value={settings.macroButton[`icon${state}`]} background={settings.macroButton[`color${state}`]} onChange={icon => save({ ...settings, macroButton: { ...settings.macroButton, [`icon${state}`]: icon } })} />
         <Input label={t(`field.color${state}`)} value={settings.macroButton[`color${state}`]} validate={text => /^#[\da-f]{6}$/i.test(text) ? undefined : "invalidColor"} onCommit={color => save({ ...settings, macroButton: { ...settings.macroButton, [`color${state}`]: color } })} />
       </fieldset>)}
     </> : <>

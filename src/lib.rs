@@ -2,6 +2,7 @@ pub mod actions;
 pub mod backend;
 pub mod domain;
 pub mod engine;
+pub mod render;
 pub mod settings;
 #[cfg(windows)]
 pub mod voicemeeter;

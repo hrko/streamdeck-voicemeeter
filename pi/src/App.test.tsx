@@ -20,6 +20,17 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("previews independent Macro colors and reports unsupported glyphs", async () => {
+    const { client } = await setup("macro");
+    const on = screen.getByRole("group", { name: "ON icon" });
+    const off = screen.getByRole("group", { name: "OFF icon" });
+    expect(within(on).getByRole("img").style.backgroundColor).not.toBe(within(off).getByRole("img").style.backgroundColor);
+    fireEvent.change(within(on).getByLabelText("Icon code point"), { target: { value: "10ffff" } });
+    expect(within(on).getByRole("alert").textContent).toContain("not present");
+    expect(within(on).getByRole("img").textContent).toBe("□");
+    expect(within(off).queryByRole("alert")).toBeNull();
+    expect(client.setSettings).toHaveBeenCalled();
+  });
   it("restores independent Combo values and never saves incomplete or invalid input", async () => {
     const settings = structuredClone(defaultSettings);
     settings.channels[1].gainStep = 0.5;

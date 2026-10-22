@@ -18,5 +18,15 @@ fn main() -> anyhow::Result<()> {
         fs::create_dir_all(path.parent().unwrap())?;
         fs::write(path, body)?;
     }
+    let glyphs = serde_json::to_string(&streamdeck_voicemeeter::render::glyph_catalog()?)? + "\n";
+    let glyph_path = "pi/src/generated/glyphs.json";
+    if env::args().any(|arg| arg == "--check") {
+        anyhow::ensure!(
+            fs::read_to_string(glyph_path)? == glyphs,
+            "Generated glyph catalog differs. Run mise run types."
+        );
+    } else {
+        fs::write(glyph_path, glyphs)?;
+    }
     Ok(())
 }

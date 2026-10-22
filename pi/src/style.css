@@ -1,4 +1,8 @@
 :root { color-scheme: dark; font-family: Arial, "Segoe UI", sans-serif; font-size: 12px; color: #d8d8d8; background: #2d2d2d; }
+@font-face { font-family: Symbols-outlined; src: url('../../assets/fonts/MaterialSymbolsOutlined.ttf') format('truetype'); font-weight: 100 700; }
+@font-face { font-family: Symbols-rounded; src: url('../../assets/fonts/MaterialSymbolsRounded.ttf') format('truetype'); font-weight: 100 700; }
+@font-face { font-family: Symbols-sharp; src: url('../../assets/fonts/MaterialSymbolsSharp.ttf') format('truetype'); font-weight: 100 700; }
+.icon-preview { display: grid; place-items: center; inline-size: 64px; block-size: 64px; font-size: 48px; color: #fff; border-radius: 5px; margin-block: 8px; margin-inline: auto; direction: ltr; }
 * { box-sizing: border-box; }
 body { margin: 0; padding: 8px 12px; }
 main { max-inline-size: 520px; margin-inline: auto; }
