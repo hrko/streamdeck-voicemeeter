@@ -35,6 +35,8 @@ Development output lives in `target/dev-plugin`, separate from release `dist`.
 An existing packaged installation is preserved under
 `%APPDATA%\Elgato\StreamDeck\PluginBackups\<plugin-id>-<timestamp>.sdPlugin`;
 profile settings are not modified. A link to another checkout is rejected.
+Host startup launches the plugin once; the task verifies that process rather
+than issuing another CLI restart that could bypass normal logout.
 Repeated runs reuse this checkout's link. Avoid running development and package
 tasks concurrently because both build the PI assets.
 

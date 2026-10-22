@@ -49,7 +49,9 @@ try {
   cli("link", destination);
   run("pwsh", "-NoProfile", "-File", "scripts/dev-host.ps1", "-Mode", "Start");
   hostStopped = false;
-  cli("restart", id);
+  // Starting the host already launches the plugin. A second CLI restart can
+  // terminate that new process without giving its worker time to log out.
+  run("pwsh", "-NoProfile", "-File", "scripts/wait-dev-plugin.ps1");
 } catch (error) {
   // Restore a moved release only if link failed without creating a destination.
   if (backup && !await lstat(installed).catch(e => {

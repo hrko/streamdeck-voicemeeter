@@ -63,6 +63,15 @@ of the baseline indicator is unproven. MacroButtons was restored afterward.
 Repeated-update connection-count stability remains unverified; do not infer it
 from this single reconnect. Meter/gain/mute recovery was confirmed earlier above.
 
+The owner confirmed `9b34802` removes the brief Macro slash on page changes.
+They also reported four R indicators after MacroButtons restoration and that
+development update; there was no recorded baseline after MacroButtons startup.
+Inspection found a redundant CLI restart after host startup in the development
+helper. This was removed: host startup now launches the plugin once, and the
+helper only verifies that exactly one matching process appears. A subsequent
+update with MacroButtons unchanged completed successfully; indicator comparison
+against the four-indicator baseline is pending.
+
 The subsequent Go appearance restoration (`fe5e769`, title defaults corrected
 in `79bed2c`) was also checked by the owner. Icons, status indicators, gain
 sliders and Macro icon size matched expectations. After repairing persisted
