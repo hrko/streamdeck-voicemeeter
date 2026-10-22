@@ -14,7 +14,7 @@ This is a progress record, not a release acceptance certificate.
 - `mise run setup`: locked tools, dependencies, MSVC and Windows SDK detected.
 - `mise run check`: Rust formatting, Clippy (warnings denied), generated TS
   contract consistency, TS type checking, en/ja locale consistency.
-- Rust tests after the appearance restoration: 28 Rust unit tests, 7 SDK/worker integration
+- Rust tests after the appearance restoration: 28 Rust unit tests, 8 SDK/worker integration
   tests and 13 PI/localization tests
   and 3 locale-validator/dependency-policy script tests.
 - React PI production bundle builds. Shared channel/icon forms, independent
@@ -128,6 +128,13 @@ This is a progress record, not a release acceptance certificate.
   normal operation with multiple meters for the same target (`04ab431`).
 - Draft assets were downloaded independently and their actual package SHA-256
   matched both the sidecar and GitHub asset digest recorded above.
+- Signed tag `rust-v0.1.2` points to `b07f9fe`. Its draft package was downloaded
+  independently and SHA-256 matched both its sidecar and GitHub's asset digest:
+  `5d7f8740d5aebee573e3df16d1f70fa94d74db833acea8247a435f72549ed07f`.
+  It remains unpublished and predates `9b34802`, which suppresses transient
+  Macro offline images while awaiting the first sample after a page change.
+  The draft notes explicitly identify that omission. The fix is installed locally;
+  its SDK test covers page reentry without a slash and real outages with a slash.
 
 ## Required before release
 
