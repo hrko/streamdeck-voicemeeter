@@ -26,9 +26,26 @@ operations are not replayed after recovery.
 ## Local development
 
 `mise run dev` builds debug Rust and PI assets, validates the assembled plugin,
-links it into Stream Deck and restarts this plugin ID. Stream Deck must already
-be installed and running. This task intentionally changes the local development
-installation; it has not yet been validated against the actual host UI.
+and links it into Stream Deck. It temporarily closes and restarts Stream Deck
+to release file locks, so all Stream Deck actions are briefly unavailable.
+The standard Windows installation under Program Files is required.
+Development output lives in `target/dev-plugin`, separate from release `dist`.
+An existing packaged installation is preserved under
+`%APPDATA%\Elgato\StreamDeck\PluginBackups\<plugin-id>-<timestamp>.sdPlugin`;
+profile settings are not modified. A link to another checkout is rejected.
+Repeated runs reuse this checkout's link. Avoid running development and package
+tasks concurrently because both build the PI assets.
+
+On Windows 11 / Stream Deck 7.0.3, conversion from a packaged installation,
+a second development build, and subsequent release packaging with the debug
+plugin running were verified on 2026-10-23. The CLI's stop response alone did
+not release all native process/directory locks; the host restart is required
+by this observed environment.
+
+To return to a packaged release, close Stream Deck, remove only the development
+junction at `Plugins\jp.hrko.streamdeck.voicemeeter.rust.sdPlugin` (not its target),
+move the saved directory back to that location, and restart Stream Deck.
+Alternatively unlink the development installation and install a new package.
 
 `mise run test:native` uses a loopback test WebSocket server and launches the
 EXE without opening Stream Deck. It validates registration, rejection of malformed

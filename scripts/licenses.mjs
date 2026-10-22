@@ -3,10 +3,10 @@ import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { root, destination } from "./build-plugin.mjs";
+import { root, destination, stagingRoot } from "./build-plugin.mjs";
 
-const output = path.join(root, "dist", "licenses");
-if (path.dirname(output) !== path.join(root, "dist")) throw new Error("Unsafe license output");
+const output = path.join(stagingRoot, "licenses");
+if (path.dirname(output) !== stagingRoot) throw new Error("Unsafe license output");
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 const inventory = [];

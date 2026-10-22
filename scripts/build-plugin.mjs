@@ -5,7 +5,8 @@ import { pluginPng } from "./png.mjs";
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const id = "jp.hrko.streamdeck.voicemeeter.rust";
-export const destination = path.join(root, "dist", `${id}.sdPlugin`);
+export const stagingRoot = path.join(root, process.env.STREAMDECK_DEV === "1" ? "target/dev-plugin" : "dist");
+export const destination = path.join(stagingRoot, `${id}.sdPlugin`);
 const json = async file => JSON.parse(await readFile(file, "utf8"));
 const writeJson = (file, value) => writeFile(file, JSON.stringify(value, null, 2) + "\n");
 
@@ -16,7 +17,7 @@ export function localizeManifest(catalog) {
 
 export async function buildPlugin(profile = "release") {
   if (!["debug", "release"].includes(profile)) throw new Error("Unsupported build profile");
-  const dist = path.join(root, "dist");
+  const dist = stagingRoot;
   if (path.dirname(destination) !== dist || path.basename(destination) !== `${id}.sdPlugin`) throw new Error("Unsafe output path");
   // Delete only this generated plugin directory, after checking its absolute path.
   await rm(destination, { recursive: true, force: true });

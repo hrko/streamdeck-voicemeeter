@@ -77,7 +77,7 @@ manually when necessary.
 
 | Check | Procedure and expected behavior | Result |
 | --- | --- | --- |
-| Installation | Install or dev-link; all three actions appear without replacing the old plugin. | Package installed; all three actions exercised. Development link untested. |
+| Installation | Install or dev-link; all three actions appear without replacing the old plugin. | Package installed; all three actions exercised. On 2026-10-23, packaged-to-development conversion and a repeated `mise run dev` succeeded; junction and running EXE verified. Release packaging also passed while the development link remained active. No separate UI acceptance of the debug build is claimed. |
 | Offline PI | Open PI with VoiceMeeter stopped; forms and saved settings remain usable and status reports disconnected. | PI remains usable per user. |
 | Startup recovery | Start Potato; status and displays recover without reloading the plugin. Offline operations are not replayed. | Passed per user, including no gain change from offline dial input. |
 | Gain | Rotate slowly and rapidly with a 3 dB step; values accumulate and stop at -60/+12 dB. Press and tap toggle mute. | 3 dB rotation and press/tap mute passed per user; rapid input/limits not separately confirmed. |

@@ -55,7 +55,7 @@ run = "node scripts/licenses.mjs"
 run = ["mise run build", "node scripts/smoke-native.mjs release", "node scripts/verify-package.mjs", "pnpm exec streamdeck pack --no-update-check --no-file-list --force --output dist dist/jp.hrko.streamdeck.voicemeeter.rust.sdPlugin", "pwsh -NoProfile -File scripts/verify-archive.ps1", "node scripts/verify-package.mjs --checksum"]
 
 [tasks.dev]
-run = ["cargo build --locked --bin streamdeck-voicemeeter", "pnpm --filter @streamdeck-voicemeeter/pi exec vite build", "node scripts/build-plugin.mjs debug", "node scripts/licenses.mjs", "mise run package:validate", "pnpm exec streamdeck link dist/jp.hrko.streamdeck.voicemeeter.rust.sdPlugin", "pnpm exec streamdeck restart jp.hrko.streamdeck.voicemeeter.rust"]
+run = "node scripts/dev.mjs"
 
 [tasks.ci]
 run = ["mise run check", "mise run test", "mise run package", "git diff --exit-code -- mise.lock pnpm-lock.yaml Cargo.lock"]
