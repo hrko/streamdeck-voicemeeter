@@ -218,8 +218,8 @@ pub fn frame(
             let current = index(levels[side]);
             let peak = index(peaks[side]);
             for cell in 0..CELLS {
-                // The one-cell notch preserves the existing current/decay marker.
-                let active = cell < peak && !(current != peak && cell == current);
+                // Optional notch marks the instantaneous signal below the decaying peak.
+                let active = cell < peak && !(b.meter_notch && current != peak && cell == current);
                 let color = if !active {
                     &b.meter_inactive
                 } else if cell < index(-24.0) {
@@ -267,6 +267,43 @@ pub fn frame(
 mod tests {
     use super::*;
     use crate::backend::ChannelSnapshot;
+
+    #[test]
+    fn current_level_notch_is_opt_in_and_does_not_change_peak_extent() {
+        let mut settings = Settings::default();
+        settings.gain_button.appearance = GainAppearance::Horizontal;
+        settings.gain_button.show_meter = true;
+        assert!(!settings.gain_button.meter_notch);
+        let target = settings.channels[0].target;
+        let snapshot = Snapshot {
+            channels: vec![(
+                target,
+                ChannelSnapshot {
+                    levels: [-36.0, -18.0],
+                    ..Default::default()
+                },
+            )],
+            meter_peaks: vec![(target, [0.0, 6.0])],
+            ..Default::default()
+        };
+        let mut cache = IconCache::default();
+        let plain = frame(&snapshot, &settings, &mut cache, "en").svg;
+        settings.gain_button.meter_notch = true;
+        let marked = frame(&snapshot, &settings, &mut cache, "en").svg;
+        assert_eq!(
+            marked.matches("#191b1b").count(),
+            plain.matches("#191b1b").count() + 2
+        );
+        assert_eq!(
+            marked.matches("<rect ").count(),
+            plain.matches("<rect ").count()
+        );
+        let mut equal = snapshot;
+        equal.meter_peaks[0].1 = equal.channels[0].1.levels;
+        let marked = frame(&equal, &settings, &mut cache, "en").svg;
+        settings.gain_button.meter_notch = false;
+        assert_eq!(marked, frame(&equal, &settings, &mut cache, "en").svg);
+    }
 
     #[test]
     fn complementary_halves_share_position_and_ignore_step_magnitude() {

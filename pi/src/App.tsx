@@ -192,6 +192,7 @@ function GainButtonEditor({ client, value, onChange }: { client: StreamDeckPiApi
     <fieldset><legend>{t("button.details")}</legend>
       {((fader ? [...(value.delta < 0 || value.syncPair ? ["faderLabel"] : []), "showDb", "showMeter"] : ["showLabel"]) as ("faderLabel" | "showLabel" | "showDb" | "showMeter")[]).map(key => <Row key={key} label={t(`button.${key}`)}><input type="checkbox" aria-label={t(`button.${key}`)} checked={value[key]} onChange={event => patch({ [key]: event.target.checked })} /></Row>)}
       {fader && value.delta > 0 && !value.syncPair && <p className="help">{t("button.labelNegativeOnly")}</p>}
+      {fader && value.showMeter && <Row label={t("button.meterNotch")}><input type="checkbox" aria-label={t("button.meterNotch")} checked={value.meterNotch} onChange={event => patch({ meterNotch: event.target.checked })} /></Row>}
       {fader && value.showMeter && <Row label={t("button.swapMeter")}><input type="checkbox" aria-label={t("button.swapMeter")} checked={value.swapMeter} onChange={event => patch({ swapMeter: event.target.checked })} /></Row>}
     </fieldset>
     {fader ? <>

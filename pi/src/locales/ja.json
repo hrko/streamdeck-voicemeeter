@@ -89,6 +89,7 @@
     "button.normalIcon": "通常のアイコン",
     "button.operation": "操作",
     "button.leftHalf": "左半分を表示します。同じチャンネルの増加キーの左に配置してください。",
+    "button.meterNotch": "現在のレベルを消灯マークで表示",
     "button.showMeter": "ステレオメーターを表示",
     "button.details": "追加の表示",
     "button.palette": "配色プリセット",

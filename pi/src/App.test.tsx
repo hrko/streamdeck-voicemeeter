@@ -25,6 +25,16 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("defaults the current-level notch off and saves the explicit toggle", async () => {
+    const settings=structuredClone(defaultSettings);
+    settings.gainButton.appearance="horizontal";
+    settings.gainButton.showMeter=true;
+    const {client}=await setup("gain-button",settings);
+    const toggle=screen.getByLabelText("Mark current level with an unlit cell") as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    fireEvent.click(toggle);
+    expect((vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings).gainButton.meterNotch).toBe(true);
+  });
   it("offers labels on both synchronized halves and only the negative half when unlinked", async () => {
     const settings=structuredClone(defaultSettings);settings.gainButton.appearance="vertical";
     const {client}=await setup("gain-button",settings);

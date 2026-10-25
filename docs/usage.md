@@ -66,7 +66,10 @@ Static styles ignore saved dB/meter preferences. Their channel label uses Stream
 Deck's native title; new keys default to bottom alignment. Existing keys retain
 their saved title formatting, which can be changed in the title controls.
 Disabling the channel label restores the user-entered title. Meters reuse
-the shared decay state and instantaneous-level marks. Select the VoiceMeeter
+the shared decay state. **Mark current level with an unlit cell** optionally
+adds a notch at the instantaneous signal level below the falling peak. It is
+off by default, including existing settings, and is synchronized between fader
+halves. This marks signal level, not the channel gain setting. Select the VoiceMeeter
 color preset for the corresponding rail, label, background and meter colors.
 
 Static mode reuses the icon picker/font controls and separate normal/muted icons

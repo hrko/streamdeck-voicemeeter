@@ -89,6 +89,7 @@
     "button.normalIcon": "Normal icon",
     "button.operation": "Action",
     "button.leftHalf": "Left half: place to the left of an increase key for the same channel.",
+    "button.meterNotch": "Mark current level with an unlit cell",
     "button.showMeter": "Show stereo meter",
     "button.details": "Additional display",
     "button.palette": "Color preset",

@@ -8,7 +8,7 @@ export type ButtonMode = "toggle" | "push";
 export type MacroSettings = { logicalId: number, mode: ButtonMode, iconOn: IconSettings, iconOff: IconSettings, colorOn: string, colorOff: string, };
 export type GainOperation = "adjust" | "set" | "mute";
 export type GainAppearance = "static" | "horizontal" | "vertical";
-export type GainButtonSettings = { operation: GainOperation, delta: number, gain: number, appearance: GainAppearance, icon: IconSettings, mutedIcon: IconSettings, background: string, mutedBackground: string, barColor: string, thumbColor: string, positiveColor: string, highlightPositive: boolean, showLabel: boolean, faderLabel: boolean, syncPair: boolean, labelColor: string, positiveLabelColor: string, showDb: boolean, showMeter: boolean, swapMeter: boolean, meterBackground: string, meterInactive: string, meterLow: string, meterMid: string, meterHigh: string, meterMutedLow: string, meterMutedMid: string, meterMutedHigh: string, };
+export type GainButtonSettings = { operation: GainOperation, delta: number, gain: number, appearance: GainAppearance, icon: IconSettings, mutedIcon: IconSettings, background: string, mutedBackground: string, barColor: string, thumbColor: string, positiveColor: string, highlightPositive: boolean, showLabel: boolean, faderLabel: boolean, syncPair: boolean, labelColor: string, positiveLabelColor: string, showDb: boolean, showMeter: boolean, meterNotch: boolean, swapMeter: boolean, meterBackground: string, meterInactive: string, meterLow: string, meterMid: string, meterHigh: string, meterMutedLow: string, meterMutedMid: string, meterMutedHigh: string, };
 export type Settings = { schemaVersion: number, channels: [ChannelSettings, ChannelSettings], macroButton: MacroSettings, gainButton: GainButtonSettings, };
 export type ValidationError = { code: string, field: string, };
 
@@ -104,6 +104,7 @@ export const defaultSettings: Settings = {
     "positiveLabelColor": "#862b20",
     "showDb": false,
     "showMeter": false,
+    "meterNotch": false,
     "swapMeter": false,
     "meterBackground": "#000000",
     "meterInactive": "#191b1b",

@@ -148,3 +148,7 @@ preserving its delta sign. SDK state is refreshed with `getSettings` after
 settings handler. Pending snapshots suppress acknowledgement loops and restore
 the latest settings if an older reply arrives during rapid edits. The registry
 is scoped to a worker/client rather than process-global static state.
+
+`meterNotch` optionally marks the instantaneous level with an unlit cell below
+the decaying peak on gain-button meters. It defaults to false for both new and
+existing settings and follows pair synchronization. Dial meters are unchanged.
