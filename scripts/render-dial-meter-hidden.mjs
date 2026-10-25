@@ -4,9 +4,9 @@
  */
 import sharp from "sharp";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-const dir = "target/dial-meter-hidden";
+const dir = "target/dial-readability";
 await mkdir(dir, { recursive: true });
-const cases = JSON.parse(await readFile("target/dial-readability/feedback.json", "utf8"));
+const cases = JSON.parse(await readFile(dir + "/feedback.json", "utf8"));
 const layouts = await Promise.all(["gain", "combo"].map(async n => JSON.parse(await readFile("assets/layouts/" + n + ".json", "utf8"))));
 const esc = s => String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
 const svg = (w,h,body) => Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'+body+'</svg>');
@@ -16,33 +16,15 @@ function wallpaper(type) {
  if(type===1) return '<defs><linearGradient id="wall"><stop stop-color="#ffe7a0"/><stop offset="1" stop-color="#f57838"/></linearGradient></defs><rect width="200" height="100" fill="url(#wall)"/>';
  return '<rect width="200" height="100" fill="#18374e"/>'+Array.from({length:12},(_,i)=>'<path d="M'+(i*24-100)+' 0l100 100h12L'+(i*24-88)+' 0z" fill="'+(i%2?"#efaf51":"#cbe7ee")+'"/>').join("");
 }
-async function render(c,kind,variant,opacity) {
- const frame=structuredClone(c.frames[kind]), layers=[];
- const layout=structuredClone(layouts[kind]);
- for(const item of layout.items) {
-  if(variant && item.key.startsWith("levelMeter")) frame[item.key].enabled=false;
-  if(variant!==2) continue;
-  const offset=item.key.endsWith("1")?100:0, left=kind===0?76:8+offset, width=kind===0?108:84;
-  if(item.key.startsWith("gainValue")) {item.rect=[left,34,width,32];item.font.size=24;}
-  if(item.key.startsWith("gainSlider")) item.rect=[left,70,width,12];
-  if(item.key.startsWith("status")) {
-   item.rect=[left,86,84,9];
-   const original=Buffer.from(frame[item.key].value.split(",")[1],"base64").toString();
-   let x=0;
-   const body=[...original.matchAll(/<rect\b[^>]*\/>/g)].map(m=>{
-    let r=m[0]; const outlined=r.includes('stroke-width="1"'), small=Number(r.match(/width="([^"]+)"/)[1])<=5;
-    const pad=outlined?.5:0;
-    r=r.replace(/x="[^"]+"/,'x="'+(x+pad)+'"').replace(/y="[^"]+"/,'y="'+((small?2:1)+pad)+'"');
-    x+=small?6:9; return r;
-   }).join("");
-   frame[item.key].value="data:image/svg+xml;base64,"+svg(84,9,body).toString("base64");
-  }
- }
- for(const item of [...layout.items].sort((a,b)=>a.zOrder-b.zOrder)) {
+async function render(c,kind,bg,opacity,mode) {
+ const frame=c.frames[kind], layers=[];
+ for(const item of [...layouts[kind].items].sort((a,b)=>a.zOrder-b.zOrder)) {
   const p=frame[item.key]; if(!p) continue;
   const background=item.key.startsWith("background");
   if(!(background&&opacity!==undefined) && !p.enabled) continue;
-  const [x,y,w,h]=item.rect;
+  let [x,y,w,h]=item.rect;
+  if(mode !== 'visible' && item.key.startsWith('levelMeter')) continue;
+  if(mode === 'compact' && item.key.startsWith('gainSlider')) y = 66;
   let input;
   if(item.type==="pixmap") {
    const source=Buffer.from(p.value.split(",")[1],"base64");
@@ -55,34 +37,33 @@ async function render(c,kind,variant,opacity) {
    const right=item.alignment==="right";
    const fade=item["text-overflow"]==="fade";
    const mask=fade?'<defs><linearGradient id="fade"><stop offset="0.75" stop-color="white"/><stop offset="1" stop-color="black"/></linearGradient><mask id="m"><rect width="'+w+'" height="'+h+'" fill="url(#fade)"/></mask></defs>':"";
-   input=await sharp(svg(w,h,mask+'<text x="'+(right?w:0)+'" y="'+(item.font.size===24?25:18)+'" text-anchor="'+(right?"end":"start")+'" fill="'+p.color+'" font-family="Segoe UI, Yu Gothic UI, sans-serif" font-size="'+item.font.size+'" font-weight="'+item.font.weight+'"'+(fade?' mask="url(#m)"':"")+'>'+esc(p.value)+'</text>')).png().toBuffer();
+   input=await sharp(svg(w,h,mask+'<text x="'+(right?w:0)+'" y="18" text-anchor="'+(right?"end":"start")+'" fill="'+p.color+'" font-family="Segoe UI, Yu Gothic UI, sans-serif" font-size="'+item.font.size+'" font-weight="'+item.font.weight+'"'+(fade?' mask="url(#m)"':"")+'>'+esc(p.value)+'</text>')).png().toBuffer();
   }
   layers.push({input,left:x,top:y});
  }
- return sharp(svg(200,100,'<rect width="200" height="100" fill="#000000"/>')).composite(layers).png().toBuffer();
+ return sharp(svg(200,100,'<rect width="200" height="100" fill="black"/>')).composite(layers).png().toBuffer();
 }
 
-
-// Preview only: production SVG components, proposed layout rectangles and status reflow.
-// Official $B1 value font: size 24, weight 600.
-// https://docs.elgato.com/streamdeck/sdk/guides/dials/
-const width=688,height=640,layers=[];
-let body='<rect width="100%" height="100%" fill="#252525"/>'+text(16,25,"Meter visibility / layout preview",20);
-const headings=["Meter ON / current","Meter OFF / current","Meter OFF / proposed"];
-for(let col=0;col<3;col++) body+=text(16+col*224,53,headings[col],14);
-for(let row=0;row<4;row++){
- const kind=row%2, c=structuredClone(cases[row<2?11:9]);
- // Use an opaque black background for an uncluttered geometry comparison.
- const y=92+row*136;
- body+=text(16,y-9,(row<2?"Default":"Monochrome")+" / "+(kind?"Combo":"Single"),13);
- for(let col=0;col<3;col++){
-  const input=await render(c,kind,col,1);
-  await writeFile(dir+"/"+row+"-"+col+".png",input);
-  layers.push({input,left:16+224*col,top:y});
+const out = "target/dial-meter-hidden";
+await mkdir(out,{recursive:true});
+const rows = [
+ {mode:"visible",label:"Meter shown / fader y=74"},
+ {mode:"hidden",label:"Current: meter hidden / gap 10 px"},
+ {mode:"compact",label:"Proposal: meter hidden / gap 2 px / fader y=66"},
+];
+for(const scale of [1,2]) {
+ const w=860,h=60+rows.length*(100*scale+58);
+ let body='<rect width="100%" height="100%" fill="#252525"/>'+text(20,28,'Hidden meter spacing — '+scale+'x',20);
+ const layers=[];
+ for(let i=0;i<rows.length;i++) {
+  const row=rows[i],y=70+i*(100*scale+58);
+  body+=text(20,y-12,row.label,16);
+  for(let kind=0;kind<2;kind++) {
+   const input=await render(cases[11],kind,0,undefined,row.mode);
+   if(scale===1) await writeFile(out+'/'+row.mode+'-'+['gain','combo'][kind]+'.png',input);
+   layers.push({input:await sharp(input).resize(200*scale,100*scale,{kernel:'nearest'}).png().toBuffer(),left:20+kind*(200*scale+20),top:y});
+  }
  }
+ await sharp(svg(w,h,body)).composite(layers).png().toFile(out+'/comparison-'+scale+'x.png');
 }
-body+=text(16,633,"Native text is approximated. Proposed: 24px values, bar y=70, status row y=86.",12);
-const result=await sharp(svg(width,height,body)).composite(layers).png().toBuffer();
-await writeFile(dir+"/comparison-1x.png",result);
-await sharp(result).resize(width*2,height*2,{kernel:"nearest"}).png().toFile(dir+"/comparison-2x.png");
-console.log(dir+"/comparison-1x.png");
+console.log(out);
