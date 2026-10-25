@@ -81,7 +81,11 @@ pub fn frame(
     if fader {
         let transform = pair_transform(vertical, b.delta > 0.0);
         let offset = if b.show_meter {
-            if b.swap_meter { -25 } else { 25 }
+            if b.swap_meter {
+                -(if b.show_db { 29 } else { 25 })
+            } else {
+                if b.show_db { 29 } else { 25 }
+            }
         } else {
             0
         };
@@ -113,10 +117,39 @@ pub fn frame(
         }
         if let Some(channel) = channel {
             let x = position(channel.gain, vertical);
+            let (radius, clearance) = if b.show_db { (25, 34) } else { (17, 26) };
             let _ = write!(
                 body,
-                r#"<circle cx="{x}" cy="72" r="26" fill="{bg}"/><circle cx="{x}" cy="72" r="17" fill="{bg}" stroke="{thumb}" stroke-width="6"/>"#
+                r#"<circle cx="{x}" cy="72" r="{clearance}" fill="{bg}"/><circle cx="{x}" cy="72" r="{radius}" fill="{bg}" stroke="{thumb}" stroke-width="6"/>"#
             );
+            if b.show_db {
+                let gain = if channel.gain.abs() < 0.05 {
+                    0.0
+                } else {
+                    channel.gain
+                };
+                let number = crate::numbers::gain(gain, language);
+                let number = if gain > 0.0 {
+                    format!("+{number}")
+                } else {
+                    number
+                };
+                let rotation = if vertical { 90 } else { 0 };
+                // Keep text horizontal after the vertical pair's -90 degree turn.
+                let rgb = u32::from_str_radix(bg.trim_start_matches('#'), 16).unwrap_or(0);
+                let brightness =
+                    ((rgb >> 16) & 255) * 299 + ((rgb >> 8) & 255) * 587 + (rgb & 255) * 114;
+                let ink = if brightness > 128000 {
+                    "#000000"
+                } else {
+                    "#ffffff"
+                };
+                let _ = write!(
+                    body,
+                    r#"<defs><clipPath id="gain-number"><circle cx="{x}" cy="72" r="22"/></clipPath></defs><text x="{x}" y="76.5" transform="rotate({rotation} {x} 72)" text-anchor="middle" font-family="Consolas, monospace" font-size="13" font-weight="bold" fill="{ink}" clip-path="url(#gain-number)">{}</text>"#,
+                    render::escape(&number)
+                );
+            }
         }
         body.push_str("</g></g>");
     } else {
@@ -151,24 +184,6 @@ pub fn frame(
             render::escape(&badge)
         );
     }
-    if fader && b.show_db {
-        let value = channel
-            .map(|c| format!("{} dB", crate::numbers::gain(c.gain, language)))
-            .unwrap_or_else(|| "—".into());
-        if vertical {
-            let _ = write!(
-                body,
-                r##"<g transform="translate(0 144) rotate(-90)"><text x="72" y="16" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" fill="#ffffff">{}</text></g>"##,
-                render::escape(&value)
-            );
-        } else {
-            let _ = write!(
-                body,
-                r##"<text x="72" y="132" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="18" fill="#ffffff">{}</text>"##,
-                render::escape(&value)
-            );
-        }
-    }
     if fader && b.show_meter {
         // Match the rail's outer rounded-cap extents, not just its centerline.
         let meter_start = position(-60.0, vertical) - 14.0;
@@ -181,7 +196,11 @@ pub fn frame(
             .map(|(_, peaks)| *peaks)
             .unwrap_or(levels);
         let transform = pair_transform(vertical, b.delta > 0.0);
-        let top = if b.swap_meter { 89 } else { 39 };
+        let top = if b.swap_meter {
+            if b.show_db { 93 } else { 89 }
+        } else {
+            if b.show_db { 35 } else { 39 }
+        };
         let _ = write!(
             body,
             r#"<g transform="{transform}"><rect x="{meter_start}" y="{}" width="{meter_width}" height="20" fill="{}"/>"#,
@@ -437,7 +456,9 @@ mod tests {
         let mut cache = IconCache::default();
         let svg = frame(&snapshot, &s, &mut cache, "en").svg;
         assert!(svg.contains("Voice &lt;&amp;&gt;"));
-        assert!(svg.contains("6.0 dB"));
+        assert!(svg.contains(">+6.0</text>"));
+        assert!(!svg.contains(" dB"));
+        assert!(svg.contains("rotate(90"));
         assert!(svg.contains("#ff6347"));
         assert_eq!(svg.matches("<svg ").count(), 1);
         snapshot.channels[0].1.gain = 0.0;

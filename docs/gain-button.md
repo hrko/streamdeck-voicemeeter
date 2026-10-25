@@ -119,3 +119,14 @@ Drop abort the task; connection loss or generation change ends it. Offline
 presses never start a repeat task. Set and mute operations do not repeat.
 SDK/worker tests cover first-tick delay, repeated changes, release, settings
 changes, disappearance and reconnect while held.
+
+## Gain inside the thumb
+
+With `showDb`, the thumb outer diameter is 28px at 72px key size (otherwise
+20px). Monospaced signed numbers use no unit and remain horizontal in either
+orientation. A light/dark foreground is selected from the background color.
+The thumb covers the channel label. With a meter, track centers move to 43/101
+(canonical 144px coordinates), preserving symmetric axes and 10px clearance.
+Without gain text the original geometry is unchanged. Numbers are clipped to
+the inner circle; pixel tests verify that removing that clip reveals no missing
+glyphs for −60, −24, −12.5, 0, +6 and +12. Key-boundary splitting remains visible.

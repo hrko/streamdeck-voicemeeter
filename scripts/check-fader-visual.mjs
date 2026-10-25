@@ -89,3 +89,14 @@ for (const vertical of [false,true]) for (const swap of [false,true]) {
   await sharp({create:{width,height,channels:3,background:'#000'}}).composite(buffers.map((input,i)=>({input,raw:{width:144,height:144,channels:3},left:vertical?0:i*144,top:vertical?i*144:0}))).png().toFile(`target/fader-visual/pair-${vertical?'vertical':'horizontal'}-${swap}.png`);
 }
 console.log('Paired meter continuity and track separation passed for both orientations and placements.');
+
+// Removing the text clip must not reveal any lost glyph pixels at bounds.
+for(const name of ['left','right','upper','lower']) for(const gain of [-60,-24,-12.5,0,6,12]) {
+  const svg=await readFile(`target/fader-visual/${name}-db-${gain}.svg`,'utf8');
+  const actual=await sharp(Buffer.from(svg)).raw().toBuffer();
+  const unclipped=await sharp(Buffer.from(svg.replace('clip-path="url(#gain-number)"',''))).raw().toBuffer();
+  assert.deepEqual(actual,unclipped,`${name} ${gain}: digits must fit inside the circle`);
+  assert.ok(!svg.includes(' dB'),'no unit outside the thumb');
+  assert.ok(svg.includes(name==='upper'||name==='lower' ? 'rotate(90 ' : 'rotate(0 '),'numbers stay horizontal');
+}
+console.log('In-thumb numbers fit at gain limits, zero, positive values and the key seam.');

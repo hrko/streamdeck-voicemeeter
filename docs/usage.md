@@ -47,7 +47,11 @@ These are key images, not draggable sliders.
 The default fader uses a black background and white rounded rail/ring thumb.
 Customize rail, thumb, normal/muted background and positive-gain color separately.
 **Highlight above 0 dB** changes the rail and thumb only when the gain is positive.
-Current dB and stereo meters are available only for fader styles. Enabling a
+Current gain and stereo meters are available only for fader styles. Gain is
+displayed horizontally inside the thumb (for example −12.5, 0.0 or +6.0),
+without the dB suffix. Enabling it enlarges the thumb; the meter clearance
+remains 10 px and both axes stay symmetric. A thumb crossing the key boundary
+is split between the two keys, including its number. Enabling a
 meter shifts the fader to a separate track. Both stereo lanes span the full
 key pair with their ends aligned to the fader bar. The default is meter
 left / fader right (vertical), or meter above / fader below (horizontal); **Swap fader and meter** exchanges the tracks (above/below for

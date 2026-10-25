@@ -24,7 +24,7 @@ fn main() -> anyhow::Result<()> {
         let mut settings = Settings::default();
         settings.gain_button.appearance = appearance;
         settings.gain_button.delta = delta;
-        let snapshot = Snapshot {
+        let mut snapshot = Snapshot {
             channels: vec![(
                 settings.channels[0].target,
                 ChannelSnapshot {
@@ -53,6 +53,16 @@ fn main() -> anyhow::Result<()> {
                 gain_button::frame(&snapshot, &settings, &mut cache, "en").svg,
             )?;
             settings.gain_button.fader_label = false;
+        }
+        settings.gain_button.show_db = true;
+        settings.gain_button.fader_label = true;
+        settings.gain_button.swap_meter = false;
+        for gain in [-60.0, -24.0, -12.5, 0.0, 6.0, 12.0] {
+            snapshot.channels[0].1.gain = gain;
+            std::fs::write(
+                format!("{directory}/{name}-db-{gain}.svg"),
+                gain_button::frame(&snapshot, &settings, &mut cache, "en").svg,
+            )?;
         }
     }
     Ok(())
