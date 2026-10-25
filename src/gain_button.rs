@@ -101,10 +101,14 @@ pub fn frame(
             );
         }
         // Only the negative half owns the label. Clip within that key and rail;
-        // never draw the overflow on the positive half. The thumb overlays text.
+        // and filled segment; never draw into the empty rail or positive half.
+        // The thumb overlays the remaining text.
         if b.fader_label && b.delta < 0.0 {
             let left = start - 6.0;
-            let width = 144.0 - left;
+            let filled_end = channel
+                .map(|value| position(value.gain, vertical))
+                .unwrap_or(left);
+            let width = (filled_end.min(144.0) - left).max(0.0);
             let _ = write!(
                 body,
                 r#"<defs><clipPath id="fader-label"><rect x="{left}" y="60" width="{width}" height="24"/></clipPath></defs><text x="{}" y="78" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="17" font-weight="600" fill="{}" clip-path="url(#fader-label)">{}</text>"#,

@@ -152,3 +152,7 @@ Opening a page does not overwrite either key's existing settings. Synchronizatio
 starts with the next edit. Turning sync off on either half stops synchronization;
 a hidden or removed key is never updated. User-entered Stream Deck titles and
 shared palette definitions are not synchronized.
+
+Fader labels are clipped to the filled segment: lowering the gain hides text
+above the thumb (vertical) or to its right (horizontal). Text stays anchored
+at the bar end instead of moving or shrinking.

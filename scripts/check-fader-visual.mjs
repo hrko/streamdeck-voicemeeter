@@ -103,3 +103,23 @@ for(const name of ['left','right','upper','lower']) for(const gain of [-60,-24,-
   assert.ok(svg.includes(name==='upper'||name==='lower' ? 'rotate(90 ' : 'rotate(0 '),'numbers stay horizontal');
 }
 console.log('In-thumb numbers fit at gain limits, zero, positive values and the key seam.');
+
+// Labels must disappear above/right of the filled segment as gain falls.
+for (const name of ['left','lower']) for (const gain of [-60,-24,-12.5,0,6,12]) {
+  const svg=await readFile(`target/fader-visual/${name}-db-${gain}.svg`,'utf8');
+  const withoutLabel=svg.replace(/<text [^>]*clip-path="url\(#fader-label\)"[^>]*>.*?<\/text>/,'');
+  const a=await sharp(Buffer.from(svg)).removeAlpha().raw().toBuffer();
+  const b=await sharp(Buffer.from(withoutLabel)).removeAlpha().raw().toBuffer();
+  const end=(name==='lower'?36.5:34.5)+215.5*((gain+60)/72);
+  let changed=0;
+  for(let y=0;y<144;y++) for(let x=0;x<144;x++) {
+    const i=(y*144+x)*3;
+    if(a[i]!==b[i] || a[i+1]!==b[i+1] || a[i+2]!==b[i+2]) {
+      changed++;
+      assert.ok((name==='lower'?144-y:x)<=end+1,`${name} ${gain}: label outside filled rail`);
+    }
+  }
+  if(gain===-60) assert.equal(changed,0,'minimum gain hides the label behind the thumb');
+  if(gain===0) assert.ok(changed>20,'normal gain retains a visible label');
+}
+console.log('Labels remain inside the filled rail as gain falls.');

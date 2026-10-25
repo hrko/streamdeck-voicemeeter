@@ -152,3 +152,7 @@ is scoped to a worker/client rather than process-global static state.
 `meterNotch` optionally marks the instantaneous level with an unlit cell below
 the decaying peak on gain-button meters. It defaults to false for both new and
 existing settings and follows pair synchronization. Dial meters are unchanged.
+
+Fader labels are clipped to the filled segment: lowering the gain hides text
+above the thumb (vertical) or to its right (horizontal). Text stays anchored
+at the bar end instead of moving or shrinking.
