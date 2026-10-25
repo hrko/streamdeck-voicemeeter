@@ -120,6 +120,15 @@ pub fn frame(
                 }),
                 render::escape(&label(snapshot, settings))
             );
+            // Stream Deck's SVG renderer may ignore text clip paths. Paint the
+            // empty rail over the label as well, using only basic SVG primitives.
+            if filled_end < end {
+                let hidden_width = end + 14.0 - filled_end;
+                let _ = write!(
+                    body,
+                    r#"<rect x="{filled_end}" y="58" width="{hidden_width}" height="28" fill="{bg}"/><path d="M{filled_end} 72H{end}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><path d="M{filled_end} 72H{end}" fill="none" stroke="{bg}" stroke-width="16" stroke-linecap="round"/>"#
+                );
+            }
         }
         if let Some(channel) = channel {
             let x = position(channel.gain, vertical);

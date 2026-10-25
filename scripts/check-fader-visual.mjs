@@ -108,7 +108,8 @@ console.log('In-thumb numbers fit at gain limits, zero, positive values and the 
 for (const name of ['left','lower']) for (const gain of [-60,-24,-12.5,0,6,12]) {
   const svg=await readFile(`target/fader-visual/${name}-db-${gain}.svg`,'utf8');
   const withoutLabel=svg.replace(/<text [^>]*clip-path="url\(#fader-label\)"[^>]*>.*?<\/text>/,'');
-  const a=await sharp(Buffer.from(svg)).removeAlpha().raw().toBuffer();
+  const hostSvg=svg.replaceAll('clip-path="url(#fader-label)"','');
+  const a=await sharp(Buffer.from(hostSvg)).removeAlpha().raw().toBuffer();
   const b=await sharp(Buffer.from(withoutLabel)).removeAlpha().raw().toBuffer();
   const end=(name==='lower'?36.5:34.5)+215.5*((gain+60)/72);
   let changed=0;
