@@ -32,12 +32,12 @@ export async function buildPlugin(profile = "release") {
   if (!version) throw new Error("Missing package version");
   const actions = Object.entries(english.manifest.Actions).map(([suffix, text]) => ({
     ...text, UUID: `${id}.${suffix}`, Icon: "imgs/action", PropertyInspectorPath: "ui/index.html",
-    Controllers: [suffix === "macro" ? "Keypad" : "Encoder"],
+    Controllers: [suffix === "macro" || suffix === "gain-button" ? "Keypad" : "Encoder"],
     DisableAutomaticStates: true,
     States: suffix === "macro"
       ? ["ON", "OFF"].map(Title => ({ Image: "imgs/key", Title, ShowTitle: true }))
-      : [{ Image: "imgs/key", ShowTitle: true, TitleAlignment: "middle", FontSize: 16 }],
-    ...(suffix === "macro" ? {} : { Encoder: { layout: `layouts/${suffix === "gain-control-combo" ? "combo" : "gain"}.json` } }),
+      : [{ Image: "imgs/key", ShowTitle: true, TitleAlignment: suffix === "gain-button" ? "top" : "middle", FontSize: suffix === "gain-button" ? 12 : 16 }],
+    ...(suffix === "macro" || suffix === "gain-button" ? {} : { Encoder: { layout: `layouts/${suffix === "gain-control-combo" ? "combo" : "gain"}.json` } }),
   }));
   await writeJson(path.join(destination, "manifest.json"), {
     $schema: "https://schemas.elgato.com/streamdeck/plugins/manifest.json",

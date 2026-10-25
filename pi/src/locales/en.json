@@ -61,7 +61,36 @@
     "picker.title": "Choose an icon",
     "picker.open": "Choose icon",
     "picker.close": "Close icon picker",
-    "picker.empty": "No matching icons."
+    "picker.empty": "No matching icons.",
+    "error.invalidButtonDelta": "Enter a nonzero change between −72 and +72 dB.",
+    "button.highlightPositive": "Highlight above 0 dB",
+    "button.mutedIcon": "Muted icon",
+    "button.mute": "Toggle mute",
+    "button.mutedBackground": "Muted background",
+    "button.upperHalf": "Upper half: place above a decrease key for the same channel.",
+    "button.set": "Set gain",
+    "button.gain": "Target gain (dB)",
+    "button.delta": "Change (dB)",
+    "button.thumbColor": "Thumb color",
+    "button.showLabel": "Show channel label",
+    "button.vertical": "Vertical fader",
+    "error.invalidButtonGain": "Enter a gain between −60 and +12 dB.",
+    "button.showDb": "Show gain (dB)",
+    "button.help": "One operation per press; holding does not repeat. Faders show −60 to +12 dB. Match display settings on both keys for a continuous fader.",
+    "button.positiveColor": "Positive gain color",
+    "button.rightHalf": "Right half: place to the right of a decrease key for the same channel.",
+    "button.barColor": "Fader color",
+    "button.background": "Background",
+    "button.horizontal": "Horizontal fader",
+    "button.appearance": "Display style",
+    "button.adjust": "Adjust gain",
+    "button.static": "Static icon",
+    "button.lowerHalf": "Lower half: place below an increase key for the same channel.",
+    "button.normalIcon": "Normal icon",
+    "button.operation": "Action",
+    "button.leftHalf": "Left half: place to the left of an increase key for the same channel.",
+    "button.showMeter": "Show stereo meter",
+    "button.details": "Additional display"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",
@@ -79,6 +108,10 @@
       "macro": {
         "Name": "Macro",
         "Tooltip": "Operate a VoiceMeeter MacroButton."
+      },
+      "gain-button": {
+        "Name": "Gain Button",
+        "Tooltip": "Adjust or set channel gain, or toggle mute with a key."
       }
     }
   }

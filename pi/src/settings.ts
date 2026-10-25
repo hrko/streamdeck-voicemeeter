@@ -51,6 +51,19 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
     if (failure) return failure;
   }
   const macro = value.macroButton;
+  const button = value.gainButton;
+  if (!record(button)) return error("invalidSettings", "gainButton");
+  if (!["adjust", "set", "mute"].includes(String(button.operation)) || !["static", "horizontal", "vertical"].includes(String(button.appearance))) return error("invalidSettings", "gainButton");
+  if (typeof button.delta !== "number" || !Number.isFinite(button.delta) || button.delta === 0 || Math.abs(button.delta) > 72) return error("invalidButtonDelta", "gainButton.delta");
+  if (typeof button.gain !== "number" || !Number.isFinite(button.gain) || button.gain < -60 || button.gain > 12) return error("invalidButtonGain", "gainButton.gain");
+  for (const key of ["highlightPositive", "showLabel", "showDb", "showMeter"]) {
+    if (typeof button[key] !== "boolean") return error("invalidSettings", `gainButton.${key}`);
+  }
+  for (const key of ["background", "mutedBackground", "barColor", "thumbColor", "positiveColor"]) {
+    if (typeof button[key] !== "string" || !/^#[\da-f]{6}$/i.test(button[key])) return error("invalidColor", `gainButton.${key}`);
+  }
+  const buttonIconError = icon(button.icon, "gainButton.icon") ?? icon(button.mutedIcon, "gainButton.mutedIcon");
+  if (buttonIconError) return buttonIconError;
   if (!record(macro)) return error("invalidSettings", "macroButton");
   if (!Number.isInteger(macro.logicalId) || (macro.logicalId as number) < 0 || (macro.logicalId as number) >= 80) return error("macroOutOfRange", "macroButton.logicalId");
   if (macro.mode !== "push" && macro.mode !== "toggle") return error("invalidSettings", "macroButton.mode");

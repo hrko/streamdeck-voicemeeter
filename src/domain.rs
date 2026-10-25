@@ -35,11 +35,13 @@ pub enum ActionKind {
     Gain,
     Combo,
     Macro,
+    GainButton,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Command {
     AdjustGain { target: Target, delta: f32 },
+    SetGain { target: Target, gain: f32 },
     ToggleMute(Target),
     ToggleMacro(u8),
     SetMacro { id: u8, on: bool },
@@ -51,7 +53,7 @@ pub fn rotated(
     ticks: i32,
     pressed: bool,
 ) -> Option<Command> {
-    if kind == ActionKind::Macro || ticks == 0 {
+    if matches!(kind, ActionKind::Macro | ActionKind::GainButton) || ticks == 0 {
         return None;
     }
     let channel = &settings.channels[usize::from(kind == ActionKind::Combo && pressed)];
@@ -67,7 +69,7 @@ pub fn tapped(kind: ActionKind, settings: &Settings, x: u32) -> Option<Command> 
         ActionKind::Combo => Some(Command::ToggleMute(
             settings.channels[usize::from(x >= 100)].target,
         )),
-        ActionKind::Macro => None,
+        ActionKind::Macro | ActionKind::GainButton => None,
     }
 }
 
@@ -76,6 +78,22 @@ pub fn adjusted_gain(current: f32, delta: f32) -> Option<f32> {
         return None;
     }
     Some((current + delta).clamp(-60.0, 12.0))
+}
+
+pub fn gain_button_command(settings: &Settings) -> Command {
+    use crate::settings::GainOperation;
+    let target = settings.channels[0].target;
+    match settings.gain_button.operation {
+        GainOperation::Adjust => Command::AdjustGain {
+            target,
+            delta: settings.gain_button.delta,
+        },
+        GainOperation::Set => Command::SetGain {
+            target,
+            gain: settings.gain_button.gain,
+        },
+        GainOperation::Mute => Command::ToggleMute(target),
+    }
 }
 
 /// Tracks the original target of every accepted Push, including overlapping keys.

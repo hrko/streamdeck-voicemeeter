@@ -13,10 +13,12 @@ or assign MacroButtons to keys.
 | Gain Control | Turn to adjust gain; press or tap to toggle mute. |
 | Gain Control Combo | Turn for the left channel; hold and turn for the right. Tap either half to toggle its mute. |
 | Macro | Toggle a MacroButton on each press, or keep it ON while holding the key in Push mode. |
+| Gain Button (development version) | Adjust or set channel gain, or toggle mute from a key. Static icons or paired horizontal/vertical faders. |
 
 - Display channel labels, gain, stereo levels and channel states.
 - Customize Material Symbols icons, including style, weight and fill, and separate Macro ON/OFF icons and background colors.
 - Find icons in an offline picker with audio icons first and English-name/code-point search.
+- Gain Button supports optional channel labels, dB values, stereo meters and positive-gain colors. This action is included in the 0.1.6 development build, not the published 0.1.5 package.
 - Set independent channels and gain steps for Combo.
 - Use Japanese or English settings screens; additional languages can be added through translation resources.
 

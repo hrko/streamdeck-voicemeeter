@@ -25,6 +25,34 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("configures gain keys with signed steps, optional details and absolute/mute operations", async () => {
+    const { client } = await setup("gain-button");
+    expect(screen.queryByLabelText("Step (dB)")).toBeNull();
+    const delta = screen.getByLabelText("Change (dB)");
+    fireEvent.change(delta, { target: { value: "0" } });
+    expect(client.setSettings).not.toHaveBeenCalled();
+    fireEvent.change(delta, { target: { value: "-2.5" } });
+    fireEvent.change(screen.getByLabelText("Display style"), { target: { value: "vertical" } });
+    expect(screen.getByText(/Lower half/)).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Highlight above 0 dB"));
+    fireEvent.change(screen.getByLabelText("Positive gain color"), { target: { value: "#ff0000" } });
+    fireEvent.click(screen.getByLabelText("Show channel label"));
+    fireEvent.click(screen.getByLabelText("Show gain (dB)"));
+    fireEvent.click(screen.getByLabelText("Show stereo meter"));
+    let saved = vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.gainButton).toMatchObject({ delta: -2.5, appearance: "vertical", highlightPositive: true, positiveColor: "#ff0000", showLabel: true, showDb: true, showMeter: true });
+    fireEvent.change(screen.getByLabelText("Action"), { target: { value: "set" } });
+    expect(screen.queryByLabelText("Display style")).toBeNull();
+    vi.mocked(client.setSettings).mockClear();
+    fireEvent.change(screen.getByLabelText("Target gain (dB)"), { target: { value: "13" } });
+    expect(client.setSettings).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Target gain (dB)"), { target: { value: "-6" } });
+    saved = vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.gainButton.gain).toBe(-6);
+    fireEvent.change(screen.getByLabelText("Action"), { target: { value: "mute" } });
+    expect(screen.queryByLabelText("Target gain (dB)")).toBeNull();
+    expect(screen.getByRole("group", { name: "Muted icon" })).toBeTruthy();
+  });
   it("synchronizes native color pickers, hex input and previews without saving invalid text", async () => {
     const { client, emit } = await setup("macro");
     const on = screen.getByRole("group", { name: "ON icon" });

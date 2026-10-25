@@ -26,6 +26,36 @@ operations are not replayed after recovery.
 For building, development installation and release preparation, see the
 [development guide](development.md).
 
+## Gain Button (0.1.6 development build)
+
+Add **Gain Button** to a key and select a Strip/Bus channel. Choose **Adjust gain**
+with a nonzero signed change (−72..+72 dB), **Set gain** (−60..+12 dB), or
+**Toggle mute**. Each press performs one operation; holding does not repeat.
+Gain is clamped to −60..+12 dB. Offline input is discarded, and external changes
+update the display through the same channel snapshot used by the dial actions.
+
+For relative adjustments, choose a static icon or a horizontal/vertical fader.
+Horizontal faders use the left half for negative changes and right half for
+positive changes. Vertical faders use the upper half for positive changes and
+lower half for negative changes. Place two keys for the same channel next to
+each other and match their display options/colors. Step magnitudes can differ.
+The pair displays the full −60..+12 dB range; −24 dB is the geometric midpoint.
+These are key images, not draggable sliders.
+
+The default fader uses a black background and white rounded rail/ring thumb.
+Customize rail, thumb, normal/muted background and positive-gain color separately.
+**Highlight above 0 dB** changes the rail and thumb only when the gain is positive.
+Enable channel label, current dB and stereo meters independently. Meters reuse
+the shared decay state and instantaneous-level marks. To approximate VoiceMeeter,
+choose a green rail/thumb (for example `#7bc99e`), enable positive-gain highlighting
+with red (`#ff6347`), and turn on the desired detail fields.
+
+Static mode reuses the icon picker/font controls and separate normal/muted icons
+and backgrounds. Adjust buttons have a +/− badge; absolute buttons show their
+target gain. Set and mute operations always use the static display while retaining
+the saved fader preference for switching back to Adjust. Existing actions/settings
+remain compatible: missing gain-button settings receive defaults.
+
 ## Choose an icon
 
 Click the icon preview or **Choose icon** to open the picker. Frequently useful

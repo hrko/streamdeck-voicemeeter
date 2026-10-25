@@ -122,6 +122,73 @@ pub struct Settings {
     pub schema_version: u32,
     pub channels: [ChannelSettings; 2],
     pub macro_button: MacroSettings,
+    pub gain_button: GainButtonSettings,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum GainOperation {
+    #[default]
+    Adjust,
+    Set,
+    Mute,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum GainAppearance {
+    #[default]
+    Static,
+    Horizontal,
+    Vertical,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(default, rename_all = "camelCase")]
+pub struct GainButtonSettings {
+    pub operation: GainOperation,
+    pub delta: f32,
+    pub gain: f32,
+    pub appearance: GainAppearance,
+    pub icon: IconSettings,
+    pub muted_icon: IconSettings,
+    pub background: String,
+    pub muted_background: String,
+    pub bar_color: String,
+    pub thumb_color: String,
+    pub positive_color: String,
+    pub highlight_positive: bool,
+    pub show_label: bool,
+    pub show_db: bool,
+    pub show_meter: bool,
+}
+
+impl Default for GainButtonSettings {
+    fn default() -> Self {
+        Self {
+            operation: GainOperation::Adjust,
+            delta: 3.0,
+            gain: 0.0,
+            appearance: GainAppearance::Static,
+            icon: IconSettings {
+                code_point: "e31d".into(),
+                ..Default::default()
+            },
+            muted_icon: IconSettings {
+                code_point: "e02b".into(),
+                ..Default::default()
+            },
+            background: "#000000".into(),
+            muted_background: "#000000".into(),
+            bar_color: "#ffffff".into(),
+            thumb_color: "#ffffff".into(),
+            positive_color: "#ff6347".into(),
+            highlight_positive: false,
+            show_label: false,
+            show_db: false,
+            show_meter: false,
+        }
+    }
 }
 
 impl Default for Settings {
@@ -143,6 +210,7 @@ impl Default for Settings {
                 },
             ],
             macro_button: MacroSettings::default(),
+            gain_button: GainButtonSettings::default(),
         }
     }
 }
@@ -224,6 +292,29 @@ impl Settings {
             channel.icon.validate(&format!("{field}.icon"))?;
         }
         let m = &self.macro_button;
+        let b = &self.gain_button;
+        if !b.delta.is_finite() || b.delta == 0.0 || b.delta.abs() > 72.0 {
+            return Err(ValidationError::new(
+                "invalidButtonDelta",
+                "gainButton.delta",
+            ));
+        }
+        if !b.gain.is_finite() || !(-60.0..=12.0).contains(&b.gain) {
+            return Err(ValidationError::new("invalidButtonGain", "gainButton.gain"));
+        }
+        b.icon.validate("gainButton.icon")?;
+        b.muted_icon.validate("gainButton.mutedIcon")?;
+        for color in [
+            &b.background,
+            &b.muted_background,
+            &b.bar_color,
+            &b.thumb_color,
+            &b.positive_color,
+        ] {
+            if !valid_color(color) {
+                return Err(ValidationError::new("invalidColor", "gainButton"));
+            }
+        }
         if m.logical_id >= 80 {
             return Err(ValidationError::new(
                 "macroOutOfRange",
@@ -253,6 +344,9 @@ pub fn typescript() -> String {
         ChannelSettings::decl(),
         ButtonMode::decl(),
         MacroSettings::decl(),
+        GainOperation::decl(),
+        GainAppearance::decl(),
+        GainButtonSettings::decl(),
         Settings::decl(),
         ValidationError::decl(),
     ];
@@ -278,6 +372,27 @@ mod tests {
         let wire = serde_json::to_value(&settings).unwrap();
         assert_eq!(wire["schemaVersion"], 1);
         assert_eq!(wire["channels"][1]["target"]["kind"], "bus");
+    }
+
+    #[test]
+    fn gain_key_defaults_preserve_older_settings_and_reject_invalid_steps() {
+        let mut old = serde_json::to_value(Settings::default()).unwrap();
+        old.as_object_mut().unwrap().remove("gainButton");
+        let restored: Settings = serde_json::from_value(old).unwrap();
+        assert_eq!(restored.gain_button, GainButtonSettings::default());
+        let mut s = restored;
+        for delta in [0.0, f32::NAN, f32::INFINITY, -73.0, 73.0] {
+            s.gain_button.delta = delta;
+            assert_eq!(s.validate().unwrap_err().code, "invalidButtonDelta");
+        }
+        for delta in [-72.0, -0.5, 0.5, 72.0] {
+            s.gain_button.delta = delta;
+            assert!(s.validate().is_ok());
+        }
+        for gain in [-61.0, 13.0, f32::NAN] {
+            s.gain_button.gain = gain;
+            assert_eq!(s.validate().unwrap_err().code, "invalidButtonGain");
+        }
     }
 
     #[test]

@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
-import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError } from "./generated/contracts";
+import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError, type GainButtonSettings } from "./generated/contracts";
 import { channelLimits, restoreSettings, validateSettings } from "./settings";
 import glyphs from "./generated/glyphs.json";
 import { IconPicker } from "./IconPicker";
@@ -85,7 +85,7 @@ function IconEditor({ value, onChange, background }: { value: IconSettings; onCh
   </>;
 }
 
-function ChannelEditor({ title, value, edition, onChange }: { title: string; value: ChannelSettings; edition?: Edition; onChange: (value: ChannelSettings) => void }) {
+function ChannelEditor({ title, value, edition, onChange, targetOnly = false }: { title: string; value: ChannelSettings; edition?: Edition; onChange: (value: ChannelSettings) => void; targetOnly?: boolean }) {
   const { t, i18n } = useTranslation();
   const count = edition ? channelLimits[edition][value.target.kind] : 8;
   const label = (index: number) => t("channel.name", { kind: t(`kind.${value.target.kind}`), index: new Intl.NumberFormat(i18n.language).format(index) });
@@ -98,9 +98,37 @@ function ChannelEditor({ title, value, edition, onChange }: { title: string; val
       {value.target.index >= count && <option value={value.target.index} disabled>{label(value.target.index)} — {t("error.targetOutOfRange")}</option>}
       {Array.from({ length: count }, (_, index) => <option key={index} value={index}>{label(index)}</option>)}
     </select></Row>
-    <Input label={t("field.gainStep")} numeric value={value.gainStep} validate={text => text.trim() && Number.isFinite(Number(text)) && Number(text) > 0 && Number(text) <= 72 ? undefined : "invalidGainStep"} onCommit={text => onChange({ ...value, gainStep: Number(text) })} />
-    <IconEditor value={value.icon} onChange={icon => onChange({ ...value, icon })} />
+    {!targetOnly && <><Input label={t("field.gainStep")} numeric value={value.gainStep} validate={text => text.trim() && Number.isFinite(Number(text)) && Number(text) > 0 && Number(text) <= 72 ? undefined : "invalidGainStep"} onCommit={text => onChange({ ...value, gainStep: Number(text) })} />
+    <IconEditor value={value.icon} onChange={icon => onChange({ ...value, icon })} /></>}
   </fieldset>;
+}
+
+function GainButtonEditor({ value, onChange }: { value: GainButtonSettings; onChange: (value: GainButtonSettings) => void }) {
+  const { t } = useTranslation();
+  const patch = (next: Partial<GainButtonSettings>) => onChange({ ...value, ...next });
+  const fader = value.operation === "adjust" && value.appearance !== "static";
+  return <>
+    <Select label={t("button.operation")} value={value.operation} options={(["adjust", "set", "mute"] as const).map(key => [key, t(`button.${key}`)])} onChange={operation => patch({ operation })} />
+    {value.operation === "adjust" && <Input label={t("button.delta")} numeric value={value.delta} validate={text => text.trim() && Number.isFinite(Number(text)) && Number(text) !== 0 && Math.abs(Number(text)) <= 72 ? undefined : "invalidButtonDelta"} onCommit={text => patch({ delta: Number(text) })} />}
+    {value.operation === "set" && <Input label={t("button.gain")} numeric value={value.gain} validate={text => text.trim() && Number.isFinite(Number(text)) && Number(text) >= -60 && Number(text) <= 12 ? undefined : "invalidButtonGain"} onCommit={text => patch({ gain: Number(text) })} />}
+    {value.operation === "adjust" && <Select label={t("button.appearance")} value={value.appearance} options={(["static", "horizontal", "vertical"] as const).map(key => [key, t(`button.${key}`)])} onChange={appearance => patch({ appearance })} />}
+    {fader ? <>
+      <p className="help">{t(value.appearance === "horizontal" ? (value.delta > 0 ? "button.rightHalf" : "button.leftHalf") : (value.delta > 0 ? "button.upperHalf" : "button.lowerHalf"))}</p>
+      <ColorEditor label={t("button.barColor")} value={value.barColor} onChange={barColor => patch({ barColor })} />
+      <ColorEditor label={t("button.thumbColor")} value={value.thumbColor} onChange={thumbColor => patch({ thumbColor })} />
+      <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.highlightPositive} onChange={event => patch({ highlightPositive: event.target.checked })} /></Row>
+      {value.highlightPositive && <ColorEditor label={t("button.positiveColor")} value={value.positiveColor} onChange={positiveColor => patch({ positiveColor })} />}
+    </> : <>
+      <fieldset><legend>{t("button.normalIcon")}</legend><IconEditor value={value.icon} background={value.background} onChange={icon => patch({ icon })} /></fieldset>
+      <fieldset><legend>{t("button.mutedIcon")}</legend><IconEditor value={value.mutedIcon} background={value.mutedBackground} onChange={mutedIcon => patch({ mutedIcon })} /></fieldset>
+    </>}
+    <ColorEditor label={t("button.background")} value={value.background} onChange={background => patch({ background })} />
+    <ColorEditor label={t("button.mutedBackground")} value={value.mutedBackground} onChange={mutedBackground => patch({ mutedBackground })} />
+    <fieldset><legend>{t("button.details")}</legend>
+      {(["showLabel", "showDb", "showMeter"] as const).map(key => <Row key={key} label={t(`button.${key}`)}><input type="checkbox" aria-label={t(`button.${key}`)} checked={value[key]} onChange={event => patch({ [key]: event.target.checked })} /></Row>)}
+    </fieldset>
+    <p className="help">{t("button.help")}</p>
+  </>;
 }
 
 export function App({ client }: { client: StreamDeckPiApi }) {
@@ -131,7 +159,10 @@ export function App({ client }: { client: StreamDeckPiApi }) {
   return <main>
     <p role="status" className="status">{status.connected ? t("status.connected", { edition: status.edition }) : t("status.disconnected")}</p>
     {error && <p role="alert" className="error">{t(`error.${error.code}`, { defaultValue: t("error.invalidSettings") })}</p>}
-    {!settings ? <button onClick={() => save(structuredClone(defaultSettings))}>{t("settings.reset")}</button> : action === "macro" ? <>
+    {!settings ? <button onClick={() => save(structuredClone(defaultSettings))}>{t("settings.reset")}</button> : action === "gain-button" ? <>
+      <ChannelEditor title={t("section.target")} value={settings.channels[0]} edition={status.connected ? status.edition : undefined} targetOnly onChange={channel => save({ ...settings, channels: [channel, settings.channels[1]] })} />
+      <GainButtonEditor value={settings.gainButton} onChange={gainButton => save({ ...settings, gainButton })} />
+    </> : action === "macro" ? <>
       <Input label={t("field.logicalId")} numeric value={settings.macroButton.logicalId} validate={text => /^\d+$/.test(text) && Number(text) < 80 ? undefined : "macroOutOfRange"} onCommit={text => save({ ...settings, macroButton: { ...settings.macroButton, logicalId: Number(text) } })} />
       <Select label={t("field.mode")} value={settings.macroButton.mode} options={[["push", t("mode.push")], ["toggle", t("mode.toggle")]]} onChange={mode => save({ ...settings, macroButton: { ...settings.macroButton, mode } })} />
       <p className="help">{t("help.macro")}</p>

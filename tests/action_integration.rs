@@ -231,6 +231,127 @@ async fn sdk_combo_rotation_uses_both_steps_and_disappearance_stops_rendering() 
 }
 
 #[tokio::test]
+async fn gain_keys_adjust_set_mute_sync_and_reject_offline_input() {
+    use streamdeck_voicemeeter::settings::{GainAppearance, GainOperation};
+    let mut settings = Settings::default();
+    settings.gain_button.appearance = GainAppearance::Horizontal;
+    settings.gain_button.delta = 72.0;
+    let (worker, mut action, sender, mut output, state) =
+        setup::<3>(serde_json::to_value(&settings).unwrap()).await;
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    action
+        .handle(event("keyUp", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(
+        state.lock().unwrap().channels[&settings.channels[0].target].gain,
+        12.0
+    );
+    let writes = state.lock().unwrap().writes.len();
+    settle(&worker).await;
+    assert_eq!(
+        state.lock().unwrap().writes.len(),
+        writes,
+        "holding must not repeat"
+    );
+    settings.gain_button.delta = -72.0;
+    action
+        .handle(
+            event("didReceiveSettings", json!({"settings": settings})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(
+        state.lock().unwrap().channels[&settings.channels[0].target].gain,
+        -60.0
+    );
+    settings.gain_button.operation = GainOperation::Set;
+    settings.gain_button.gain = -4.5;
+    action
+        .handle(
+            event("didReceiveSettings", json!({"settings": settings})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(
+        state.lock().unwrap().channels[&settings.channels[0].target].gain,
+        -4.5
+    );
+    settings.gain_button.operation = GainOperation::Mute;
+    action
+        .handle(
+            event("didReceiveSettings", json!({"settings": settings})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert!(state.lock().unwrap().channels[&settings.channels[0].target].mute);
+    while output.try_recv().is_ok() {}
+    state
+        .lock()
+        .unwrap()
+        .channels
+        .get_mut(&settings.channels[0].target)
+        .unwrap()
+        .mute = false;
+    settle(&worker).await;
+    let mut images = 0;
+    while let Ok(message) = output.try_recv() {
+        let message: Value = serde_json::from_str(&message).unwrap();
+        if message["event"] == "setImage" {
+            images += 1;
+        }
+        assert_ne!(message["event"], "setFeedbackLayout");
+    }
+    assert!(images > 0, "external changes must update the key image");
+    state.lock().unwrap().unavailable = true;
+    wait_connected(&worker, false).await;
+    let writes = state.lock().unwrap().writes.len();
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    state.lock().unwrap().unavailable = false;
+    wait_connected(&worker, true).await;
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().writes.len(), writes);
+    action
+        .handle(event("willDisappear", json!({})), sender.clone())
+        .await
+        .unwrap();
+    while output.try_recv().is_ok() {}
+    action
+        .handle(event("keyDown", json!({})), sender)
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().writes.len(), writes);
+    assert!(output.try_recv().is_err());
+}
+
+#[tokio::test]
 async fn sdk_invalid_settings_never_fall_back_to_strip_zero() {
     let (worker, mut action, sender, mut output, state) =
         setup::<0>(json!({"channels":"invalid"})).await;

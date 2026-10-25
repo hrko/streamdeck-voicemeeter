@@ -3,6 +3,7 @@ pub mod backend;
 pub mod dial;
 pub mod domain;
 pub mod engine;
+pub mod gain_button;
 pub mod logging;
 mod meter;
 pub mod numbers;

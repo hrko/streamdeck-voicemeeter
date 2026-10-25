@@ -89,6 +89,14 @@ impl<B: Backend> Engine<B> {
             .edition
             .ok_or_else(|| anyhow::anyhow!("disconnected"))?;
         match command {
+            Command::SetGain { target, gain } => {
+                anyhow::ensure!(edition.contains(target), "targetOutOfRange");
+                anyhow::ensure!(
+                    gain.is_finite() && (-60.0..=12.0).contains(&gain),
+                    "invalidButtonGain"
+                );
+                self.backend.set_gain(target, gain)
+            }
             Command::AdjustGain { target, delta } => {
                 anyhow::ensure!(edition.contains(target), "targetOutOfRange");
                 let current = self.backend.channel(target)?.gain;
@@ -221,7 +229,7 @@ impl<B: Backend> Engine<B> {
                     tracing::warn!(?target, %error, "Channel read failed");
                     for (context, sub) in &self.subscriptions {
                         let count = match sub.kind {
-                            ActionKind::Gain => 1,
+                            ActionKind::Gain | ActionKind::GainButton => 1,
                             ActionKind::Combo => 2,
                             ActionKind::Macro => 0,
                         };
@@ -348,6 +356,38 @@ mod tests {
             Command::ToggleMute(Target::default())
         ));
         assert!(e.backend.writes.is_empty());
+    }
+
+    #[test]
+    fn absolute_gain_checks_edition_range_and_connection_generation() {
+        let mut e = setup(ActionKind::GainButton);
+        let target = Target::default();
+        let generation = e.snapshot.generation;
+        assert!(e.command(
+            "a",
+            generation,
+            Command::SetGain {
+                target,
+                gain: -60.0
+            }
+        ));
+        assert_eq!(e.backend.gain, -60.0);
+        assert!(e.command("a", generation, Command::SetGain { target, gain: 12.0 }));
+        for gain in [-61.0, 13.0, f32::NAN] {
+            assert!(!e.command("a", generation, Command::SetGain { target, gain }));
+        }
+        assert!(!e.command(
+            "a",
+            generation,
+            Command::SetGain {
+                target: Target { index: 7, ..target },
+                gain: 0.0
+            }
+        ));
+        e.disconnect();
+        e.connect().unwrap();
+        assert!(!e.command("a", generation, Command::SetGain { target, gain: 0.0 }));
+        assert_eq!(e.backend.gain, 12.0);
     }
     #[test]
     fn shared_meter_decays_once_and_resets_after_disconnect_or_removal() {

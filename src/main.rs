@@ -32,6 +32,7 @@ async fn run() -> anyhow::Result<()> {
         .add_action::<DeckAction<0>>()
         .add_action::<DeckAction<1>>()
         .add_action::<DeckAction<2>>()
+        .add_action::<DeckAction<3>>()
         .run();
     let result = tokio::select! {
         result = plugin => result,

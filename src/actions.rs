@@ -32,6 +32,7 @@ impl<const KIND: u8> DeckAction<KIND> {
         match KIND {
             0 => ActionKind::Gain,
             1 => ActionKind::Combo,
+            3 => ActionKind::GainButton,
             _ => ActionKind::Macro,
         }
     }
@@ -62,10 +63,10 @@ impl<const KIND: u8> DeckAction<KIND> {
         }
         self.send(Request::Subscribe {
             context: context.clone(),
-            subscription: Subscription {
+            subscription: Box::new(Subscription {
                 kind: Self::kind(),
                 settings: settings.clone(),
-            },
+            }),
         })?;
         if let Err(error) = settings.validate() {
             ctx.show_alert()?;
@@ -73,7 +74,7 @@ impl<const KIND: u8> DeckAction<KIND> {
             return Ok(());
         }
         let sender = ctx.sender().clone();
-        if Self::kind() != ActionKind::Macro {
+        if matches!(Self::kind(), ActionKind::Gain | ActionKind::Combo) {
             ctx.set_feedback_layout(crate::dial::layout(Self::kind()))?;
         }
         let mut snapshots = self.client.snapshots.clone();
@@ -106,6 +107,11 @@ impl<const KIND: u8> DeckAction<KIND> {
                         let missing = frame.missing_glyph;
                         (Some(frame), Value::Null, missing)
                     }
+                } else if Self::kind() == ActionKind::GainButton {
+                    let frame =
+                        crate::gain_button::frame(&snapshot, &settings, &mut cache, &language);
+                    let missing = frame.missing_glyph;
+                    (Some(frame), Value::Null, missing)
                 } else {
                     let (feedback, missing) = crate::dial::feedback(
                         &snapshot,
@@ -205,6 +211,7 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
     const UUID: &'static str = match KIND {
         0 => "jp.hrko.streamdeck.voicemeeter.rust.gain-control",
         1 => "jp.hrko.streamdeck.voicemeeter.rust.gain-control-combo",
+        3 => "jp.hrko.streamdeck.voicemeeter.rust.gain-button",
         _ => "jp.hrko.streamdeck.voicemeeter.rust.macro",
     };
     fn new(state: Arc<Self::State>) -> Self {
@@ -271,6 +278,9 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
         Ok(())
     }
     async fn on_key_down(&mut self, _: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
+        if Self::kind() == ActionKind::GainButton {
+            self.command(ctx, domain::gain_button_command(&ctx.settings()))?;
+        }
         if Self::kind() == ActionKind::Macro {
             self.send(Request::Press {
                 context: ctx.identity().context.clone(),

@@ -61,7 +61,36 @@
     "picker.title": "アイコンを選択",
     "picker.open": "アイコンを選ぶ",
     "picker.close": "アイコン選択を閉じる",
-    "picker.empty": "一致するアイコンがありません。"
+    "picker.empty": "一致するアイコンがありません。",
+    "error.invalidButtonDelta": "−72〜＋72 dBの範囲で、0以外の増減量を入力してください。",
+    "button.highlightPositive": "正のゲインを強調",
+    "button.mutedIcon": "ミュート時のアイコン",
+    "button.mute": "ミュート切り替え",
+    "button.mutedBackground": "ミュート時の背景色",
+    "button.upperHalf": "上半分を表示します。同じチャンネルの減少キーの上に配置してください。",
+    "button.set": "指定ゲインに設定",
+    "button.gain": "設定値 (dB)",
+    "button.delta": "増減量 (dB)",
+    "button.thumbColor": "つまみの色",
+    "button.showLabel": "チャンネル名を表示",
+    "button.vertical": "フェーダー（縦向き）",
+    "error.invalidButtonGain": "−60〜＋12 dBの範囲でゲインを入力してください。",
+    "button.showDb": "ゲイン値 (dB) を表示",
+    "button.help": "1回の押下につき1回操作します。長押しでの繰り返しはありません。フェーダーの範囲は−60〜＋12 dBです。連続したフェーダーにする場合は、両キーの表示設定を揃えてください。",
+    "button.positiveColor": "正ゲインの色",
+    "button.rightHalf": "右半分を表示します。同じチャンネルの減少キーの右に配置してください。",
+    "button.barColor": "フェーダーの色",
+    "button.background": "背景色",
+    "button.horizontal": "フェーダー（横向き）",
+    "button.appearance": "表示スタイル",
+    "button.adjust": "ゲインを増減",
+    "button.static": "静的アイコン",
+    "button.lowerHalf": "下半分を表示します。同じチャンネルの増加キーの下に配置してください。",
+    "button.normalIcon": "通常のアイコン",
+    "button.operation": "操作",
+    "button.leftHalf": "左半分を表示します。同じチャンネルの増加キーの左に配置してください。",
+    "button.showMeter": "ステレオメーターを表示",
+    "button.details": "追加の表示"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",
@@ -79,6 +108,10 @@
       "macro": {
         "Name": "マクロ",
         "Tooltip": "VoiceMeeter MacroButtonを操作します。"
+      },
+      "gain-button": {
+        "Name": "ゲイン操作ボタン",
+        "Tooltip": "キーでチャンネルのゲインを増減・設定したり、ミュートを切り替えます。"
       }
     }
   }

@@ -17,7 +17,7 @@ use tokio::sync::watch;
 pub enum Request {
     Subscribe {
         context: String,
-        subscription: Subscription,
+        subscription: Box<Subscription>,
     },
     Remove(String),
     Command {
@@ -142,7 +142,7 @@ impl Worker {
                         Ok(Request::Subscribe {
                             context,
                             subscription,
-                        }) => engine.subscribe(context, subscription),
+                        }) => engine.subscribe(context, *subscription),
                         Ok(Request::Remove(context)) => engine.remove(&context),
                         Ok(Request::Command {
                             context,
