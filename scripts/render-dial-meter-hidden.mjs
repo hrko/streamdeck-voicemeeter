@@ -24,7 +24,7 @@ async function render(c,kind,bg,opacity,mode) {
   if(!(background&&opacity!==undefined) && !p.enabled) continue;
   let [x,y,w,h]=item.rect;
   if(mode !== 'visible' && item.key.startsWith('levelMeter')) continue;
-  if(mode === 'compact' && item.key.startsWith('gainSlider')) y = 66;
+  if(mode === 'compact' && (item.key.startsWith('gainValue') || item.key.startsWith('status'))) y += 8;
   let input;
   if(item.type==="pixmap") {
    const source=Buffer.from(p.value.split(",")[1],"base64");
@@ -44,12 +44,12 @@ async function render(c,kind,bg,opacity,mode) {
  return sharp(svg(200,100,'<rect width="200" height="100" fill="black"/>')).composite(layers).png().toBuffer();
 }
 
-const out = "target/dial-meter-hidden";
+const out = "target/dial-meter-hidden-fixed-fader";
 await mkdir(out,{recursive:true});
 const rows = [
  {mode:"visible",label:"Meter shown / fader y=74"},
  {mode:"hidden",label:"Current: meter hidden / gap 10 px"},
- {mode:"compact",label:"Proposal: meter hidden / gap 2 px / fader y=66"},
+ {mode:"compact",label:"Proposal: value + status y=48 / gap 2 px / fader stays y=74"},
 ];
 for(const scale of [1,2]) {
  const w=860,h=60+rows.length*(100*scale+58);
