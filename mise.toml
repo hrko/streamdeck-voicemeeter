@@ -37,7 +37,7 @@ run = "cargo test --locked"
 run = ["pnpm --filter @streamdeck-voicemeeter/pi exec vitest run", "node --test scripts/check-locales.test.mjs scripts/build-plugin.test.mjs scripts/dependency-policy.test.mjs scripts/icon-catalog.test.mjs"]
 
 [tasks.test]
-depends = ["test:rust", "test:pi", "test:native"]
+depends = ["test:rust", "test:pi", "test:native", "test:visual"]
 
 [tasks."test:native"]
 run = ["cargo build --locked --bin streamdeck-voicemeeter", "node scripts/smoke-native.mjs debug", "node scripts/smoke-native.mjs debug --shutdown-event"]
@@ -65,3 +65,6 @@ run = "node scripts/update-dependencies.mjs"
 
 [tasks."deps:audit"]
 run = "node scripts/update-dependencies.mjs --audit"
+
+[tasks."test:visual"]
+run = ["cargo run --locked --example gain_button_fixtures", "node scripts/check-fader-visual.mjs"]

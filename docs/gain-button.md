@@ -9,19 +9,39 @@ the edition's target bounds and the finite −60..+12 dB range before writing.
 
 ## Reference geometry
 
-The owner supplied a pixel-size screenshot of the built-in Volume Controller.
-`src/gain_button.rs` draws a shared 288x144 rail, then clips/transforms it into
-one 144x144 key image. At 72px display size, the rail's outer thickness is 14px,
-its outline is 3px, and the thumb uses a round white ring with background-colored
-separation. The rail centers span x=34..254 in the combined image. Horizontal
-negative/positive keys show the left/right half; vertical positive/negative keys
-show the upper/lower half. The magnitude of the step never changes geometry.
+The owner supplied the built-in Volume Controller screenshot used in
+`tests/fixtures/fader`. The production renderer draws a shared 288x144 rail
+and clips/transforms it into one 144x144 key image. At 72px display size:
 
-The visual shape was compared in a browser against the supplied reference.
-Native Stream Deck rendering and the physical key gaps still require owner
-confirmation; exact raster equivalence is not claimed from a browser preview.
-The gain mapping is linear in dB over −60..+12, independent of Windows volume
-percentages. The visual midpoint corresponds to −24 dB.
+| Measurement | Horizontal | Vertical (before rotation) |
+| --- | --- | --- |
+| Rail endpoint centers | 17.25..125 px | 18.25..126 px |
+| Outer rail width / outline | 14 / 3 px | 14 / 3 px |
+| Thumb ring outer / inner diameter | 20 / 14 px | 20 / 14 px |
+| Background clearance outside ring | 3 px | 3 px |
+
+Negative/positive horizontal keys show the left/right half; positive/negative
+vertical keys show the upper/lower half. Step magnitude does not change geometry.
+Gain maps linearly over −60..+12 dB, independently of Windows volume percentages.
+
+Run `mise run test:visual` for the pixel regression check (also included in CI).
+A Rust example exports the **production renderer's** four SVGs, and locked sharp
+0.35.5 (published 2026-09-27; resolved under the 7-day policy on 2026-10-25)
+rasterizes them directly at 72px. Comparison excludes only rounded host
+key-frame corners. Each key must have grayscale RMSE <= 2/255 and no more than
+4 differing silhouette pixels (threshold 128). This allows minor rasterizer
+antialiasing differences while catching 1px shifts and changed clearances.
+Reference thumb position is aligned with one shared test gain because the
+screenshot does not expose its Windows volume percentage. This tests geometry,
+not equivalence between Windows percentage and VoiceMeeter gain.
+
+On 2026-10-25, the four keys had RMSE 0.98–1.27/255 and 1–2 silhouette pixels
+different out of 4,400 compared pixels each. Reinstating the old geometry at
+the same thumb positions produces 4/118/96/18 silhouette differences for
+left/right/upper/lower and fails the thresholds. Output PNGs, red/green difference
+images and numerical results are in `target/fader-visual`. This is a raster
+comparison with the supplied screenshot; updated hardware rendering still
+requires confirmation. No claim of byte-identical antialiasing is made.
 
 Color and detail options are independent, with all optional detail fields off by
 default. Labels are clipped to the key. Vertical labels and values run alongside

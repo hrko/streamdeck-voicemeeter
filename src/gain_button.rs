@@ -7,9 +7,10 @@ use crate::{
 };
 use std::fmt::Write;
 
-pub fn position(gain: f32) -> f32 {
+pub fn position(gain: f32, vertical: bool) -> f32 {
     // The whole pair covers the same -60..+12 dB range as the existing dial.
-    34.0 + 220.0 * ((gain.clamp(-60.0, 12.0) + 60.0) / 72.0)
+    let start = if vertical { 36.5 } else { 34.5 };
+    start + 215.5 * ((gain.clamp(-60.0, 12.0) + 60.0) / 72.0)
 }
 
 pub fn frame(
@@ -58,15 +59,17 @@ pub fn frame(
         } else {
             "translate(0 0)"
         };
+        let start = position(-60.0, vertical);
+        let end = position(12.0, vertical);
         let _ = write!(
             body,
-            r#"<g transform="{transform}"><path d="M34 72H254" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><path d="M34 72H254" fill="none" stroke="{bg}" stroke-width="16" stroke-linecap="round"/>"#
+            r#"<g transform="{transform}"><path d="M{start} 72H{end}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><path d="M{start} 72H{end}" fill="none" stroke="{bg}" stroke-width="16" stroke-linecap="round"/>"#
         );
         if let Some(channel) = channel {
-            let x = position(channel.gain);
+            let x = position(channel.gain, vertical);
             let _ = write!(
                 body,
-                r#"<path d="M34 72H{x}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><circle cx="{x}" cy="72" r="24" fill="{bg}"/><circle cx="{x}" cy="72" r="18" fill="{bg}" stroke="{thumb}" stroke-width="6"/>"#
+                r#"<path d="M{start} 72H{x}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><circle cx="{x}" cy="72" r="26" fill="{bg}"/><circle cx="{x}" cy="72" r="17" fill="{bg}" stroke="{thumb}" stroke-width="6"/>"#
             );
         }
         body.push_str("</g>");
@@ -183,9 +186,10 @@ mod tests {
 
     #[test]
     fn complementary_halves_share_position_and_ignore_step_magnitude() {
-        assert_eq!(position(-60.0), 34.0);
-        assert_eq!(position(-24.0), 144.0);
-        assert_eq!(position(12.0), 254.0);
+        assert_eq!(position(-60.0, false), 34.5);
+        assert_eq!(position(12.0, false), 250.0);
+        assert_eq!(position(-60.0, true), 36.5);
+        assert_eq!(position(12.0, true), 252.0);
         let mut s = Settings::default();
         s.gain_button.appearance = GainAppearance::Horizontal;
         let snapshot = Snapshot {
@@ -217,7 +221,8 @@ mod tests {
             s.gain_button.delta = delta;
             let svg = frame(&snapshot, &s, &mut cache, "en").svg;
             assert!(svg.contains(transform));
-            assert!(svg.contains(r#"cx="144" cy="72""#));
+            assert!(svg.contains(r#"r="26""#));
+            assert!(svg.contains(r#"r="17""#));
             assert!(svg.contains(r#"stroke-width="28""#));
         }
     }

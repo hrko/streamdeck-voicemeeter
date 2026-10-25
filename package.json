@@ -4,6 +4,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "packageManager": "pnpm@11.28.6",
   "devDependencies": {
-    "@elgato/cli": "1.10.2"
+    "@elgato/cli": "1.10.2",
+    "sharp": "0.35.5"
   }
 }
