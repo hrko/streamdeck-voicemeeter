@@ -119,6 +119,7 @@
     "meter.meterMutedHigh": "ミュート時の高域色",
     "button.faderLabel": "フェーダー内ラベル（左／下側のみ）",
     "button.labelNegativeOnly": "フェーダー内ラベルは減少キー（左／下側）で設定します。",
+    "button.positiveLabelColor": "正ゲイン時の文字色",
     "button.labelColor": "フェーダー内の文字色",
     "palette.adjustColors": "配色を調整",
     "palette.includesMeter": "プリセットにはフェーダー・文字・背景と、ミュート時を含むメーターの全配色を保存します。",

@@ -119,6 +119,7 @@
     "meter.meterMutedHigh": "Muted high level",
     "button.faderLabel": "Label inside fader (left/lower key)",
     "button.labelNegativeOnly": "Enable the fader label on the decrease (left/lower) key.",
+    "button.positiveLabelColor": "Positive gain label color",
     "button.labelColor": "Fader label color",
     "palette.adjustColors": "Adjust colors",
     "palette.includesMeter": "Presets include fader, label, background and all meter colors, including muted colors.",

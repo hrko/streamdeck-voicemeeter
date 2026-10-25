@@ -202,6 +202,7 @@ function GainButtonEditor({ client, value, onChange }: { client: StreamDeckPiApi
           <ColorEditor label={t("button.thumbColor")} value={value.thumbColor} onChange={thumbColor => patch({ thumbColor })} />
           <ColorEditor label={t("button.labelColor")} value={value.labelColor} onChange={labelColor => patch({ labelColor })} />
           <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.highlightPositive} onChange={event => patch({ highlightPositive: event.target.checked })} /></Row>
+          {value.highlightPositive && <ColorEditor label={t("button.positiveLabelColor")} value={value.positiveLabelColor} onChange={positiveLabelColor => patch({ positiveLabelColor })} />}
           {value.highlightPositive && <ColorEditor label={t("button.positiveColor")} value={value.positiveColor} onChange={positiveColor => patch({ positiveColor })} />}
         </fieldset>
         <fieldset><legend>{t("palette.keyColors")}</legend>

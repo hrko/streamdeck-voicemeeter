@@ -52,9 +52,10 @@ channel, operation, step, orientation and label/dB/meter options are retained.
 Presets are inferred from saved color values; individual edits display Custom.
 The `swapMeter` flag defaults to false: the meter is above a horizontal fader
 and left of a vertical fader. Swapping reverses these positions. The rail is
-at canonical y=97 and stereo lanes at y=39/49 (swapped: y=47 and y=89/99).
-The meter center and rail center lie at 47/97 around the key center 72; the
-10px display-size clearance is between the meter background and thumb ring.
+at canonical y=96 and stereo lanes at y=36/48 (swapped: y=48 and y=88/100).
+The 24px meter background starts at 34 (86 swapped). At 72px key size,
+outer margins measured from the meter background and 14px bar are both 17px;
+the gap between them is 12px. These axes stay fixed with or without gain text.
 Both lanes span the rounded rail's outer cap extents across the shared pair
 (x=20.5..264 horizontally, x=22.5..266 before vertical rotation).
 The meter has 40 cells per channel, with a shared grid across both keys.
@@ -81,7 +82,10 @@ or network is used.
 Only fader styles render dB and meters; static styles retain but ignore those
 preferences. `faderLabel` is independent of the static `showLabel`. It renders
 inside the negative (left/lower) rail only, clipped before the split and
-overlaid by the thumb. `labelColor` is a palette field; older user palettes
+overlaid by the thumb. Labels start 4px from the outer rounded bar end, rather than being centered.
+`positiveLabelColor` selects the text color when positive highlighting is active
+(default and VoiceMeeter preset: dark red #862b20). Older settings and user
+palettes receive this default. `labelColor` is a palette field; older user palettes
 without it receive the default black. Raster tests verify label pixels stay
 inside the rail and the positive half remains completely unchanged. Static channel names instead use
 `setTitle`, including external name updates; disabling labels or returning to a
@@ -125,8 +129,7 @@ changes, disappearance and reconnect while held.
 With `showDb`, the thumb outer diameter is 28px at 72px key size (otherwise
 20px). Monospaced signed numbers use no unit and remain horizontal in either
 orientation. A light/dark foreground is selected from the background color.
-The thumb covers the channel label. With a meter, track centers move to 43/101
-(canonical 144px coordinates), preserving symmetric axes and 10px clearance.
-Without gain text the original geometry is unchanged. Numbers are clipped to
+The thumb covers the channel label. Meter and fader centers remain at 46/96
+(canonical 144px coordinates), or 98/48 when swapped, with or without gain text. Numbers are clipped to
 the inner circle; pixel tests verify that removing that clip reveals no missing
 glyphs for −60, −24, −12.5, 0, +6 and +12. Key-boundary splitting remains visible.

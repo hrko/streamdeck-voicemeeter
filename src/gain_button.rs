@@ -80,12 +80,10 @@ pub fn frame(
     let vertical = fader && b.appearance == GainAppearance::Vertical;
     if fader {
         let transform = pair_transform(vertical, b.delta > 0.0);
+        // H layout: 12px meter, 12px bar gap, 17px outer margins.
+        // Reflect both tracks when swapped; number visibility never moves axes.
         let offset = if b.show_meter {
-            if b.swap_meter {
-                -(if b.show_db { 29 } else { 25 })
-            } else {
-                if b.show_db { 29 } else { 25 }
-            }
+            if b.swap_meter { -24 } else { 24 }
         } else {
             0
         };
@@ -109,9 +107,13 @@ pub fn frame(
             let width = 144.0 - left;
             let _ = write!(
                 body,
-                r#"<defs><clipPath id="fader-label"><rect x="{left}" y="60" width="{width}" height="24"/></clipPath></defs><text x="{}" y="78" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" font-weight="600" fill="{}" clip-path="url(#fader-label)">{}</text>"#,
-                (left + 144.0) / 2.0,
-                render::escape(&b.label_color),
+                r#"<defs><clipPath id="fader-label"><rect x="{left}" y="60" width="{width}" height="24"/></clipPath></defs><text x="{}" y="78" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="17" font-weight="600" fill="{}" clip-path="url(#fader-label)">{}</text>"#,
+                left,
+                render::escape(if positive {
+                    &b.positive_label_color
+                } else {
+                    &b.label_color
+                }),
                 render::escape(&label(snapshot, settings))
             );
         }
@@ -196,14 +198,10 @@ pub fn frame(
             .map(|(_, peaks)| *peaks)
             .unwrap_or(levels);
         let transform = pair_transform(vertical, b.delta > 0.0);
-        let top = if b.swap_meter {
-            if b.show_db { 93 } else { 89 }
-        } else {
-            if b.show_db { 35 } else { 39 }
-        };
+        let top = if b.swap_meter { 88 } else { 36 };
         let _ = write!(
             body,
-            r#"<g transform="{transform}"><rect x="{meter_start}" y="{}" width="{meter_width}" height="20" fill="{}"/>"#,
+            r#"<g transform="{transform}"><rect x="{meter_start}" y="{}" width="{meter_width}" height="24" fill="{}"/>"#,
             top - 2,
             render::escape(&b.meter_background)
         );
@@ -243,9 +241,9 @@ pub fn frame(
                 };
                 let _ = write!(
                     body,
-                    r#"<rect x="{}" y="{}" width="{}" height="6" fill="{}"/>"#,
+                    r#"<rect x="{}" y="{}" width="{}" height="8" fill="{}"/>"#,
                     meter_start + cell as f32 * pitch + 1.0,
-                    top + side * 10,
+                    top + side * 12,
                     pitch - 2.0,
                     render::escape(color)
                 );
@@ -363,7 +361,7 @@ mod tests {
         let mut cache = IconCache::default();
         settings.gain_button.meter_background = "#123456".into();
         let normal = frame(&snapshot, &settings, &mut cache, "en").svg;
-        assert_eq!(normal.matches("height=\"6\"").count(), 80);
+        assert_eq!(normal.matches("height=\"8\"").count(), 80);
         assert!(normal.contains("#123456"));
         for color in ["#85adb9", "#1efe5b", "#fa0000"] {
             assert!(normal.contains(color));
@@ -460,6 +458,8 @@ mod tests {
         assert!(!svg.contains(" dB"));
         assert!(svg.contains("rotate(90"));
         assert!(svg.contains("#ff6347"));
+        assert!(svg.contains("fill=\"#862b20\""));
+        assert!(svg.contains("text-anchor=\"start\""));
         assert_eq!(svg.matches("<svg ").count(), 1);
         snapshot.channels[0].1.gain = 0.0;
         assert!(

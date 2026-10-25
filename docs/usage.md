@@ -46,22 +46,22 @@ These are key images, not draggable sliders.
 
 The default fader uses a black background and white rounded rail/ring thumb.
 Customize rail, thumb, normal/muted background and positive-gain color separately.
-**Highlight above 0 dB** changes the rail and thumb only when the gain is positive.
+**Highlight above 0 dB** changes the rail, thumb and label color only when the gain is positive.
 Current gain and stereo meters are available only for fader styles. Gain is
 displayed horizontally inside the thumb (for example −12.5, 0.0 or +6.0),
-without the dB suffix. Enabling it enlarges the thumb; the meter clearance
-remains 10 px and both axes stay symmetric. A thumb crossing the key boundary
+without the dB suffix. Enabling it enlarges the thumb without moving either track. A thumb crossing the key boundary
 is split between the two keys, including its number. Enabling a
 meter shifts the fader to a separate track. Both stereo lanes span the full
 key pair with their ends aligned to the fader bar. The default is meter
 left / fader right (vertical), or meter above / fader below (horizontal); **Swap fader and meter** exchanges the tracks (above/below for
-horizontal, left/right for vertical). Both center axes are equally spaced from
-the key center, with 10 px between meter background and thumb ring at 72px key
-size. Set the same options on both keys.
+horizontal, left/right for vertical). At 72px key size, the meter is 12px wide, the gap to the 14px bar is
+12px, and the outer margins measured from the meter background and bar are
+both 17px. Set the same options on both keys.
 
 The decrease (left/lower) key has a separate **Label inside fader** option. The
 text is clipped inside its bar and never continues onto the right/upper key.
-Its color is under **Adjust colors → Fader and label** and included in presets.
+It starts 4px from the rounded bar end. Normal and positive-gain text colors
+are under **Adjust colors → Fader and label** and included in presets.
 Static styles ignore saved dB/meter preferences. Their channel label uses Stream
 Deck's native title; new keys default to bottom alignment. Existing keys retain
 their saved title formatting, which can be changed in the title controls.

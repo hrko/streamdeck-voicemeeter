@@ -48,9 +48,10 @@ for (const vertical of [false,true]) for (const swap of [false,true]) {
     const i=((vertical ? y+half*144 : y)*(vertical?144:288)+(vertical?x:x+half*144))*3;
     assert.deepEqual(pixel(b,x,y), [...full.subarray(i,i+3)], 'both keys must preserve the uninterrupted cell grid');
   }
-  const meterMin=swap?89:39, faderCenter=swap?47:97;
-  assert.equal((meterMin+8+faderCenter)/2,72, 'track axes must be symmetric about the key center');
-  assert.equal((Math.abs(meterMin+8-faderCenter)-10-20)/2,10,'visible clearance is 10px at 72px key size');
+  const meterMin=swap?88:36, faderCenter=swap?48:96;
+  assert.equal(swap ? faderCenter-14 : meterMin-2,34,'outer margin is 17px');
+  assert.equal(swap ? 144-(meterMin+22) : 144-(faderCenter+14),34,'opposite outer margin is 17px');
+  assert.equal((Math.abs(meterMin+10-faderCenter)-12-14)/2,12,'bar clearance is 12px');
   let green=0, white=0;
   const railExtents=[], meterExtents=[];
   for(const [half,b] of buffers.entries()) for(let y=0;y<144;y++) for(let x=0;x<144;x++) {
@@ -60,9 +61,9 @@ for (const vertical of [false,true]) for (const swap of [false,true]) {
     if(cross===faderCenter && r>128) railExtents.push(along);
     if(g>r+20 && g>blue+20 && g>80) {
       green++;
-      assert.ok(cross>=meterMin && cross<meterMin+16,'meter must stay in its track');
+      assert.ok(cross>=meterMin && cross<meterMin+20,'meter must stay in its track');
     }
-    if(r>245 && g>245 && blue>245 && !(cross>=meterMin && cross<meterMin+16)) {
+    if(r>245 && g>245 && blue>245 && !(cross>=meterMin && cross<meterMin+20)) {
       white++;
       assert.ok(Math.abs(cross-faderCenter)<=21,'fader must stay in its separate track');
     }
@@ -97,6 +98,8 @@ for(const name of ['left','right','upper','lower']) for(const gain of [-60,-24,-
   const unclipped=await sharp(Buffer.from(svg.replace('clip-path="url(#gain-number)"',''))).raw().toBuffer();
   assert.deepEqual(actual,unclipped,`${name} ${gain}: digits must fit inside the circle`);
   assert.ok(!svg.includes(' dB'),'no unit outside the thumb');
+  assert.ok(svg.includes('translate(0 24)'),'gain text never shifts the fader axis');
+  assert.ok(svg.includes('y="34"'),'gain text never shifts the meter background');
   assert.ok(svg.includes(name==='upper'||name==='lower' ? 'rotate(90 ' : 'rotate(0 '),'numbers stay horizontal');
 }
 console.log('In-thumb numbers fit at gain limits, zero, positive values and the key seam.');
