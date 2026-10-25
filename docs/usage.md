@@ -47,7 +47,8 @@ Customize rail, thumb, normal/muted background and positive-gain color separatel
 **Highlight above 0 dB** changes the rail and thumb only when the gain is positive.
 Current dB and stereo meters are available only for fader styles. Enabling a
 meter shifts the fader to a separate track. Both stereo lanes span the full
-key pair with their ends aligned to the fader bar; **Swap fader and meter** exchanges the tracks (above/below for
+key pair with their ends aligned to the fader bar. The default is meter
+left / fader right (vertical), or meter above / fader below (horizontal); **Swap fader and meter** exchanges the tracks (above/below for
 horizontal, left/right for vertical). Set the same options on both keys.
 Static styles ignore saved dB/meter preferences. Their channel label uses Stream
 Deck's native title; new keys default to bottom alignment. Existing keys retain
@@ -62,6 +63,21 @@ and backgrounds. Adjust buttons have a +/− badge; absolute buttons show their
 target gain. Set and mute operations always use the static display while retaining
 the saved fader preference for switching back to Adjust. Existing actions/settings
 remain compatible: missing gain-button settings receive defaults.
+
+### Meter colors and shared presets
+
+The stereo meter uses VoiceMeeter-style cells. Expand **Meter colors** to edit
+its background, unlit cells, low/middle/high level colors and their muted
+counterparts. The level/decay continues while muted; only the active-cell colors
+change. These colors are independent of the key background.
+
+Choose **Color preset** to apply a built-in or shared user palette. Under
+**Manage presets**, enter a name and **Save as new preset** to copy the current
+colors. Select a user preset, adjust its colors/name and **Update selected
+preset** to edit it, or delete it with confirmation. Built-ins are read-only.
+All Gain Button panels share the list. Edits/deletions do not affect keys that
+already copied the palette; reapply to update those keys. Presets include meter
+colors and positive-gain highlighting, but not target, step, layout or visibility.
 
 ## Choose an icon
 

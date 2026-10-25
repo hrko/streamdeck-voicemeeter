@@ -59,7 +59,7 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
   for (const key of ["highlightPositive", "showLabel", "showDb", "showMeter", "swapMeter"]) {
     if (typeof button[key] !== "boolean") return error("invalidSettings", `gainButton.${key}`);
   }
-  for (const key of ["background", "mutedBackground", "barColor", "thumbColor", "positiveColor"]) {
+  for (const key of ["background", "mutedBackground", "barColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
     if (typeof button[key] !== "string" || !/^#[\da-f]{6}$/i.test(button[key])) return error("invalidColor", `gainButton.${key}`);
   }
   const buttonIconError = icon(button.icon, "gainButton.icon") ?? icon(button.mutedIcon, "gainButton.mutedIcon");

@@ -1,17 +1,37 @@
 import type { GainButtonSettings } from "./generated/contracts";
+import { defaultSettings } from "./generated/contracts";
 
-type Palette = Pick<GainButtonSettings, "barColor" | "thumbColor" | "background" | "mutedBackground" | "positiveColor" | "highlightPositive">;
-// Matches src/dial.rs and the solid colors sampled from VoiceMeeter Potato.
+export const meterColorKeys = ["meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"] as const;
+export const paletteKeys = ["barColor", "thumbColor", "background", "mutedBackground", "positiveColor", "highlightPositive", ...meterColorKeys] as const;
+export type Palette = Pick<GainButtonSettings, typeof paletteKeys[number]>;
+export interface UserPalette { id: string; name: string; colors: Palette }
+export function paletteOf(value: GainButtonSettings): Palette {
+  return Object.fromEntries(paletteKeys.map(key => [key, value[key]])) as Palette;
+}
+const base = paletteOf(defaultSettings.gainButton);
 export const gainPalettes = {
-  standard: { barColor: "#ffffff", thumbColor: "#ffffff", background: "#000000", mutedBackground: "#000000", positiveColor: "#ff6347", highlightPositive: false },
-  voicemeeter: { barColor: "#70c399", thumbColor: "#70c399", background: "#2c3d4d", mutedBackground: "#2c3d4d", positiveColor: "#f8634d", highlightPositive: true },
+  standard: { ...base },
+  voicemeeter: { ...base, barColor: "#70c399", thumbColor: "#70c399", background: "#2c3d4d", mutedBackground: "#2c3d4d", positiveColor: "#f8634d", highlightPositive: true },
 } satisfies Record<string, Palette>;
-
+export function samePalette(a: Palette, b: Palette): boolean {
+  return paletteKeys.every(key => typeof a[key] === "string" ? a[key].toLowerCase() === b[key] : a[key] === b[key]);
+}
 export function gainPaletteName(value: GainButtonSettings): keyof typeof gainPalettes | "custom" {
-  for (const name of ["standard", "voicemeeter"] as const) {
-    const palette = gainPalettes[name];
-    if ((Object.keys(palette) as (keyof Palette)[]).every(key =>
-      typeof value[key] === "string" ? value[key].toLowerCase() === palette[key] : value[key] === palette[key])) return name;
+  return (["standard", "voicemeeter"] as const).find(name => samePalette(value, gainPalettes[name])) ?? "custom";
+}
+const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+// Refuse malformed/unknown-version stores rather than overwrite user presets.
+export function readPalettes(global: unknown): UserPalette[] | undefined {
+  if (!record(global)) return undefined;
+  const store = global.gainColorPresets;
+  if (store === undefined) return [];
+  if (!record(store) || store.version !== 1 || !Array.isArray(store.items) || store.items.length > 100) return undefined;
+  const ids = new Set<string>();
+  for (const p of store.items) {
+    if (!record(p) || typeof p.id !== "string" || !p.id.startsWith("user:") || ids.has(p.id) || typeof p.name !== "string" || !p.name.trim() || p.name.length > 64 || !record(p.colors)) return undefined;
+    const colors = p.colors;
+    if (!paletteKeys.every(key => key === "highlightPositive" ? typeof colors[key] === "boolean" : typeof colors[key] === "string" && /^#[\da-f]{6}$/i.test(colors[key]))) return undefined;
+    ids.add(p.id);
   }
-  return "custom";
+  return store.items as UserPalette[];
 }

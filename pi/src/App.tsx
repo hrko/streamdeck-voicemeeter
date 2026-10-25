@@ -1,10 +1,10 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
 import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError, type GainButtonSettings } from "./generated/contracts";
 import { channelLimits, restoreSettings, validateSettings } from "./settings";
 import glyphs from "./generated/glyphs.json";
-import { gainPalettes, gainPaletteName } from "./gainColors";
+import { gainPalettes, gainPaletteName, meterColorKeys, paletteOf, readPalettes, samePalette, type UserPalette } from "./gainColors";
 import { IconPicker } from "./IconPicker";
 
 export interface Status { connected: boolean; edition?: Edition; error?: ValidationError | null }
@@ -104,7 +104,78 @@ function ChannelEditor({ title, value, edition, onChange, targetOnly = false }: 
   </fieldset>;
 }
 
-function GainButtonEditor({ value, onChange }: { value: GainButtonSettings; onChange: (value: GainButtonSettings) => void }) {
+function PaletteEditor({ client, value, onChange }: { client: StreamDeckPiApi; value: GainButtonSettings; onChange: (value: GainButtonSettings) => void }) {
+  const { t } = useTranslation();
+  const [items, setItems] = useState<UserPalette[] | null>(null);
+  const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [name, setName] = useState("");
+  const [editing, setEditing] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const pending = useRef<((latest: UserPalette[]) => UserPalette[]) | null>(null);
+  useEffect(() => {
+    const unsubscribe = client.subscribe("didReceiveGlobalSettings", global => {
+      const latest = readPalettes(global);
+      if (!latest) { pending.current = null; setBusy(false); setError(true); return; }
+      setItems(latest); setError(false);
+      if (pending.current) {
+        const apply = pending.current; pending.current = null;
+        try {
+          const next = apply(latest);
+          client.setGlobalSettings({ ...(global as Record<string, unknown>), gainColorPresets: { version: 1, items: next } });
+          setItems(next);
+        } catch { setError(true); }
+        setBusy(false);
+      }
+    });
+    client.getGlobalSettings();
+    return unsubscribe;
+  }, [client]);
+  const matching = items?.find(item => samePalette(value, item.colors));
+  useEffect(() => {
+    if (matching && !editing) { setEditing(matching.id); setName(matching.name); }
+  }, [matching?.id, editing]);
+  const choice = matching?.id ?? gainPaletteName(value);
+  const selected = items?.find(item => item.id === editing);
+  const validName = !!name.trim() && name.trim().length <= 64;
+  const mutate = (operation: (latest: UserPalette[]) => UserPalette[]) => {
+    pending.current = operation; setBusy(true); client.getGlobalSettings();
+  };
+  return <fieldset><legend>{t("button.palette")}</legend>
+    <Select label={t("button.palette")} value={choice} options={[
+      ...(["standard", "voicemeeter", "custom"] as const).map(key => [key, t(`button.palette.${key}`)] as [string,string]),
+      ...(items ?? []).map(item => [item.id, item.name] as [string,string])
+    ]} onChange={id => {
+      setConfirmDelete(false);
+      const user = items?.find(item => item.id === id);
+      setEditing(user?.id ?? ""); setName(user?.name ?? "");
+      if (user) onChange({ ...value, ...user.colors });
+      else if (id === "standard" || id === "voicemeeter") onChange({ ...value, ...gainPalettes[id] });
+    }} />
+    <details><summary>{t("palette.manage")}</summary>
+      <p className="help">{t("palette.help")}</p>
+      <Row label={t("palette.name")}><input aria-label={t("palette.name")} maxLength={64} value={name} onChange={event => setName(event.target.value)} /></Row>
+      {selected && <p>{t("palette.editing", { name: selected.name })}</p>}
+      <button disabled={!items || busy || error || !validName || items.length >= 100} onClick={() => {
+        const item = { id: `user:${crypto.randomUUID()}`, name: name.trim(), colors: paletteOf(value) };
+        mutate(latest => { if (latest.length >= 100) throw new Error("limit"); return [...latest, item]; });
+        setEditing(item.id);
+      }}>{t("palette.add")}</button>
+      <button disabled={!selected || busy || error || !validName} onClick={() => {
+        const id = selected!.id, colors = paletteOf(value), nextName = name.trim();
+        mutate(latest => { if (!latest.some(item => item.id === id)) throw new Error("removed"); return latest.map(item => item.id === id ? { ...item, name: nextName, colors } : item); });
+      }}>{t("palette.update")}</button>
+      <button disabled={!selected || busy || error} onClick={() => setConfirmDelete(true)}>{t("palette.delete")}</button>
+      {confirmDelete && selected && <div><p>{t("palette.confirm", { name: selected.name })}</p><button onClick={() => {
+        const id = selected.id; mutate(latest => latest.filter(item => item.id !== id)); setEditing(""); setConfirmDelete(false);
+      }}>{t("palette.confirmDelete")}</button><button onClick={() => setConfirmDelete(false)}>{t("palette.cancel")}</button></div>}
+      {!items && !error && <p role="status">{t("palette.loading")}</p>}
+      {error && <p role="alert">{t("palette.error")}</p>}
+    </details>
+  </fieldset>;
+}
+
+function GainButtonEditor({ client, value, onChange }: { client: StreamDeckPiApi; value: GainButtonSettings; onChange: (value: GainButtonSettings) => void }) {
   const { t } = useTranslation();
   const patch = (next: Partial<GainButtonSettings>) => onChange({ ...value, ...next });
   const fader = value.operation === "adjust" && value.appearance !== "static";
@@ -115,7 +186,7 @@ function GainButtonEditor({ value, onChange }: { value: GainButtonSettings; onCh
     {value.operation === "adjust" && <Select label={t("button.appearance")} value={value.appearance} options={(["static", "horizontal", "vertical"] as const).map(key => [key, t(`button.${key}`)])} onChange={appearance => patch({ appearance })} />}
     {fader ? <>
       <p className="help">{t(value.appearance === "horizontal" ? (value.delta > 0 ? "button.rightHalf" : "button.leftHalf") : (value.delta > 0 ? "button.upperHalf" : "button.lowerHalf"))}</p>
-      <Select label={t("button.palette")} value={gainPaletteName(value)} options={(["standard", "voicemeeter", "custom"] as const).map(key => [key, t(`button.palette.${key}`)])} onChange={name => { if (name !== "custom") patch(gainPalettes[name]); }} />
+      <PaletteEditor client={client} value={value} onChange={onChange} />
       <ColorEditor label={t("button.barColor")} value={value.barColor} onChange={barColor => patch({ barColor })} />
       <ColorEditor label={t("button.thumbColor")} value={value.thumbColor} onChange={thumbColor => patch({ thumbColor })} />
       <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.highlightPositive} onChange={event => patch({ highlightPositive: event.target.checked })} /></Row>
@@ -130,6 +201,9 @@ function GainButtonEditor({ value, onChange }: { value: GainButtonSettings; onCh
       {((fader ? ["showLabel", "showDb", "showMeter"] : ["showLabel"]) as ("showLabel" | "showDb" | "showMeter")[]).map(key => <Row key={key} label={t(`button.${key}`)}><input type="checkbox" aria-label={t(`button.${key}`)} checked={value[key]} onChange={event => patch({ [key]: event.target.checked })} /></Row>)}
       {fader && value.showMeter && <Row label={t("button.swapMeter")}><input type="checkbox" aria-label={t("button.swapMeter")} checked={value.swapMeter} onChange={event => patch({ swapMeter: event.target.checked })} /></Row>}
     </fieldset>
+    {fader && value.showMeter && <details><summary>{t("meter.colors")}</summary>
+      {meterColorKeys.map(key => <ColorEditor key={key} label={t(`meter.${key}`)} value={value[key]} onChange={color => patch({ [key]: color })} />)}
+    </details>}
     <p className="help">{t("button.help")}</p>
   </>;
 }
@@ -164,7 +238,7 @@ export function App({ client }: { client: StreamDeckPiApi }) {
     {error && <p role="alert" className="error">{t(`error.${error.code}`, { defaultValue: t("error.invalidSettings") })}</p>}
     {!settings ? <button onClick={() => save(structuredClone(defaultSettings))}>{t("settings.reset")}</button> : action === "gain-button" ? <>
       <ChannelEditor title={t("section.target")} value={settings.channels[0]} edition={status.connected ? status.edition : undefined} targetOnly onChange={channel => save({ ...settings, channels: [channel, settings.channels[1]] })} />
-      <GainButtonEditor value={settings.gainButton} onChange={gainButton => save({ ...settings, gainButton })} />
+      <GainButtonEditor client={client} value={settings.gainButton} onChange={gainButton => save({ ...settings, gainButton })} />
     </> : action === "macro" ? <>
       <Input label={t("field.logicalId")} numeric value={settings.macroButton.logicalId} validate={text => /^\d+$/.test(text) && Number(text) < 80 ? undefined : "macroOutOfRange"} onCommit={text => save({ ...settings, macroButton: { ...settings.macroButton, logicalId: Number(text) } })} />
       <Select label={t("field.mode")} value={settings.macroButton.mode} options={[["push", t("mode.push")], ["toggle", t("mode.toggle")]]} onChange={mode => save({ ...settings, macroButton: { ...settings.macroButton, mode } })} />

@@ -25,6 +25,53 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("shares user palettes across panels and edits/deletes copies without mutating keys", async () => {
+    const settings = structuredClone(defaultSettings);
+    settings.gainButton.appearance = "horizontal";
+    let global: Record<string, unknown> = { unrelated: { keep: true } };
+    const first = await setup("gain-button", settings);
+    first.emit("didReceiveGlobalSettings",global);
+    vi.mocked(first.client.getGlobalSettings).mockImplementation(() => first.emit("didReceiveGlobalSettings",global));
+    vi.mocked(first.client.setGlobalSettings).mockImplementation(value => { global = value; });
+    expect((screen.getByRole("button", {name:"Update selected preset"}) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Preset name"),{target:{value:"My palette"}});
+    fireEvent.change(screen.getByLabelText("Fader color"),{target:{value:"#123456"}});
+    fireEvent.click(screen.getByRole("button",{name:"Save as new preset"}));
+    const items = (global.gainColorPresets as {items:{id:string;name:string;colors:Record<string,unknown>}[]}).items;
+    expect(items).toHaveLength(1);
+    expect(global.unrelated).toEqual({keep:true});
+    cleanup();
+    const second = await setup("gain-button", settings);
+    second.emit("didReceiveGlobalSettings",global);
+    vi.mocked(second.client.getGlobalSettings).mockImplementation(() => second.emit("didReceiveGlobalSettings",global));
+    vi.mocked(second.client.setGlobalSettings).mockImplementation(value => { global=value; });
+    fireEvent.change(screen.getByLabelText("Color preset"),{target:{value:items[0].id}});
+    let saved=vi.mocked(second.client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.gainButton.barColor).toBe("#123456");
+    fireEvent.change(screen.getByLabelText("Preset name"),{target:{value:"Renamed"}});
+    fireEvent.change(screen.getByLabelText("Fader color"),{target:{value:"#abcdef"}});
+    fireEvent.click(screen.getByRole("button",{name:"Update selected preset"}));
+    expect((global.gainColorPresets as {items:{name:string}[]}).items[0].name).toBe("Renamed");
+    const before=vi.mocked(second.client.setSettings).mock.calls.length;
+    fireEvent.click(screen.getByRole("button",{name:"Delete selected preset"}));
+    fireEvent.click(screen.getByRole("button",{name:"Delete preset"}));
+    expect((global.gainColorPresets as {items:unknown[]}).items).toHaveLength(0);
+    expect(second.client.setSettings).toHaveBeenCalledTimes(before);
+    expect(saved.gainButton.barColor).toBe("#123456");
+    fireEvent.change(screen.getByLabelText("Color preset"),{target:{value:"voicemeeter"}});
+    expect((screen.getByRole("button",{name:"Delete selected preset"}) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("preserves an unsupported shared preset store",async () => {
+    const settings=structuredClone(defaultSettings);settings.gainButton.appearance="vertical";
+    const {client,emit}=await setup("gain-button",settings);
+    emit("didReceiveGlobalSettings",{gainColorPresets:{version:99,items:[]}});
+    expect(screen.getByRole("alert").textContent).toContain("Cannot update shared presets");
+    fireEvent.change(screen.getByLabelText("Preset name"),{target:{value:"new"}});
+    expect((screen.getByRole("button",{name:"Save as new preset"}) as HTMLButtonElement).disabled).toBe(true);
+    expect(client.setGlobalSettings).not.toHaveBeenCalled();
+  });
+
   it("restricts meter and dB options to faders while retaining saved preferences", async () => {
     const settings = structuredClone(defaultSettings);
     settings.gainButton.showMeter = true;

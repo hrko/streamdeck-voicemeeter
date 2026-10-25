@@ -162,6 +162,14 @@ pub struct GainButtonSettings {
     pub show_db: bool,
     pub show_meter: bool,
     pub swap_meter: bool,
+    pub meter_background: String,
+    pub meter_inactive: String,
+    pub meter_low: String,
+    pub meter_mid: String,
+    pub meter_high: String,
+    pub meter_muted_low: String,
+    pub meter_muted_mid: String,
+    pub meter_muted_high: String,
 }
 
 impl Default for GainButtonSettings {
@@ -189,6 +197,14 @@ impl Default for GainButtonSettings {
             show_db: false,
             show_meter: false,
             swap_meter: false,
+            meter_background: "#000000".into(),
+            meter_inactive: "#191b1b".into(),
+            meter_low: "#85adb9".into(),
+            meter_mid: "#1efe5b".into(),
+            meter_high: "#fa0000".into(),
+            meter_muted_low: "#394547".into(),
+            meter_muted_mid: "#384b34".into(),
+            meter_muted_high: "#583328".into(),
         }
     }
 }
@@ -312,6 +328,14 @@ impl Settings {
             &b.bar_color,
             &b.thumb_color,
             &b.positive_color,
+            &b.meter_background,
+            &b.meter_inactive,
+            &b.meter_low,
+            &b.meter_mid,
+            &b.meter_high,
+            &b.meter_muted_low,
+            &b.meter_muted_mid,
+            &b.meter_muted_high,
         ] {
             if !valid_color(color) {
                 return Err(ValidationError::new("invalidColor", "gainButton"));

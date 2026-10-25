@@ -81,7 +81,7 @@ pub fn frame(
     if fader {
         let transform = pair_transform(vertical, b.delta > 0.0);
         let offset = if b.show_meter {
-            if b.swap_meter { 24 } else { -24 }
+            if b.swap_meter { -24 } else { 24 }
         } else {
             0
         };
@@ -176,19 +176,61 @@ pub fn frame(
             .find(|(key, _)| *key == target)
             .map(|(_, peaks)| *peaks)
             .unwrap_or(levels);
-        for (index, peak) in peaks.iter().enumerate() {
-            let length = ((peak.clamp(-60.0, 12.0) + 60.0) / 72.0) * meter_width;
-            let marker = ((levels[index].clamp(-60.0, 12.0) + 60.0) / 72.0) * meter_width;
-            let color = if *peak > 0.0 { "#ff6347" } else { "#7bc99e" };
-            let y = (if b.swap_meter { 30 } else { 98 }) + index * 10;
-            let transform = pair_transform(vertical, b.delta > 0.0);
-            let _ = write!(
-                body,
-                r##"<g transform="{transform}"><rect x="{meter_start}" y="{y}" width="{meter_width}" height="6" fill="#303030"/><rect x="{meter_start}" y="{y}" width="{length}" height="6" fill="{color}"/><rect x="{}" y="{y}" width="2" height="6" fill="#ffffff"/></g>"##,
-                meter_start + marker.min(meter_width - 2.0)
-            );
+        let transform = pair_transform(vertical, b.delta > 0.0);
+        let top = if b.swap_meter { 98 } else { 30 };
+        let _ = write!(
+            body,
+            r#"<g transform="{transform}"><rect x="{meter_start}" y="{}" width="{meter_width}" height="20" fill="{}"/>"#,
+            top - 2,
+            render::escape(&b.meter_background)
+        );
+        const CELLS: usize = 40;
+        let pitch = meter_width / CELLS as f32;
+        let index = |db: f32| -> usize {
+            if db.is_finite() {
+                (((db + 60.0) / 72.0).clamp(0.0, 1.0) * CELLS as f32).round() as usize
+            } else {
+                0
+            }
+        };
+        for side in 0..2 {
+            let current = index(levels[side]);
+            let peak = index(peaks[side]);
+            for cell in 0..CELLS {
+                // The one-cell notch preserves the existing current/decay marker.
+                let active = cell < peak && !(current != peak && cell == current);
+                let color = if !active {
+                    &b.meter_inactive
+                } else if cell < index(-24.0) {
+                    if muted {
+                        &b.meter_muted_low
+                    } else {
+                        &b.meter_low
+                    }
+                } else if cell < index(0.0) {
+                    if muted {
+                        &b.meter_muted_mid
+                    } else {
+                        &b.meter_mid
+                    }
+                } else if muted {
+                    &b.meter_muted_high
+                } else {
+                    &b.meter_high
+                };
+                let _ = write!(
+                    body,
+                    r#"<rect x="{}" y="{}" width="{}" height="6" fill="{}"/>"#,
+                    meter_start + cell as f32 * pitch + 1.0,
+                    top + side * 10,
+                    pitch - 2.0,
+                    render::escape(color)
+                );
+            }
         }
+        body.push_str("</g>");
     }
+
     if channel.is_none() {
         body.push_str(r##"<path d="M8 136L136 8" stroke="#ffb1b1" stroke-width="4"/>"##);
     }
@@ -246,6 +288,46 @@ mod tests {
             assert!(svg.contains(r#"r="17""#));
             assert!(svg.contains(r#"stroke-width="28""#));
         }
+    }
+
+    #[test]
+    fn cell_meter_uses_independent_background_and_muted_zone_colors() {
+        let mut settings = Settings::default();
+        settings.gain_button.appearance = GainAppearance::Horizontal;
+        settings.gain_button.show_meter = true;
+        let mut snapshot = Snapshot {
+            channels: vec![(
+                settings.channels[0].target,
+                ChannelSnapshot {
+                    gain: 0.0,
+                    levels: [12.0, 12.0],
+                    ..Default::default()
+                },
+            )],
+            ..Default::default()
+        };
+        let mut cache = IconCache::default();
+        settings.gain_button.meter_background = "#123456".into();
+        let normal = frame(&snapshot, &settings, &mut cache, "en").svg;
+        assert_eq!(normal.matches("height=\"6\"").count(), 80);
+        assert!(normal.contains("#123456"));
+        for color in ["#85adb9", "#1efe5b", "#fa0000"] {
+            assert!(normal.contains(color));
+        }
+        snapshot.channels[0].1.mute = true;
+        let muted = frame(&snapshot, &settings, &mut cache, "en").svg;
+        for color in ["#394547", "#384b34", "#583328"] {
+            assert!(muted.contains(color));
+        }
+        for color in ["#85adb9", "#1efe5b", "#fa0000"] {
+            assert!(!muted.contains(color));
+        }
+        assert!(muted.contains("#123456"));
+        snapshot.channels[0].1.levels = [-120.0; 2];
+        let silence = frame(&snapshot, &settings, &mut cache, "en").svg;
+        assert_eq!(silence.matches("fill=\"#191b1b\"").count(), 80);
+        settings.gain_button.meter_background = "invalid".into();
+        assert!(settings.validate().is_err());
     }
 
     #[test]

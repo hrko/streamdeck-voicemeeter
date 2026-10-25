@@ -50,12 +50,31 @@ and #2c3d4d for both backgrounds, matching `src/dial.rs` and the owner's Potato
 screenshot. Applying a palette changes only colors and positive highlighting;
 channel, operation, step, orientation and label/dB/meter options are retained.
 Presets are inferred from saved color values; individual edits display Custom.
-The new `swapMeter` field defaults to false for existing settings. Meter-enabled
-faders use separate tracks: canonical y=48 for the rail and y=98/108 for the
-stereo lanes, or y=96 and y=30/40 when swapped. Both lanes span the rounded rail's outer cap extents across
-the shared pair (x=20.5..264 horizontally, x=22.5..266 before vertical rotation) and use the same clipping/rotation as the fader. Pixel tests
-verify seam continuity and non-overlapping tracks for all four combinations.
-The meter includes current-level markers and shared decaying peaks.
+The `swapMeter` flag defaults to false: the meter is above a horizontal fader
+and left of a vertical fader. Swapping reverses these positions. The rail is
+at canonical y=96 and stereo lanes at y=30/40 (swapped: y=48 and y=98/108).
+Both lanes span the rounded rail's outer cap extents across the shared pair
+(x=20.5..264 horizontally, x=22.5..266 before vertical rotation).
+The meter has 40 cells per channel, with a shared grid across both keys.
+Pixel tests compare two rendered keys against one uninterrupted production
+canvas, checking both orientations and placements, alignment and separation.
+
+Cells below −24 dB are cyan, −24..0 dB green, and above 0 dB red. Their normal
+and muted colors are independently configurable. Muting changes colors, not
+level readings. Meter background and unlit-cell color are separate from the
+key background and remain unchanged by mute. The current-level notch and
+shared peak decay are retained. The default muted colors were sampled from
+the owner's 2026-10-25 screenshot; normal colors match the existing dial.
+
+User palettes are stored in Stream Deck global settings under `gainColorPresets`
+(version 1) and shared across Gain Button inspectors. Each has a UUID, name and
+only palette fields. Applying copies values into action settings. Updating,
+renaming or deleting the shared entry never rewrites existing action settings.
+Built-ins cannot be mutated; saving a copy creates a user entry. Before writes
+the inspector requests the latest global settings, preserves unrelated fields,
+and refuses unknown or malformed preset stores. Up to 100 names of 64 characters
+are supported. Stored palette IDs cannot address built-ins. No external storage
+or network is used.
 
 Only fader styles render dB and meters; static styles retain but ignore those
 preferences. Fader labels are SVG-clipped. Static channel names instead use
