@@ -35,7 +35,7 @@ it("recognizes all four transparent variants without changing their base colors"
  for(const name of ["standardTransparent","standardTransparentOutlined","voicemeeterTransparent","voicemeeterTransparentOutlined"] as const){
   const value=gainPalettes[name];
   const base=name.startsWith("standard")?gainPalettes.standard:gainPalettes.voicemeeter;
-  expect(value).toEqual({...base,keyMeterOpacity:40,keyInactiveOpacity:40,keyRailOpacity:40,keyThumbOpacity:80,keyThumbClearance:false,backgroundOpacity:0,mutedBackgroundOpacity:0,indicatorBackground:"#000000",indicatorOpacity:62,indicatorOutline:name.endsWith("Outlined")});
+  expect(value).toEqual({...base,keyMeterOpacity:40,keyInactiveOpacity:40,keyRailOpacity:40,keyThumbOpacity:40,keyThumbClearance:false,backgroundOpacity:0,mutedBackgroundOpacity:0,indicatorBackground:"#000000",indicatorOpacity:62,indicatorOutline:name.endsWith("Outlined")});
   expect(gainPaletteName({...defaultSettings.gainButton,...value})).toBe(name);
  }
 });

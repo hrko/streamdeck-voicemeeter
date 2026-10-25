@@ -13,7 +13,7 @@ const monochrome: Palette={...base,meterMutedLow:"#424242",meterLow:"#a6a6a6",me
 const voicemeeter: Palette = { ...base, meterMutedLow:"#394547", meterLow:"#85adb9", meterInactive:"#191b1b", indicatorOutlineColor:"#91a4b5", emptyBarColor:"#2c3d4d", indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline:false, barColor: "#70c399", labelColor: "#286442", positiveLabelColor: "#862b20", thumbColor: "#70c399", background: "#2c3d4d", mutedBackground: "#2c3d4d", positiveColor: "#f8634d", highlightPositive: true };
 const transparent = (palette:Palette, indicatorOutline:boolean):Palette => ({
   ...palette, backgroundOpacity:0, mutedBackgroundOpacity:0,
-  keyMeterOpacity:40,keyInactiveOpacity:40,keyRailOpacity:40,keyThumbOpacity:80,keyThumbClearance:false,
+  keyMeterOpacity:40,keyInactiveOpacity:40,keyRailOpacity:40,keyThumbOpacity:40,keyThumbClearance:false,
   indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline,
 });
 export const gainPalettes = {
