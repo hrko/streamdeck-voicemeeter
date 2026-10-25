@@ -3,14 +3,20 @@ import { defaultSettings } from "./generated/contracts";
 import { restoreSettings, validateSettings } from "./settings";
 
 describe("settings contract", () => {
+  it("migrates old dial fields without conflating button text colors", () => {
+    const result=restoreSettings({dial:{styles:[{backgroundOpacity:20,mutedBackgroundOpacity:40,meterTrackOpacity:60,labelColor:"#123456",positiveLabelColor:"#234567",gainColor:"#345678",positiveGainColor:"#456789"},{}]}});
+    expect(result.settings?.dial.styles[0].palette).toMatchObject({backgroundOpacity:20,mutedBackgroundOpacity:40,meterTrackOpacity:60,dialLabelColor:"#123456",dialPositiveLabelColor:"#234567",dialGainColor:"#345678",dialPositiveGainColor:"#456789"});
+    expect(result.settings?.gainButton.labelColor).toBe("#000000");
+    expect(restoreSettings({dial:{styles:[{palette:null},{}]}}).error).toBeDefined();
+  });
   it("migrates dial display defaults and rejects invalid new values", () => {
     const restored=restoreSettings({dial:{styles:[{},{}]}});
-    expect(restored.settings?.dial.styles[0]).toMatchObject({meterStyle:"cells",meterTrackOpacity:0,palette:{indicatorOutline:false,indicatorBackground:"#808080",indicatorOpacity:100}});
+    expect(restored.settings?.dial.styles[0]).toMatchObject({meterStyle:"cells",palette:{meterTrackOpacity:0,indicatorOutline:false,indicatorBackground:"#808080",indicatorOpacity:100}});
     expect(restoreSettings({dial:{styles:[{indicatorOutline:true,emptyBarColor:"#123456"},{}]}}).settings?.dial.styles[0].palette).toMatchObject({indicatorOutline:true,emptyBarColor:"#123456"});
     const settings=structuredClone(defaultSettings);
-    settings.dial.styles[0].meterTrackOpacity=101;
+    settings.dial.styles[0].palette.meterTrackOpacity=101;
     expect(validateSettings(settings)?.code).toBe("invalidOpacity");
-    settings.dial.styles[0].meterTrackOpacity=50;
+    settings.dial.styles[0].palette.meterTrackOpacity=50;
     settings.dial.styles[0].meterStyle="continuous";
     expect(validateSettings(settings)).toBeUndefined();
     const malformed=JSON.parse(JSON.stringify(settings));

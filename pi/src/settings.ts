@@ -33,8 +33,18 @@ export function restoreSettings(value: unknown): { settings?: Settings; error?: 
           if(style.palette===undefined) style.palette={};
           if(record(style.palette) && style.palette.indicatorOutline===undefined) style.palette.indicatorOutline=style.indicatorOutline;
         }
-        if(style.backgroundOpacity===undefined) style.backgroundOpacity=100;
-        if(style.mutedBackgroundOpacity===undefined) style.mutedBackgroundOpacity=100;
+        if(style.palette===undefined) style.palette={};
+        if(record(style.palette)) {
+          if(style.backgroundOpacity!==undefined && style.palette.backgroundOpacity===undefined) style.palette.backgroundOpacity=style.backgroundOpacity;
+          if(style.mutedBackgroundOpacity!==undefined && style.palette.mutedBackgroundOpacity===undefined) style.palette.mutedBackgroundOpacity=style.mutedBackgroundOpacity;
+          if(style.meterTrackOpacity!==undefined && style.palette.meterTrackOpacity===undefined) style.palette.meterTrackOpacity=style.meterTrackOpacity;
+          if(style.labelColor!==undefined && style.palette.dialLabelColor===undefined) style.palette.dialLabelColor=style.labelColor;
+          if(style.positiveLabelColor!==undefined && style.palette.dialPositiveLabelColor===undefined) style.palette.dialPositiveLabelColor=style.positiveLabelColor;
+          if(style.gainColor!==undefined && style.palette.dialGainColor===undefined) style.palette.dialGainColor=style.gainColor;
+          if(style.positiveGainColor!==undefined && style.palette.dialPositiveGainColor===undefined) style.palette.dialPositiveGainColor=style.positiveGainColor;
+          if(style.palette.backgroundOpacity===undefined) style.palette.backgroundOpacity=100;
+          if(style.palette.mutedBackgroundOpacity===undefined) style.palette.mutedBackgroundOpacity=100;
+        }
       }
     }
   }
@@ -79,22 +89,20 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
     if(style.meterStyle!=="cells" && style.meterStyle!=="continuous") return error("invalidSettings","dial.meterStyle");
     for(const key of Object.keys(defaultSettings.dial.styles[0].palette)) {
       const v=style.palette[key];
-      if(key==="indicatorOpacity" ? !Number.isInteger(v) || (v as number)<0 || (v as number)>100 : key==="highlightPositive" || key==="indicatorOutline" ? typeof v!=="boolean" : typeof v!=="string" || !/^#[\da-f]{6}$/i.test(v)) return error("invalidColor",`dial.palette.${key}`);
+      if(["indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].includes(key) ? !Number.isInteger(v) || (v as number)<0 || (v as number)>100 : key==="highlightPositive" || key==="indicatorOutline" ? typeof v!=="boolean" : typeof v!=="string" || !/^#[\da-f]{6}$/i.test(v)) return error(["indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].includes(key)?"invalidOpacity":"invalidColor",`dial.palette.${key}`);
     }
-    for(const key of ["backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"]) if(!Number.isInteger(style[key]) || (style[key] as number)<0 || (style[key] as number)>100) return error("invalidOpacity",`dial.${key}`);
-    for(const key of ["labelColor","positiveLabelColor","gainColor","positiveGainColor"]) if(typeof style[key]!=="string" || !/^#[\da-f]{6}$/i.test(style[key] as string)) return error("invalidColor",`dial.${key}`);
   }
   const macro = value.macroButton;
   const button = value.gainButton;
   if (!record(button)) return error("invalidSettings", "gainButton");
-  if(!Number.isInteger(button.indicatorOpacity) || (button.indicatorOpacity as number)<0 || (button.indicatorOpacity as number)>100) return error("invalidOpacity","gainButton.indicatorOpacity");
+  if(["indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].some(key=>!Number.isInteger(button[key]) || (button[key] as number)<0 || (button[key] as number)>100)) return error("invalidOpacity","gainButton.indicatorOpacity");
   if (!["adjust", "set", "mute"].includes(String(button.operation)) || !["static", "horizontal", "vertical"].includes(String(button.appearance))) return error("invalidSettings", "gainButton");
   if (typeof button.delta !== "number" || !Number.isFinite(button.delta) || button.delta === 0 || Math.abs(button.delta) > 72) return error("invalidButtonDelta", "gainButton.delta");
   if (typeof button.gain !== "number" || !Number.isFinite(button.gain) || button.gain < -60 || button.gain > 12) return error("invalidButtonGain", "gainButton.gain");
   for (const key of ["indicatorOutline", "syncPair", "meterNotch", "highlightPositive", "showLabel", "faderLabel", "showDb", "showMeter", "swapMeter"]) {
     if (typeof button[key] !== "boolean") return error("invalidSettings", `gainButton.${key}`);
   }
-  for (const key of ["emptyBarColor", "indicatorBackground", "background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
+  for (const key of ["dialLabelColor", "dialPositiveLabelColor", "dialGainColor", "dialPositiveGainColor", "emptyBarColor", "indicatorBackground", "background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
     if (typeof button[key] !== "string" || !/^#[\da-f]{6}$/i.test(button[key])) return error("invalidColor", `gainButton.${key}`);
   }
   const buttonIconError = icon(button.icon, "gainButton.icon") ?? icon(button.mutedIcon, "gainButton.mutedIcon");

@@ -210,3 +210,12 @@ VoiceMeeter uses black at 62% with no outline. The dial's empty bar color is als
 part of the palette: #808080 for standard, #2c3d4d for VoiceMeeter. Previously
 saved top-level dial outline and empty bar values migrate into the palette.
 Changing inactive opacity does not affect the active colors or outline opacity.
+
+Background opacity (normal and muted), inactive meter-track opacity, and the
+four dial text colors are now included in shared palettes. Dial label/gain
+colors have separate dial-prefixed keys from the button's in-fader label colors.
+Existing top-level dial settings migrate without overriding already-saved palette
+values. Older user presets receive opaque normal/muted backgrounds, no meter
+track, and white dial text. Built-in presets use those same opacity/text defaults;
+new actions remain transparent until a preset is applied. Meter style, visibility,
+notch and shared/independent appearance are not changed by palette selection.

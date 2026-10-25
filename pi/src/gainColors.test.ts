@@ -18,3 +18,14 @@ it("round-trips indicator palettes and upgrades older palettes", () => {
  for(const key of ["indicatorBackground","indicatorOpacity","indicatorOutline","emptyBarColor"]) delete old[key];
  expect(readPalettes({gainColorPresets:{version:1,items:[{id:"user:old",name:"Old",colors:old}]}})?.[0].colors).toMatchObject({indicatorBackground:"#808080",indicatorOpacity:100,indicatorOutline:false,emptyBarColor:"#808080"});
 });
+
+it("preserves opacity and independent dial text colors in shared presets", () => {
+ const colors={...gainPalettes.standard,backgroundOpacity:30,mutedBackgroundOpacity:70,meterTrackOpacity:45,dialLabelColor:"#123456",dialPositiveLabelColor:"#234567",dialGainColor:"#345678",dialPositiveGainColor:"#456789"};
+ const wrap=(c:unknown)=>({gainColorPresets:{version:1,items:[{id:"user:colors",name:"Colors",colors:c}]}});
+ expect(readPalettes(wrap(colors))?.[0].colors).toEqual(colors);
+ expect(colors.labelColor).toBe("#000000");
+ const old={...colors} as Record<string,unknown>;
+ for(const key of ["backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity","dialLabelColor","dialPositiveLabelColor","dialGainColor","dialPositiveGainColor"]) delete old[key];
+ expect(readPalettes(wrap(old))?.[0].colors).toMatchObject({backgroundOpacity:100,mutedBackgroundOpacity:100,meterTrackOpacity:0,dialLabelColor:"#ffffff",dialGainColor:"#ffffff"});
+ for(const key of ["backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"]) expect(readPalettes(wrap({...colors,[key]:101}))).toBeUndefined();
+});

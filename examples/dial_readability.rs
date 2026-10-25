@@ -15,8 +15,8 @@ fn main() -> anyhow::Result<()> {
     for id in 0..9 {
         let mut s = Settings::default();
         let d = &mut s.dial.styles[0];
-        d.background_opacity = 70;
-        d.muted_background_opacity = 70;
+        d.palette.background_opacity = 70;
+        d.palette.muted_background_opacity = 70;
         let mut gain = -6.0;
         let mut mute = false;
         match id {
@@ -27,12 +27,12 @@ fn main() -> anyhow::Result<()> {
             2 => {
                 d.palette.background = "#2c3d4d".into();
                 d.palette.muted_background = "#2c3d4d".into();
-                d.background_opacity = 100;
-                d.muted_background_opacity = 100;
+                d.palette.background_opacity = 100;
+                d.palette.muted_background_opacity = 100;
             }
             3 => {
                 gain = 6.0;
-                d.positive_gain_color = "#ffab91".into();
+                d.palette.dial_positive_gain_color = "#ffab91".into();
             }
             4 => {
                 mute = true;
@@ -55,7 +55,7 @@ fn main() -> anyhow::Result<()> {
             }
             8 => {
                 s.dial.shared = false;
-                s.dial.styles[1].background_opacity = 70;
+                s.dial.styles[1].palette.background_opacity = 70;
                 s.dial.styles[1].palette.bar_color = "#8db7ff".into();
             }
             _ => {}

@@ -32,7 +32,7 @@ describe("property inspector forms", () => {
     fireEvent.change(screen.getByLabelText("Inactive track opacity"),{target:{value:"65"}});
     fireEvent.click(screen.getByLabelText("Outline inactive indicators"));
     const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
-    expect(saved.dial.styles[0]).toMatchObject({meterStyle:"continuous",meterTrackOpacity:65,palette:{indicatorOutline:true}});
+    expect(saved.dial.styles[0]).toMatchObject({meterStyle:"continuous",palette:{meterTrackOpacity:65,indicatorOutline:true}});
     expect(saved.channels).toEqual(defaultSettings.channels);
     emit("didReceiveSettings",saved);
     expect((screen.getByLabelText("Meter style") as HTMLSelectElement).value).toBe("continuous");
@@ -40,11 +40,11 @@ describe("property inspector forms", () => {
     expect((screen.getByLabelText("Outline inactive indicators") as HTMLInputElement).checked).toBe(true);
   });
   it("migrates existing backgrounds to opaque and keeps new backgrounds transparent", () => {
-    expect(restoreSettings({}).settings?.dial.styles[0].backgroundOpacity).toBe(0);
-    expect(restoreSettings({schemaVersion:1}).settings?.dial.styles[0].backgroundOpacity).toBe(100);
-    expect(restoreSettings({dial:{styles:[{},{}]}}).settings?.dial.styles[1].mutedBackgroundOpacity).toBe(100);
-    const saved=structuredClone(defaultSettings);saved.dial.styles[0].backgroundOpacity=40;
-    expect(restoreSettings(saved).settings?.dial.styles[0].backgroundOpacity).toBe(40);
+    expect(restoreSettings({}).settings?.dial.styles[0].palette.backgroundOpacity).toBe(0);
+    expect(restoreSettings({schemaVersion:1}).settings?.dial.styles[0].palette.backgroundOpacity).toBe(100);
+    expect(restoreSettings({dial:{styles:[{},{}]}}).settings?.dial.styles[1].palette.mutedBackgroundOpacity).toBe(100);
+    const saved=structuredClone(defaultSettings);saved.dial.styles[0].palette.backgroundOpacity=40;
+    expect(restoreSettings(saved).settings?.dial.styles[0].palette.backgroundOpacity).toBe(40);
   });
 
   it("edits shared and independent dial appearances without changing targets or steps", async () => {
@@ -64,6 +64,7 @@ describe("property inspector forms", () => {
     saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
     expect(saved.dial.styles[0].palette.indicatorOpacity).toBe(35);
     expect(saved.dial.styles[0].showGain).toBe(false);
+    expect(saved.dial.styles[0].palette).toMatchObject({backgroundOpacity:100,mutedBackgroundOpacity:100,meterTrackOpacity:0,dialLabelColor:"#ffffff",dialPositiveLabelColor:"#ffffff",dialGainColor:"#ffffff",dialPositiveGainColor:"#ffffff"});
     fireEvent.click(screen.getByLabelText("Use the same appearance on both sides"));
     const right=within(screen.getByRole("group",{name:"Right dial appearance"}));
     fireEvent.click(right.getByLabelText("Show routing"));

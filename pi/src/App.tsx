@@ -237,7 +237,7 @@ function DialEditor({client,value,onChange}: {client:StreamDeckPiApi;value:DialS
     </fieldset>
     {value.showMeter && <fieldset><legend>{t("dial.meterOptions")}</legend>
       <Row label={t("dial.meterStyle")}><select aria-label={t("dial.meterStyle")} value={value.meterStyle} onChange={e=>patch({meterStyle:e.target.value as DialStyle["meterStyle"]})}><option value="cells">{t("dial.meterCells")}</option><option value="continuous">{t("dial.meterContinuous")}</option></select></Row>
-      <Row label={t("dial.meterTrackOpacity")}><input type="range" min="0" max="100" step="1" aria-label={t("dial.meterTrackOpacity")} value={value.meterTrackOpacity} onChange={e=>patch({meterTrackOpacity:Number(e.target.value)})}/><output>{value.meterTrackOpacity}%</output></Row>
+      <Row label={t("dial.meterTrackOpacity")}><input type="range" min="0" max="100" step="1" aria-label={t("dial.meterTrackOpacity")} value={value.palette.meterTrackOpacity} onChange={e=>patch({palette:{...value.palette,meterTrackOpacity:Number(e.target.value)}})}/><output>{value.palette.meterTrackOpacity}%</output></Row>
       {value.showMeter && <Row label={t("button.meterNotch")}><input type="checkbox" aria-label={t("button.meterNotch")} checked={value.meterNotch} onChange={e=>patch({meterNotch:e.target.checked})}/></Row>}
     </fieldset>}
     <PaletteEditor client={client} value={{...defaultSettings.gainButton,...value.palette}} onChange={v=>patch({palette:paletteOf(v)})}/>
@@ -245,18 +245,18 @@ function DialEditor({client,value,onChange}: {client:StreamDeckPiApi;value:DialS
       <fieldset><legend>{t("dial.barColors")}</legend>
         {(["barColor","positiveColor"] as const).map(key=><ColorEditor key={key} label={t(`button.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
         <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.palette.highlightPositive} onChange={e=>color("highlightPositive",e.target.checked)}/></Row>
-        <ColorEditor label={t("dial.labelColor")} value={value.labelColor} onChange={labelColor=>patch({labelColor})}/>
-        <ColorEditor label={t("dial.positiveLabelColor")} value={value.positiveLabelColor} onChange={positiveLabelColor=>patch({positiveLabelColor})}/>
+        <ColorEditor label={t("dial.labelColor")} value={value.palette.dialLabelColor} onChange={v=>color("dialLabelColor",v)}/>
+        <ColorEditor label={t("dial.positiveLabelColor")} value={value.palette.dialPositiveLabelColor} onChange={v=>color("dialPositiveLabelColor",v)}/>
         <ColorEditor label={t("dial.emptyBarColor")} value={value.palette.emptyBarColor} onChange={v=>color("emptyBarColor",v)}/>
-        <ColorEditor label={t("dial.gainColor")} value={value.gainColor} onChange={gainColor=>patch({gainColor})}/>
-        <ColorEditor label={t("dial.positiveGainColor")} value={value.positiveGainColor} onChange={positiveGainColor=>patch({positiveGainColor})}/>
+        <ColorEditor label={t("dial.gainColor")} value={value.palette.dialGainColor} onChange={v=>color("dialGainColor",v)}/>
+        <ColorEditor label={t("dial.positiveGainColor")} value={value.palette.dialPositiveGainColor} onChange={v=>color("dialPositiveGainColor",v)}/>
       </fieldset>
       <fieldset><legend>{t("dial.indicatorColors")}</legend>
         <ColorEditor label={t("dial.indicatorBackground")} value={value.palette.indicatorBackground} onChange={v=>color("indicatorBackground",v)}/>
         <Row label={t("dial.indicatorOpacity")}><input type="range" min="0" max="100" step="1" aria-label={t("dial.indicatorOpacity")} value={value.palette.indicatorOpacity} onChange={e=>patch({palette:{...value.palette,indicatorOpacity:Number(e.target.value)}})}/><output>{value.palette.indicatorOpacity}%</output></Row>
       </fieldset>
       <fieldset><legend>{t("dial.background")}</legend>
-        {(["backgroundOpacity","mutedBackgroundOpacity"] as const).map(key=><Row key={key} label={t(`dial.${key}`)}><input type="range" min="0" max="100" step="10" aria-label={t(`dial.${key}`)} value={value[key]} onChange={e=>patch({[key]:Number(e.target.value)})}/><output>{value[key]}%</output></Row>)}
+        {(["backgroundOpacity","mutedBackgroundOpacity"] as const).map(key=><Row key={key} label={t(`dial.${key}`)}><input type="range" min="0" max="100" step="10" aria-label={t(`dial.${key}`)} value={value.palette[key]} onChange={e=>patch({palette:{...value.palette,[key]:Number(e.target.value)}})}/><output>{value.palette[key]}%</output></Row>)}
         {(["background","mutedBackground"] as const).map(key=><ColorEditor key={key} label={t(`button.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
       </fieldset>
       <fieldset><legend>{t("meter.colors")}</legend>

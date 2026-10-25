@@ -50,7 +50,7 @@ pub fn feedback(
             .unwrap_or_else(|| format!("{:?} {}", config.target.kind, config.target.index));
         let muted = channel.is_some_and(|c| c.mute);
         let positive = colors.highlight_positive && channel.is_some_and(|c| c.gain > 0.0);
-        payload.insert(format!("channelLabel{suffix}"), serde_json::json!({"value":label,"enabled":style.show_label,"color": if positive {&style.positive_label_color} else {&style.label_color}}));
+        payload.insert(format!("channelLabel{suffix}"), serde_json::json!({"value":label,"enabled":style.show_label,"color": if positive {&style.palette.dial_positive_label_color} else {&style.palette.dial_label_color}}));
         let bg = if muted {
             &colors.muted_background
         } else {
@@ -58,9 +58,9 @@ pub fn feedback(
         };
         let background_width = if combo { 100 } else { 200 };
         let opacity = if muted {
-            style.muted_background_opacity
+            style.palette.muted_background_opacity
         } else {
-            style.background_opacity
+            style.palette.background_opacity
         };
         payload.insert(format!("background{suffix}"), serde_json::json!({
             "value":render::data_url(&svg(background_width,100,&format!(r#"<rect width="{background_width}" height="100" fill="{bg}"/>"#))),
@@ -77,7 +77,7 @@ pub fn feedback(
                 }
             })
             .unwrap_or_else(|| "—".into());
-        payload.insert(format!("gainValue{suffix}"), serde_json::json!({"value":gain,"enabled":style.show_gain,"color":if positive {&style.positive_gain_color} else {&style.gain_color}}));
+        payload.insert(format!("gainValue{suffix}"), serde_json::json!({"value":gain,"enabled":style.show_gain,"color":if positive {&style.palette.dial_positive_gain_color} else {&style.palette.dial_gain_color}}));
         let size = if combo { 20 } else { 48 };
         let opacity = if combo { "0.501961" } else { "0.705882" };
         let icon = if style.show_icon {
@@ -162,7 +162,7 @@ fn meter_styled(
     let mut body = format!(
         r#"<rect width="{width}" height="5" rx="2.5" fill="black" fill-opacity="0.623529"/><rect x="2" y="1" width="{inner}" height="3" rx="1.5" fill="{}" fill-opacity="{}"/>"#,
         style.palette.empty_bar_color,
-        f32::from(style.meter_track_opacity) / 100.0
+        f32::from(style.palette.meter_track_opacity) / 100.0
     );
     for side in 0..2 {
         let current = index(levels[side]);
@@ -365,7 +365,7 @@ mod tests {
                 false,
                 &style,
             );
-            style.meter_track_opacity = 100;
+            style.palette.meter_track_opacity = 100;
             let track = meter_styled(
                 width,
                 0,
@@ -456,13 +456,13 @@ mod tests {
     fn opacity_migration_background_extent_and_label_colors() {
         use base64::Engine;
         let fresh: Settings = serde_json::from_value(serde_json::json!({})).unwrap();
-        assert_eq!(fresh.dial.styles[0].background_opacity, 0);
+        assert_eq!(fresh.dial.styles[0].palette.background_opacity, 0);
         let old: Settings = serde_json::from_value(serde_json::json!({"schemaVersion":1})).unwrap();
-        assert_eq!(old.dial.styles[0].background_opacity, 100);
+        assert_eq!(old.dial.styles[0].palette.background_opacity, 100);
         let mut settings = old;
-        settings.dial.styles[0].background_opacity = 40;
+        settings.dial.styles[0].palette.background_opacity = 40;
         settings.dial.styles[0].palette.label_color = "#000000".into();
-        settings.dial.styles[0].label_color = "#abcdef".into();
+        settings.dial.styles[0].palette.dial_label_color = "#abcdef".into();
         for kind in [ActionKind::Gain, ActionKind::Combo] {
             let (p, _) = feedback(
                 &Snapshot::default(),
@@ -534,7 +534,7 @@ mod tests {
         style.show_mono = false;
         style.show_eq = false;
         style.palette.meter_muted_high = "#123456".into();
-        style.positive_gain_color = "#abcdef".into();
+        style.palette.dial_positive_gain_color = "#abcdef".into();
         let (shared, _) = feedback(
             &snapshot,
             &settings,

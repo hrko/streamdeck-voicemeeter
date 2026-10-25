@@ -169,6 +169,13 @@ pub struct GainButtonSettings {
     pub meter_notch: bool,
     pub swap_meter: bool,
     pub empty_bar_color: String,
+    pub background_opacity: u8,
+    pub muted_background_opacity: u8,
+    pub meter_track_opacity: u8,
+    pub dial_label_color: String,
+    pub dial_positive_label_color: String,
+    pub dial_gain_color: String,
+    pub dial_positive_gain_color: String,
     pub indicator_background: String,
     pub indicator_opacity: u8,
     pub indicator_outline: bool,
@@ -213,6 +220,13 @@ impl Default for GainButtonSettings {
             meter_notch: false,
             swap_meter: false,
             empty_bar_color: "#808080".into(),
+            background_opacity: 100,
+            muted_background_opacity: 100,
+            meter_track_opacity: 0,
+            dial_label_color: "#ffffff".into(),
+            dial_positive_label_color: "#ffffff".into(),
+            dial_gain_color: "#ffffff".into(),
+            dial_positive_gain_color: "#ffffff".into(),
             indicator_background: "#808080".into(),
             indicator_opacity: 100,
             indicator_outline: false,
@@ -239,6 +253,13 @@ pub struct DialPalette {
     pub muted_background: String,
     pub positive_color: String,
     pub empty_bar_color: String,
+    pub background_opacity: u8,
+    pub muted_background_opacity: u8,
+    pub meter_track_opacity: u8,
+    pub dial_label_color: String,
+    pub dial_positive_label_color: String,
+    pub dial_gain_color: String,
+    pub dial_positive_gain_color: String,
     pub indicator_background: String,
     pub indicator_opacity: u8,
     pub indicator_outline: bool,
@@ -264,6 +285,13 @@ impl Default for DialPalette {
             muted_background: b.muted_background,
             positive_color: "#f8634d".into(),
             empty_bar_color: "#2c3d4d".into(),
+            background_opacity: 0,
+            muted_background_opacity: 0,
+            meter_track_opacity: 0,
+            dial_label_color: "#ffffff".into(),
+            dial_positive_label_color: "#ffffff".into(),
+            dial_gain_color: "#ffffff".into(),
+            dial_positive_gain_color: "#ffffff".into(),
             indicator_background: b.indicator_background,
             indicator_opacity: b.indicator_opacity,
             indicator_outline: b.indicator_outline,
@@ -302,13 +330,6 @@ pub struct DialStyle {
     pub show_eq: bool,
     pub meter_notch: bool,
     pub meter_style: DialMeterStyle,
-    pub meter_track_opacity: u8,
-    pub background_opacity: u8,
-    pub muted_background_opacity: u8,
-    pub label_color: String,
-    pub positive_label_color: String,
-    pub gain_color: String,
-    pub positive_gain_color: String,
 }
 impl Default for DialStyle {
     fn default() -> Self {
@@ -326,13 +347,6 @@ impl Default for DialStyle {
             show_eq: true,
             meter_notch: false,
             meter_style: DialMeterStyle::Cells,
-            meter_track_opacity: 0,
-            background_opacity: 0,
-            muted_background_opacity: 0,
-            label_color: "#ffffff".into(),
-            positive_label_color: "#ffffff".into(),
-            gain_color: "#ffffff".into(),
-            positive_gain_color: "#ffffff".into(),
         }
     }
 }
@@ -453,9 +467,9 @@ impl Settings {
             channel.icon.validate(&format!("{field}.icon"))?;
         }
         for style in &self.dial.styles {
-            if style.background_opacity > 100
-                || style.muted_background_opacity > 100
-                || style.meter_track_opacity > 100
+            if style.palette.background_opacity > 100
+                || style.palette.muted_background_opacity > 100
+                || style.palette.meter_track_opacity > 100
                 || style.palette.indicator_opacity > 100
             {
                 return Err(ValidationError::new("invalidOpacity", "dial"));
@@ -478,11 +492,11 @@ impl Settings {
                 &p.meter_muted_low,
                 &p.meter_muted_mid,
                 &p.meter_muted_high,
-                &style.label_color,
-                &style.positive_label_color,
+                &style.palette.dial_label_color,
+                &style.palette.dial_positive_label_color,
                 &p.empty_bar_color,
-                &style.gain_color,
-                &style.positive_gain_color,
+                &style.palette.dial_gain_color,
+                &style.palette.dial_positive_gain_color,
             ] {
                 if !valid_color(color) {
                     return Err(ValidationError::new("invalidColor", "dial"));
@@ -500,7 +514,11 @@ impl Settings {
         if !b.gain.is_finite() || !(-60.0..=12.0).contains(&b.gain) {
             return Err(ValidationError::new("invalidButtonGain", "gainButton.gain"));
         }
-        if b.indicator_opacity > 100 {
+        if b.indicator_opacity > 100
+            || b.background_opacity > 100
+            || b.muted_background_opacity > 100
+            || b.meter_track_opacity > 100
+        {
             return Err(ValidationError::new(
                 "invalidOpacity",
                 "gainButton.indicatorOpacity",
@@ -509,6 +527,10 @@ impl Settings {
         b.icon.validate("gainButton.icon")?;
         b.muted_icon.validate("gainButton.mutedIcon")?;
         for color in [
+            &b.dial_label_color,
+            &b.dial_positive_label_color,
+            &b.dial_gain_color,
+            &b.dial_positive_gain_color,
             &b.empty_bar_color,
             &b.indicator_background,
             &b.background,
@@ -597,6 +619,24 @@ impl<'de> Deserialize<'de> for Settings {
                 if let Some(styles) = styles.as_array_mut() {
                     for style in styles {
                         if let Some(style) = style.as_object_mut() {
+                            for (old, new) in [
+                                ("backgroundOpacity", "backgroundOpacity"),
+                                ("mutedBackgroundOpacity", "mutedBackgroundOpacity"),
+                                ("meterTrackOpacity", "meterTrackOpacity"),
+                                ("labelColor", "dialLabelColor"),
+                                ("positiveLabelColor", "dialPositiveLabelColor"),
+                                ("gainColor", "dialGainColor"),
+                                ("positiveGainColor", "dialPositiveGainColor"),
+                            ] {
+                                if let Some(v) = style.remove(old) {
+                                    let palette = style
+                                        .entry("palette")
+                                        .or_insert_with(|| serde_json::json!({}));
+                                    if let Some(palette) = palette.as_object_mut() {
+                                        palette.entry(new).or_insert(v);
+                                    }
+                                }
+                            }
                             if let Some(empty) = style.remove("emptyBarColor") {
                                 let palette = style
                                     .entry("palette")
@@ -614,12 +654,18 @@ impl<'de> Deserialize<'de> for Settings {
                                 }
                             }
 
-                            style
-                                .entry("backgroundOpacity")
-                                .or_insert(serde_json::json!(100));
-                            style
-                                .entry("mutedBackgroundOpacity")
-                                .or_insert(serde_json::json!(100));
+                            if let Some(palette) = style
+                                .entry("palette")
+                                .or_insert_with(|| serde_json::json!({}))
+                                .as_object_mut()
+                            {
+                                palette
+                                    .entry("backgroundOpacity")
+                                    .or_insert(serde_json::json!(100));
+                                palette
+                                    .entry("mutedBackgroundOpacity")
+                                    .or_insert(serde_json::json!(100));
+                            }
                         }
                     }
                 }
