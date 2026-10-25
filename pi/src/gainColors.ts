@@ -2,23 +2,24 @@ import type { GainButtonSettings } from "./generated/contracts";
 import { defaultSettings } from "./generated/contracts";
 
 export const meterColorKeys = ["meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"] as const;
-export const paletteKeys = ["barColor", "labelColor", "positiveLabelColor", "thumbColor", "background", "mutedBackground", "positiveColor", "highlightPositive", "emptyBarColor", "indicatorBackground", "indicatorOpacity", "indicatorOutline", "backgroundOpacity", "mutedBackgroundOpacity", "meterTrackOpacity", "dialLabelColor", "dialPositiveLabelColor", "dialGainColor", "dialPositiveGainColor", ...meterColorKeys] as const;
+export const paletteKeys = ["barColor", "labelColor", "positiveLabelColor", "thumbColor", "background", "mutedBackground", "positiveColor", "highlightPositive", "emptyBarColor", "indicatorOutlineColor", "indicatorBackground", "indicatorOpacity", "indicatorOutline", "backgroundOpacity", "mutedBackgroundOpacity", "meterTrackOpacity", "dialLabelColor", "dialPositiveLabelColor", "dialGainColor", "dialPositiveGainColor", ...meterColorKeys] as const;
 export type Palette = Pick<GainButtonSettings, typeof paletteKeys[number]>;
 export interface UserPalette { id: string; name: string; colors: Palette }
 export function paletteOf(value: GainButtonSettings): Palette {
   return Object.fromEntries(paletteKeys.map(key => [key, value[key]])) as Palette;
 }
 const base = paletteOf(defaultSettings.gainButton);
-const voicemeeter: Palette = { ...base, emptyBarColor:"#2c3d4d", indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline:false, barColor: "#70c399", labelColor: "#286442", positiveLabelColor: "#862b20", thumbColor: "#70c399", background: "#2c3d4d", mutedBackground: "#2c3d4d", positiveColor: "#f8634d", highlightPositive: true };
+const monochrome: Palette={...base,meterInactive:"#1b1b1b",indicatorOutlineColor:"#a0a0a0"};
+const voicemeeter: Palette = { ...base, meterInactive:"#191b1b", indicatorOutlineColor:"#91a4b5", emptyBarColor:"#2c3d4d", indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline:false, barColor: "#70c399", labelColor: "#286442", positiveLabelColor: "#862b20", thumbColor: "#70c399", background: "#2c3d4d", mutedBackground: "#2c3d4d", positiveColor: "#f8634d", highlightPositive: true };
 const transparent = (palette:Palette, indicatorOutline:boolean):Palette => ({
   ...palette, backgroundOpacity:0, mutedBackgroundOpacity:0,
   indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline,
 });
 export const gainPalettes = {
   default: paletteOf({...defaultSettings.gainButton,...defaultSettings.dial.styles[0].palette}),
-  standard: { ...base },
-  standardTransparent: transparent(base,false),
-  standardTransparentOutlined: transparent(base,true),
+  standard: { ...monochrome },
+  standardTransparent: transparent(monochrome,false),
+  standardTransparentOutlined: transparent(monochrome,true),
   voicemeeter,
   voicemeeterTransparent: transparent(voicemeeter,false),
   voicemeeterTransparentOutlined: transparent(voicemeeter,true),
@@ -40,9 +41,9 @@ export function readPalettes(global: unknown): UserPalette[] | undefined {
   const ids = new Set<string>();
   for (const p of store.items) {
     if (!record(p) || typeof p.id !== "string" || !p.id.startsWith("user:") || ids.has(p.id) || typeof p.name !== "string" || !p.name.trim() || p.name.length > 64 || !record(p.colors)) return undefined;
-    const colors: Record<string, unknown> = { backgroundOpacity:base.backgroundOpacity, mutedBackgroundOpacity:base.mutedBackgroundOpacity, meterTrackOpacity:base.meterTrackOpacity, dialLabelColor:base.dialLabelColor, dialPositiveLabelColor:base.dialPositiveLabelColor, dialGainColor:base.dialGainColor, dialPositiveGainColor:base.dialPositiveGainColor, emptyBarColor:base.emptyBarColor, indicatorBackground:base.indicatorBackground, indicatorOpacity:base.indicatorOpacity, indicatorOutline:base.indicatorOutline, labelColor: base.labelColor, positiveLabelColor: base.positiveLabelColor, ...p.colors };
+    const colors: Record<string, unknown> = { indicatorOutlineColor:"#91a4b5", backgroundOpacity:base.backgroundOpacity, mutedBackgroundOpacity:base.mutedBackgroundOpacity, meterTrackOpacity:base.meterTrackOpacity, dialLabelColor:base.dialLabelColor, dialPositiveLabelColor:base.dialPositiveLabelColor, dialGainColor:base.dialGainColor, dialPositiveGainColor:base.dialPositiveGainColor, emptyBarColor:base.emptyBarColor, indicatorBackground:base.indicatorBackground, indicatorOpacity:base.indicatorOpacity, indicatorOutline:base.indicatorOutline, labelColor: base.labelColor, positiveLabelColor: base.positiveLabelColor, ...p.colors };
     if (!paletteKeys.every(key => ["indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].includes(key) ? Number.isInteger(colors[key]) && (colors[key] as number)>=0 && (colors[key] as number)<=100 : key === "highlightPositive" || key === "indicatorOutline" ? typeof colors[key] === "boolean" : typeof colors[key] === "string" && /^#[\da-f]{6}$/i.test(colors[key]))) return undefined;
     ids.add(p.id);
   }
-  return store.items.map(p => ({ ...p, colors: { backgroundOpacity:base.backgroundOpacity, mutedBackgroundOpacity:base.mutedBackgroundOpacity, meterTrackOpacity:base.meterTrackOpacity, dialLabelColor:base.dialLabelColor, dialPositiveLabelColor:base.dialPositiveLabelColor, dialGainColor:base.dialGainColor, dialPositiveGainColor:base.dialPositiveGainColor, emptyBarColor:base.emptyBarColor, indicatorBackground:base.indicatorBackground, indicatorOpacity:base.indicatorOpacity, indicatorOutline:base.indicatorOutline, labelColor: base.labelColor, positiveLabelColor: base.positiveLabelColor, ...p.colors } })) as UserPalette[];
+  return store.items.map(p => ({ ...p, colors: { indicatorOutlineColor:"#91a4b5", backgroundOpacity:base.backgroundOpacity, mutedBackgroundOpacity:base.mutedBackgroundOpacity, meterTrackOpacity:base.meterTrackOpacity, dialLabelColor:base.dialLabelColor, dialPositiveLabelColor:base.dialPositiveLabelColor, dialGainColor:base.dialGainColor, dialPositiveGainColor:base.dialPositiveGainColor, emptyBarColor:base.emptyBarColor, indicatorBackground:base.indicatorBackground, indicatorOpacity:base.indicatorOpacity, indicatorOutline:base.indicatorOutline, labelColor: base.labelColor, positiveLabelColor: base.positiveLabelColor, ...p.colors } })) as UserPalette[];
 }

@@ -243,6 +243,7 @@ fn status_styled(
     style: &DialStyle,
 ) -> String {
     let mut body = String::new();
+    let outline_color = &style.palette.indicator_outline_color;
     let off_color = &style.palette.indicator_background;
     let off_opacity = f32::from(style.palette.indicator_opacity) / 100.0;
     let flag = |key: &str| channel.flags.get(key).copied().unwrap_or(false);
@@ -269,7 +270,7 @@ fn status_styled(
                 if !enabled && style.palette.indicator_outline {
                     let _ = write!(
                         body,
-                        r##"<rect x="{}" y="{}" width="4" height="4" rx="1.5" fill="{off_color}" fill-opacity="{off_opacity}" stroke="#91a4b5" stroke-width="1"/>"##,
+                        r##"<rect x="{}" y="{}" width="4" height="4" rx="1.5" fill="{off_color}" fill-opacity="{off_opacity}" stroke="{outline_color}" stroke-width="1"/>"##,
                         x + 0.5,
                         y as f32 + 0.5
                     );
@@ -307,7 +308,7 @@ fn status_styled(
         if !enabled && style.palette.indicator_outline {
             let _ = write!(
                 body,
-                r##"<rect x="{}" y="15.5" width="6" height="6" rx="1" fill="{off_color}" fill-opacity="{off_opacity}" stroke="#91a4b5" stroke-width="1"/>"##,
+                r##"<rect x="{}" y="15.5" width="6" height="6" rx="1" fill="{off_color}" fill-opacity="{off_opacity}" stroke="{outline_color}" stroke-width="1"/>"##,
                 2.5 + i as f32 * 9.0
             );
         } else {

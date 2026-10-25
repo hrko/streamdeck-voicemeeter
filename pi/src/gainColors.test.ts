@@ -49,3 +49,13 @@ it("places the default first and groups each opaque palette with its transparent
 it("keeps the default button thumb and label colors distinct from dial text", () => {
  expect(gainPalettes.default).toMatchObject({barColor:"#70c399",thumbColor:"#70c399",labelColor:"#286442",positiveLabelColor:"#862b20",dialLabelColor:"#ffffff",dialPositiveLabelColor:"#ffffff"});
 });
+
+it("uses neutral inactive cells and outlines only in monochrome presets", () => {
+ for(const key of ["standard","standardTransparent","standardTransparentOutlined"] as const)
+  expect(gainPalettes[key]).toMatchObject({meterInactive:"#1b1b1b",indicatorOutlineColor:"#a0a0a0"});
+ for(const key of ["default","voicemeeter","voicemeeterTransparent","voicemeeterTransparentOutlined"] as const)
+  expect(gainPalettes[key]).toMatchObject({meterInactive:"#191b1b",indicatorOutlineColor:"#91a4b5"});
+ const old={...gainPalettes.standard} as Record<string,unknown>;
+ delete old.indicatorOutlineColor;
+ expect(readPalettes({gainColorPresets:{version:1,items:[{id:"user:old",name:"Old",colors:old}]}})?.[0].colors.indicatorOutlineColor).toBe("#91a4b5");
+});

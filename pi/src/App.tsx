@@ -252,6 +252,7 @@ function DialEditor({client,value,onChange}: {client:StreamDeckPiApi;value:DialS
         <ColorEditor label={t("dial.positiveGainColor")} value={value.palette.dialPositiveGainColor} onChange={v=>color("dialPositiveGainColor",v)}/>
       </fieldset>
       <fieldset><legend>{t("dial.indicatorColors")}</legend>
+        <ColorEditor label={t("dial.indicatorOutlineColor")} value={value.palette.indicatorOutlineColor} onChange={v=>color("indicatorOutlineColor",v)}/>
         <ColorEditor label={t("dial.indicatorBackground")} value={value.palette.indicatorBackground} onChange={v=>color("indicatorBackground",v)}/>
         <Row label={t("dial.indicatorOpacity")}><input type="range" min="0" max="100" step="1" aria-label={t("dial.indicatorOpacity")} value={value.palette.indicatorOpacity} onChange={e=>patch({palette:{...value.palette,indicatorOpacity:Number(e.target.value)}})}/><output>{value.palette.indicatorOpacity}%</output></Row>
       </fieldset>

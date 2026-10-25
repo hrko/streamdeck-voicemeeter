@@ -167,7 +167,8 @@
     "button.palette.standardTransparentOutlined": "White on black (transparent, outlined)",
     "button.palette.voicemeeterTransparent": "VoiceMeeter (transparent, no outline)",
     "button.palette.voicemeeterTransparentOutlined": "VoiceMeeter (transparent, outlined)",
-    "button.palette.default": "Default"
+    "button.palette.default": "Default",
+    "dial.indicatorOutlineColor": "Indicator outline color"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

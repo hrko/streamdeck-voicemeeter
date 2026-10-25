@@ -102,7 +102,7 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
   for (const key of ["indicatorOutline", "syncPair", "meterNotch", "highlightPositive", "showLabel", "faderLabel", "showDb", "showMeter", "swapMeter"]) {
     if (typeof button[key] !== "boolean") return error("invalidSettings", `gainButton.${key}`);
   }
-  for (const key of ["dialLabelColor", "dialPositiveLabelColor", "dialGainColor", "dialPositiveGainColor", "emptyBarColor", "indicatorBackground", "background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
+  for (const key of ["indicatorOutlineColor", "dialLabelColor", "dialPositiveLabelColor", "dialGainColor", "dialPositiveGainColor", "emptyBarColor", "indicatorBackground", "background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
     if (typeof button[key] !== "string" || !/^#[\da-f]{6}$/i.test(button[key])) return error("invalidColor", `gainButton.${key}`);
   }
   const buttonIconError = icon(button.icon, "gainButton.icon") ?? icon(button.mutedIcon, "gainButton.mutedIcon");

@@ -231,3 +231,9 @@ transparent backgrounds, green/red gain bar, #2c3d4d empty rail and inactive
 indicators (100%, no outline), and white dial text. Other built-ins are grouped
 as white/black then VoiceMeeter, each followed by transparent no-outline and
 outlined variants. Saved action palettes are not replaced by the new default.
+
+Monochrome palettes (including transparent variants) use neutral #1b1b1b inactive
+meter cells and #a0a0a0 inactive indicator outlines. Default and VoiceMeeter retain
+their existing colors. Indicator outline color is editable and saved in shared
+palettes; older presets retain the former #91a4b5 outline. Active status and meter
+colors remain semantic colors.
