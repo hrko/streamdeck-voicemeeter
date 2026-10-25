@@ -12,7 +12,7 @@ fn main() -> anyhow::Result<()> {
     let dir = "target/dial-readability";
     std::fs::create_dir_all(dir)?;
     let mut cases = Vec::new();
-    for id in 0..14 {
+    for id in 0..17 {
         let mut s = Settings::default();
         let d = &mut s.dial.styles[0];
         d.palette.background_opacity = 70;
@@ -77,6 +77,27 @@ fn main() -> anyhow::Result<()> {
                 d.palette.empty_bar_color = "#2c3d4d".into();
                 gain = if id == 12 { 6.0 } else { -6.0 };
                 mute = id == 13;
+            }
+            14..=16 => {
+                d.palette = serde_json::from_value(serde_json::to_value(
+                    streamdeck_voicemeeter::settings::GainButtonSettings::default(),
+                )?)?;
+                if id != 15 {
+                    d.palette.bar_color = "#70c399".into();
+                    d.palette.positive_color = "#f8634d".into();
+                    d.palette.highlight_positive = true;
+                    d.palette.empty_bar_color = "#2c3d4d".into();
+                    d.palette.background = "#2c3d4d".into();
+                    d.palette.muted_background = "#2c3d4d".into();
+                    d.palette.meter_low = "#85adb9".into();
+                    d.palette.meter_muted_low = "#394547".into();
+                    d.palette.meter_inactive = "#191b1b".into();
+                }
+                d.palette.background_opacity = if id == 14 { 100 } else { 0 };
+                d.palette.muted_background_opacity = d.palette.background_opacity;
+                d.palette.indicator_background = "#000000".into();
+                d.palette.indicator_opacity = 62;
+                d.palette.indicator_outline = false;
             }
             _ => {}
         }

@@ -41,7 +41,7 @@ async function render(c,kind,bg,opacity,mode) {
   }
   layers.push({input,left:x,top:y});
  }
- return sharp(svg(200,100,'<rect width="200" height="100" fill="black"/>')).composite(layers).png().toBuffer();
+ return sharp(svg(200,100,wallpaper(bg))).composite(layers).png().toBuffer();
 }
 
 const out = "target/dial-meter-hidden-fixed-fader";
@@ -51,19 +51,23 @@ const rows = [
  {mode:"hidden",label:"Current: meter hidden / gap 10 px"},
  {mode:"compact",label:"Proposal: value + status y=48 / gap 2 px / fader stays y=74"},
 ];
-for(const scale of [1,2]) {
+for(const variant of [
+ {id:14,name:"voicemeeter",title:"VoiceMeeter / opaque",bg:0},
+ {id:15,name:"white-transparent",title:"White / transparent + wallpaper",bg:1},
+ {id:16,name:"vm-transparent",title:"VoiceMeeter / transparent + wallpaper",bg:1},
+]) for(const scale of [1,2]) {
  const w=860,h=60+rows.length*(100*scale+58);
- let body='<rect width="100%" height="100%" fill="#252525"/>'+text(20,28,'Hidden meter spacing — '+scale+'x',20);
+ let body='<rect width="100%" height="100%" fill="#252525"/>'+text(20,28,variant.title+' — '+scale+'x',20);
  const layers=[];
  for(let i=0;i<rows.length;i++) {
   const row=rows[i],y=70+i*(100*scale+58);
   body+=text(20,y-12,row.label,16);
   for(let kind=0;kind<2;kind++) {
-   const input=await render(cases[11],kind,0,undefined,row.mode);
-   if(scale===1) await writeFile(out+'/'+row.mode+'-'+['gain','combo'][kind]+'.png',input);
+   const input=await render(cases[variant.id],kind,variant.bg,undefined,row.mode);
+   if(scale===1) await writeFile(out+'/'+variant.name+'-'+row.mode+'-'+['gain','combo'][kind]+'.png',input);
    layers.push({input:await sharp(input).resize(200*scale,100*scale,{kernel:'nearest'}).png().toBuffer(),left:20+kind*(200*scale+20),top:y});
   }
  }
- await sharp(svg(w,h,body)).composite(layers).png().toFile(out+'/comparison-'+scale+'x.png');
+ await sharp(svg(w,h,body)).composite(layers).png().toFile(out+'/'+variant.name+'-'+scale+'x.png');
 }
 console.log(out);
