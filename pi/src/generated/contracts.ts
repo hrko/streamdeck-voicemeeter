@@ -10,7 +10,8 @@ export type GainOperation = "adjust" | "set" | "mute";
 export type GainAppearance = "static" | "horizontal" | "vertical";
 export type GainButtonSettings = { operation: GainOperation, delta: number, gain: number, appearance: GainAppearance, icon: IconSettings, mutedIcon: IconSettings, background: string, mutedBackground: string, barColor: string, thumbColor: string, positiveColor: string, highlightPositive: boolean, showLabel: boolean, faderLabel: boolean, syncPair: boolean, labelColor: string, positiveLabelColor: string, showDb: boolean, showMeter: boolean, meterNotch: boolean, swapMeter: boolean, meterBackground: string, meterInactive: string, meterLow: string, meterMid: string, meterHigh: string, meterMutedLow: string, meterMutedMid: string, meterMutedHigh: string, };
 export type DialPalette = { barColor: string, labelColor: string, positiveLabelColor: string, thumbColor: string, background: string, mutedBackground: string, positiveColor: string, meterBackground: string, meterInactive: string, meterLow: string, meterMid: string, meterHigh: string, meterMutedLow: string, meterMutedMid: string, meterMutedHigh: string, highlightPositive: boolean, };
-export type DialStyle = { palette: DialPalette, showLabel: boolean, showGain: boolean, showIcon: boolean, showMeter: boolean, showBar: boolean, showMute: boolean, showSolo: boolean, showRouting: boolean, showMono: boolean, showEq: boolean, meterNotch: boolean, backgroundOpacity: number, mutedBackgroundOpacity: number, labelColor: string, positiveLabelColor: string, emptyBarColor: string, gainColor: string, positiveGainColor: string, };
+export type DialMeterStyle = "cells" | "continuous";
+export type DialStyle = { palette: DialPalette, showLabel: boolean, showGain: boolean, showIcon: boolean, showMeter: boolean, showBar: boolean, showMute: boolean, showSolo: boolean, showRouting: boolean, showMono: boolean, showEq: boolean, meterNotch: boolean, meterStyle: DialMeterStyle, meterTrackOpacity: number, indicatorOutline: boolean, backgroundOpacity: number, mutedBackgroundOpacity: number, labelColor: string, positiveLabelColor: string, emptyBarColor: string, gainColor: string, positiveGainColor: string, };
 export type DialSettings = { shared: boolean, styles: [DialStyle, DialStyle], };
 export type Settings = { dial: DialSettings, schemaVersion: number, channels: [ChannelSettings, ChannelSettings], macroButton: MacroSettings, gainButton: GainButtonSettings, };
 export type ValidationError = { code: string, field: string, };
@@ -51,6 +52,9 @@ export const defaultSettings: Settings = {
         "showMono": true,
         "showEq": true,
         "meterNotch": false,
+        "meterStyle": "cells",
+        "meterTrackOpacity": 0,
+        "indicatorOutline": true,
         "backgroundOpacity": 0,
         "mutedBackgroundOpacity": 0,
         "labelColor": "#ffffff",
@@ -89,6 +93,9 @@ export const defaultSettings: Settings = {
         "showMono": true,
         "showEq": true,
         "meterNotch": false,
+        "meterStyle": "cells",
+        "meterTrackOpacity": 0,
+        "indicatorOutline": true,
         "backgroundOpacity": 0,
         "mutedBackgroundOpacity": 0,
         "labelColor": "#ffffff",

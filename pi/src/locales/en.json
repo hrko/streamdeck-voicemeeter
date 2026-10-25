@@ -153,7 +153,13 @@
     "palette.faderColors": "Fader and label",
     "palette.keyColors": "Key background",
     "meter.normal": "Active cells",
-    "meter.muted": "Muted cells"
+    "meter.muted": "Muted cells",
+    "dial.meterOptions": "Meter",
+    "dial.meterStyle": "Meter style",
+    "dial.meterCells": "Cells",
+    "dial.meterContinuous": "Continuous",
+    "dial.meterTrackOpacity": "Inactive track opacity",
+    "dial.indicatorOutline": "Outline inactive indicators"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

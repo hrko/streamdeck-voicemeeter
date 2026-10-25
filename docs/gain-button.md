@@ -181,3 +181,24 @@ respect explicit PI label colors. Shared palettes retain button label fields,
 but dial text uses independent `DialStyle.labelColor`/`positiveLabelColor`.
 Rust deserialization and PI restore both distinguish empty new settings from
 nonempty legacy settings to preserve the existing opaque background.
+
+### Dial meter and indicator readability
+
+Dial meters default to meterStyle "cells"; "continuous" draws two continuous
+stereo lanes. Both use the same level scale and symmetric 2 px inner margin as
+the gain bar. Cell gaps are centered within each interval, so switching styles
+does not change the level boundaries. Meter decay, mute colors and the optional
+current-level notch are unchanged.
+
+The outer meter background matches the gain bar rim (black, opacity 160/255).
+meterTrackOpacity controls the inner inactive track from 0 to 100% (default 0),
+using emptyBarColor. At zero opacity, cells retain dim inactive cells; continuous
+meters show only the active portions. The legacy palette meterBackground field
+is retained for shared preset compatibility but is not used by dial meters.
+
+indicatorOutline defaults to true and controls outlines on inactive indicators.
+Routing indicators have a 5 px footprint and 2 px outer corner radius. Other
+status indicators retain their 7 px footprint. Inset 1 px strokes align straight
+edges to pixels while curves remain antialiased. These settings follow the existing
+shared/independent Combo appearance selection. Old settings acquire these defaults
+without changing targets, steps, palettes or per-channel settings.

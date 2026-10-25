@@ -26,6 +26,19 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("saves and restores dial meter style, track opacity and indicator outlines", async () => {
+    const {client,emit}=await setup("gain-control");
+    fireEvent.change(screen.getByLabelText("Meter style"),{target:{value:"continuous"}});
+    fireEvent.change(screen.getByLabelText("Inactive track opacity"),{target:{value:"65"}});
+    fireEvent.click(screen.getByLabelText("Outline inactive indicators"));
+    const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial.styles[0]).toMatchObject({meterStyle:"continuous",meterTrackOpacity:65,indicatorOutline:false});
+    expect(saved.channels).toEqual(defaultSettings.channels);
+    emit("didReceiveSettings",saved);
+    expect((screen.getByLabelText("Meter style") as HTMLSelectElement).value).toBe("continuous");
+    expect((screen.getByLabelText("Inactive track opacity") as HTMLInputElement).value).toBe("65");
+    expect((screen.getByLabelText("Outline inactive indicators") as HTMLInputElement).checked).toBe(false);
+  });
   it("migrates existing backgrounds to opaque and keeps new backgrounds transparent", () => {
     expect(restoreSettings({}).settings?.dial.styles[0].backgroundOpacity).toBe(0);
     expect(restoreSettings({schemaVersion:1}).settings?.dial.styles[0].backgroundOpacity).toBe(100);

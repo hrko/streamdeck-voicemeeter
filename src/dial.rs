@@ -5,7 +5,7 @@ use crate::{
     domain::{ActionKind, Edition},
     engine::Snapshot,
     render::{self, IconCache},
-    settings::{DialPalette, DialStyle, Settings, Target, TargetKind},
+    settings::{DialMeterStyle, DialPalette, DialStyle, Settings, Target, TargetKind},
 };
 use serde_json::{Map, Value};
 use std::fmt::Write;
@@ -111,6 +111,7 @@ pub fn feedback(
             colors,
             muted,
             style.meter_notch,
+            style,
         );
         let fader = fader_styled(
             width,
@@ -137,16 +138,19 @@ pub fn feedback(
     (Value::Object(payload), missing)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn meter_styled(
     width: usize,
-    padding_right: usize,
+    _padding_right: usize,
     levels: [f32; 2],
     peaks: [f32; 2],
     colors: &DialPalette,
     muted: bool,
     notch: bool,
+    style: &DialStyle,
 ) -> String {
-    let cells = (width - 2 - padding_right).div_ceil(2);
+    let inner = (width - 4) as f32;
+    let cells = (width - 4) / 2;
     let index = |db: f32| -> usize {
         if db.is_finite() {
             (((db + 60.0) / 72.0).clamp(0.0, 1.0) * cells as f32).round() as usize
@@ -154,9 +158,11 @@ fn meter_styled(
             0
         }
     };
+    // Match the fader's outer rim, including alpha. The optional inner track is separate.
     let mut body = format!(
-        r#"<rect width="{width}" height="5" fill="{}"/>"#,
-        colors.meter_background
+        r#"<rect width="{width}" height="5" rx="2.5" fill="black" fill-opacity="0.623529"/><rect x="2" y="1" width="{inner}" height="3" rx="1.5" fill="{}" fill-opacity="{}"/>"#,
+        style.empty_bar_color,
+        f32::from(style.meter_track_opacity) / 100.0
     );
     for side in 0..2 {
         let current = index(levels[side]);
@@ -182,11 +188,20 @@ fn meter_styled(
             } else {
                 &colors.meter_high
             };
+            let continuous = style.meter_style == DialMeterStyle::Continuous;
+            if continuous && !active {
+                continue;
+            }
+            // Identical level boundaries in both styles, with symmetric half-gaps for cells.
+            let gap = if continuous { 0.0 } else { 0.35 };
+            let x = 2.0 + cell as f32 * 2.0 + gap / 2.0;
+            let y = 1.0 + side as f32 * 2.0 - if continuous { 0.2 } else { 0.0 };
+            let height = if continuous { 1.4 } else { 1.0 };
+            let opacity = if active { 1.0 } else { 0.28 };
             let _ = write!(
                 body,
-                r#"<rect x="{}" y="{}" width="1" height="1" fill="{color}"/>"#,
-                2 + cell * 2,
-                1 + side * 2
+                r#"<rect x="{x}" y="{y}" width="{}" height="{height}" fill="{color}" fill-opacity="{opacity}"/>"#,
+                2.0 - gap
             );
         }
     }
@@ -247,13 +262,21 @@ fn status_styled(
                 continue;
             }
             for (i, enabled) in flags.into_iter().enumerate() {
-                let color = if enabled { "#70c399" } else { "#2c3d4d" };
-                let _ = write!(
-                    body,
-                    r#"<circle cx="{}" cy="{}" r="2.5" fill="{color}"/>"#,
-                    4.5 + i as f32 * 7.0,
-                    y as f32 + 2.5
-                );
+                let x = 2.0 + i as f32 * 7.0;
+                if !enabled && style.indicator_outline {
+                    let _ = write!(
+                        body,
+                        r##"<rect x="{}" y="{}" width="4" height="4" rx="1.5" fill="#2c3d4d" stroke="#91a4b5" stroke-width="1"/>"##,
+                        x + 0.5,
+                        y as f32 + 0.5
+                    );
+                } else {
+                    let color = if enabled { "#8bdfb1" } else { "#2c3d4d" };
+                    let _ = write!(
+                        body,
+                        r#"<rect x="{x}" y="{y}" width="5" height="5" rx="2" fill="{color}"/>"#
+                    );
+                }
             }
         }
         squares.push((flag("Solo"), "#e8b15f", style.show_solo));
@@ -277,12 +300,24 @@ fn status_styled(
         if !visible {
             continue;
         }
-        let color = if enabled { color } else { "#2c3d4d" };
-        let _ = write!(
-            body,
-            r#"<rect x="{}" y="15" width="7" height="7" rx="1.5" fill="{color}"/>"#,
-            2 + i * 9
-        );
+        if !enabled && style.indicator_outline {
+            let _ = write!(
+                body,
+                r##"<rect x="{}" y="15.5" width="6" height="6" rx="1" fill="#2c3d4d" stroke="#91a4b5" stroke-width="1"/>"##,
+                2.5 + i as f32 * 9.0
+            );
+        } else {
+            let color = if enabled {
+                if color == "#296ffd" { "#72a9ff" } else { color }
+            } else {
+                "#2c3d4d"
+            };
+            let _ = write!(
+                body,
+                r#"<rect x="{}" y="15" width="7" height="7" rx="1.5" fill="{color}"/>"#,
+                2 + i * 9
+            );
+        }
     }
     svg(36, 24, &body)
 }
@@ -305,11 +340,91 @@ fn meter(width: usize, padding: usize, levels: [f32; 2], peaks: [f32; 2]) -> Str
         &DialPalette::default(),
         false,
         true,
+        &DialStyle::default(),
     )
 }
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn meter_modes_and_track_preserve_level_bounds_and_mute_colors() {
+        for width in [84, 108] {
+            let mut style = DialStyle::default();
+            let a = meter_styled(
+                width,
+                0,
+                [-12.0, -24.0],
+                [-6.0, -18.0],
+                &style.palette,
+                false,
+                false,
+                &style,
+            );
+            style.meter_track_opacity = 100;
+            let track = meter_styled(
+                width,
+                0,
+                [-12.0, -24.0],
+                [-6.0, -18.0],
+                &style.palette,
+                false,
+                false,
+                &style,
+            );
+            // Changing track opacity affects only the track, not any meter cells.
+            assert_eq!(
+                a.replacen("fill-opacity=\"0\"", "fill-opacity=\"1\"", 1),
+                track
+            );
+            style.meter_style = DialMeterStyle::Continuous;
+            let b = meter_styled(
+                width,
+                0,
+                [-12.0, -24.0],
+                [-6.0, -18.0],
+                &style.palette,
+                false,
+                false,
+                &style,
+            );
+            assert!(!b.contains(&style.palette.meter_inactive));
+            assert!(b.contains("x=\"2\" y=\"0.8\""));
+            let muted = meter_styled(
+                width,
+                0,
+                [12.0; 2],
+                [12.0; 2],
+                &style.palette,
+                true,
+                false,
+                &style,
+            );
+            assert!(muted.contains(&style.palette.meter_muted_high));
+            assert!(!muted.contains(&format!("fill=\"{}\"", style.palette.meter_high)));
+            assert!(muted.contains(&format!("x=\"{}\" y=\"0.8\" width=\"2\"", width - 4)));
+        }
+    }
+
+    #[test]
+    fn outline_toggle_retains_routing_and_status_geometry() {
+        let mut style = DialStyle::default();
+        let channel = ChannelSnapshot::default();
+        let outlined = status_styled(Edition::Potato, Target::default(), &channel, &style);
+        style.indicator_outline = false;
+        let plain = status_styled(Edition::Potato, Target::default(), &channel, &style);
+        assert!(outlined.contains("width=\"4\" height=\"4\" rx=\"1.5\""));
+        assert!(outlined.contains("width=\"6\" height=\"6\" rx=\"1\""));
+        assert!(!plain.contains("stroke="));
+        assert_eq!(
+            plain.matches("width=\"5\" height=\"5\" rx=\"2\"").count(),
+            8
+        );
+        assert_eq!(
+            outlined.matches("<rect").count(),
+            plain.matches("<rect").count()
+        );
+    }
+
     #[test]
     fn opacity_migration_background_extent_and_label_colors() {
         use base64::Engine;
@@ -432,8 +547,8 @@ mod tests {
         let channel = ChannelSnapshot::default();
         let svg = status_styled(Edition::Potato, Target::default(), &channel, &style);
         assert!(!svg.contains("x=\"2\" y=\"15\""));
-        assert!(svg.contains("x=\"20\" y=\"15\""));
-        assert!(svg.contains("x=\"29\" y=\"15\""));
+        assert!(svg.contains("x=\"20.5\" y=\"15.5\""));
+        assert!(svg.contains("x=\"29.5\" y=\"15.5\""));
     }
 
     #[test]
@@ -460,7 +575,7 @@ mod tests {
         let meter = meter(108, 3, [-60.0, 12.0], [12.0; 2]);
         assert_eq!(meter.matches("height=\"1\"").count(), 104);
         assert!(meter.contains("#fa0000"));
-        assert!(meter.contains(r##"x="2" y="1" width="1" height="1" fill="#191b1b""##));
+        assert!(meter.contains(r##"x="2.175" y="1" width="1.65" height="1" fill="#191b1b""##));
         assert_eq!(meter.matches("<svg").count(), 1);
         assert!(!fader(108, -60.0).contains("#70c399"));
         assert!(fader(108, 12.0).contains(r##"width="104" height="8" rx="4" fill="#f8634d""##));
@@ -552,13 +667,13 @@ mod tests {
         };
         let physical = Target::default();
         let potato = status(Edition::Potato, physical, &channel);
-        assert_eq!(potato.matches("<circle").count(), 8);
-        assert_eq!(potato.matches("<rect").count(), 4);
+        assert_eq!(potato.matches("width=\"4\" height=\"4\"").count(), 8);
+        assert_eq!(potato.matches("<rect").count(), 12);
         assert!(potato.contains(r##"x="2" y="15" width="7" height="7" rx="1.5" fill="#f66051""##));
         let banana = status(Edition::Banana, physical, &channel);
-        assert_eq!(banana.matches("<circle").count(), 5);
-        assert!(!banana.contains("cy=\"2.5\""));
-        assert_eq!(banana.matches("<rect").count(), 3);
+        assert_eq!(banana.matches("width=\"4\" height=\"4\"").count(), 5);
+        assert!(!banana.contains("y=\"0.5\""));
+        assert_eq!(banana.matches("<rect").count(), 8);
         let basic = status(
             Edition::Basic,
             Target {

@@ -3,6 +3,19 @@ import { defaultSettings } from "./generated/contracts";
 import { restoreSettings, validateSettings } from "./settings";
 
 describe("settings contract", () => {
+  it("migrates dial display defaults and rejects invalid new values", () => {
+    const restored=restoreSettings({dial:{styles:[{},{}]}});
+    expect(restored.settings?.dial.styles[0]).toMatchObject({meterStyle:"cells",meterTrackOpacity:0,indicatorOutline:true});
+    const settings=structuredClone(defaultSettings);
+    settings.dial.styles[0].meterTrackOpacity=101;
+    expect(validateSettings(settings)?.code).toBe("invalidOpacity");
+    settings.dial.styles[0].meterTrackOpacity=50;
+    settings.dial.styles[0].meterStyle="continuous";
+    expect(validateSettings(settings)).toBeUndefined();
+    const malformed=JSON.parse(JSON.stringify(settings));
+    malformed.dial.styles[0].meterStyle="unknown";
+    expect(validateSettings(malformed)?.code).toBe("invalidSettings");
+  });
   it("restores nested defaults without replacing saved channels", () => {
     const restored = restoreSettings({ channels: [{ target: { index: 2 } }, {}] });
     expect(restored.error).toBeUndefined();

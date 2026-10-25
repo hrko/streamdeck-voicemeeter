@@ -65,14 +65,15 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
   if (!record(dial) || typeof dial.shared!=="boolean" || !Array.isArray(dial.styles) || dial.styles.length!==2) return error("invalidSettings","dial");
   for(const style of dial.styles) {
     if(!record(style) || !record(style.palette)) return error("invalidSettings","dial");
-    for(const key of ["showLabel","showGain","showIcon","showBar","showMeter","showMute","showSolo","showRouting","showMono","showEq","meterNotch"]) {
+    for(const key of ["showLabel","showGain","showIcon","showBar","showMeter","showMute","showSolo","showRouting","showMono","showEq","meterNotch","indicatorOutline"]) {
       if(typeof style[key]!=="boolean") return error("invalidSettings",`dial.${key}`);
     }
+    if(style.meterStyle!=="cells" && style.meterStyle!=="continuous") return error("invalidSettings","dial.meterStyle");
     for(const key of Object.keys(defaultSettings.dial.styles[0].palette)) {
       const v=style.palette[key];
       if(key==="highlightPositive" ? typeof v!=="boolean" : typeof v!=="string" || !/^#[\da-f]{6}$/i.test(v)) return error("invalidColor",`dial.palette.${key}`);
     }
-    for(const key of ["backgroundOpacity","mutedBackgroundOpacity"]) if(!Number.isInteger(style[key]) || (style[key] as number)<0 || (style[key] as number)>100) return error("invalidOpacity",`dial.${key}`);
+    for(const key of ["backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"]) if(!Number.isInteger(style[key]) || (style[key] as number)<0 || (style[key] as number)>100) return error("invalidOpacity",`dial.${key}`);
     for(const key of ["labelColor","positiveLabelColor","emptyBarColor","gainColor","positiveGainColor"]) if(typeof style[key]!=="string" || !/^#[\da-f]{6}$/i.test(style[key] as string)) return error("invalidColor",`dial.${key}`);
   }
   const macro = value.macroButton;

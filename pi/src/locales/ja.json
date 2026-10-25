@@ -153,7 +153,13 @@
     "palette.faderColors": "フェーダーと文字",
     "palette.keyColors": "キー背景",
     "meter.normal": "通常の点灯色",
-    "meter.muted": "ミュート時の点灯色"
+    "meter.muted": "ミュート時の点灯色",
+    "dial.meterOptions": "メーター",
+    "dial.meterStyle": "描画方式",
+    "dial.meterCells": "セル",
+    "dial.meterContinuous": "連続バー",
+    "dial.meterTrackOpacity": "消灯部分の下地の不透明度",
+    "dial.indicatorOutline": "消灯インジケーターの縁を表示"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

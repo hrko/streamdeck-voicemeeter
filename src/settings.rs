@@ -263,6 +263,13 @@ impl Default for DialPalette {
         }
     }
 }
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum DialMeterStyle {
+    #[default]
+    Cells,
+    Continuous,
+}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DialStyle {
@@ -278,6 +285,9 @@ pub struct DialStyle {
     pub show_mono: bool,
     pub show_eq: bool,
     pub meter_notch: bool,
+    pub meter_style: DialMeterStyle,
+    pub meter_track_opacity: u8,
+    pub indicator_outline: bool,
     pub background_opacity: u8,
     pub muted_background_opacity: u8,
     pub label_color: String,
@@ -301,6 +311,9 @@ impl Default for DialStyle {
             show_mono: true,
             show_eq: true,
             meter_notch: false,
+            meter_style: DialMeterStyle::Cells,
+            meter_track_opacity: 0,
+            indicator_outline: true,
             background_opacity: 0,
             muted_background_opacity: 0,
             label_color: "#ffffff".into(),
@@ -428,7 +441,10 @@ impl Settings {
             channel.icon.validate(&format!("{field}.icon"))?;
         }
         for style in &self.dial.styles {
-            if style.background_opacity > 100 || style.muted_background_opacity > 100 {
+            if style.background_opacity > 100
+                || style.muted_background_opacity > 100
+                || style.meter_track_opacity > 100
+            {
                 return Err(ValidationError::new("invalidOpacity", "dial"));
             }
             let p = &style.palette;
@@ -526,6 +542,7 @@ pub fn typescript() -> String {
         GainAppearance::decl(),
         GainButtonSettings::decl(),
         DialPalette::decl(),
+        DialMeterStyle::decl(),
         DialStyle::decl(),
         DialSettings::decl(),
         Settings::decl(),

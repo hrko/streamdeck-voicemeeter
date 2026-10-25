@@ -232,8 +232,14 @@ function DialEditor({client,value,onChange}: {client:StreamDeckPiApi;value:DialS
   return <>
     <fieldset><legend>{t("dial.items")}</legend>
       {(["showLabel","showGain","showIcon","showBar","showMeter","showMute","showSolo","showRouting","showMono","showEq"] as const).map(key=><Row key={key} label={t(`dial.${key}`)}><input type="checkbox" aria-label={t(`dial.${key}`)} checked={value[key]} onChange={e=>patch({[key]:e.target.checked})}/></Row>)}
-      {value.showMeter && <Row label={t("button.meterNotch")}><input type="checkbox" aria-label={t("button.meterNotch")} checked={value.meterNotch} onChange={e=>patch({meterNotch:e.target.checked})}/></Row>}
+      <Row label={t("dial.indicatorOutline")}><input type="checkbox" aria-label={t("dial.indicatorOutline")} checked={value.indicatorOutline} onChange={e=>patch({indicatorOutline:e.target.checked})}/></Row>
+
     </fieldset>
+    {value.showMeter && <fieldset><legend>{t("dial.meterOptions")}</legend>
+      <Row label={t("dial.meterStyle")}><select aria-label={t("dial.meterStyle")} value={value.meterStyle} onChange={e=>patch({meterStyle:e.target.value as DialStyle["meterStyle"]})}><option value="cells">{t("dial.meterCells")}</option><option value="continuous">{t("dial.meterContinuous")}</option></select></Row>
+      <Row label={t("dial.meterTrackOpacity")}><input type="range" min="0" max="100" step="1" aria-label={t("dial.meterTrackOpacity")} value={value.meterTrackOpacity} onChange={e=>patch({meterTrackOpacity:Number(e.target.value)})}/><output>{value.meterTrackOpacity}%</output></Row>
+      {value.showMeter && <Row label={t("button.meterNotch")}><input type="checkbox" aria-label={t("button.meterNotch")} checked={value.meterNotch} onChange={e=>patch({meterNotch:e.target.checked})}/></Row>}
+    </fieldset>}
     <PaletteEditor client={client} value={{...defaultSettings.gainButton,...value.palette}} onChange={v=>patch({palette:paletteOf(v)})}/>
     <details><summary>{t("palette.adjustColors")}</summary>
       <fieldset><legend>{t("dial.barColors")}</legend>
@@ -250,7 +256,7 @@ function DialEditor({client,value,onChange}: {client:StreamDeckPiApi;value:DialS
         {(["background","mutedBackground"] as const).map(key=><ColorEditor key={key} label={t(`button.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
       </fieldset>
       <fieldset><legend>{t("meter.colors")}</legend>
-        {meterColorKeys.map(key=><ColorEditor key={key} label={t(`meter.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
+        {meterColorKeys.filter(key=>key!=="meterBackground").map(key=><ColorEditor key={key} label={t(`meter.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
       </fieldset>
     </details>
   </>;

@@ -96,7 +96,6 @@ fn main() -> anyhow::Result<()> {
                                 ("EQ".into(), true),
                             ]
                             .into(),
-                            ..Default::default()
                         },
                     )
                 })
