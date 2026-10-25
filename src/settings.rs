@@ -292,7 +292,7 @@ impl Default for DialPalette {
             dial_positive_label_color: "#ffffff".into(),
             dial_gain_color: "#ffffff".into(),
             dial_positive_gain_color: "#ffffff".into(),
-            indicator_background: b.indicator_background,
+            indicator_background: "#2c3d4d".into(),
             indicator_opacity: b.indicator_opacity,
             indicator_outline: b.indicator_outline,
             meter_background: b.meter_background,

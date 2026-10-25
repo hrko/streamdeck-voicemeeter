@@ -1,6 +1,6 @@
 import { defaultSettings } from "./generated/contracts";
 import { expect, it } from "vitest";
-import { gainPalettes, readPalettes, gainPaletteName } from "./gainColors";
+import { gainPalettes, readPalettes, gainPaletteName, builtinPaletteNames } from "./gainColors";
 it("loads older shared palettes without losing meter colors when label color is absent", () => {
   const { labelColor: _label, positiveLabelColor: _positiveLabel, ...older } = gainPalettes.voicemeeter;
   const items = readPalettes({ gainColorPresets: { version: 1, items: [{ id: "user:old", name: "Old VM", colors: older }] } });
@@ -38,4 +38,10 @@ it("recognizes all four transparent variants without changing their base colors"
   expect(value).toEqual({...base,backgroundOpacity:0,mutedBackgroundOpacity:0,indicatorBackground:"#000000",indicatorOpacity:62,indicatorOutline:name.endsWith("Outlined")});
   expect(gainPaletteName({...defaultSettings.gainButton,...value})).toBe(name);
  }
+});
+
+it("places the default first and groups each opaque palette with its transparent variants", () => {
+ expect(builtinPaletteNames).toEqual(["default","standard","standardTransparent","standardTransparentOutlined","voicemeeter","voicemeeterTransparent","voicemeeterTransparentOutlined"]);
+ expect(gainPaletteName({...defaultSettings.gainButton,...defaultSettings.dial.styles[0].palette})).toBe("default");
+ expect(gainPalettes.default).toMatchObject({barColor:"#70c399",positiveColor:"#f8634d",emptyBarColor:"#2c3d4d",indicatorBackground:"#2c3d4d",indicatorOpacity:100,indicatorOutline:false,backgroundOpacity:0,mutedBackgroundOpacity:0});
 });

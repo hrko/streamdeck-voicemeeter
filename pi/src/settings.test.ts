@@ -11,7 +11,7 @@ describe("settings contract", () => {
   });
   it("migrates dial display defaults and rejects invalid new values", () => {
     const restored=restoreSettings({dial:{styles:[{},{}]}});
-    expect(restored.settings?.dial.styles[0]).toMatchObject({meterStyle:"cells",palette:{meterTrackOpacity:0,indicatorOutline:false,indicatorBackground:"#808080",indicatorOpacity:100}});
+    expect(restored.settings?.dial.styles[0]).toMatchObject({meterStyle:"cells",palette:{meterTrackOpacity:0,indicatorOutline:false,indicatorBackground:"#2c3d4d",indicatorOpacity:100}});
     expect(restoreSettings({dial:{styles:[{indicatorOutline:true,emptyBarColor:"#123456"},{}]}}).settings?.dial.styles[0].palette).toMatchObject({indicatorOutline:true,emptyBarColor:"#123456"});
     const settings=structuredClone(defaultSettings);
     settings.dial.styles[0].palette.meterTrackOpacity=101;

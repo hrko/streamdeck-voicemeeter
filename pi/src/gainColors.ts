@@ -15,10 +15,11 @@ const transparent = (palette:Palette, indicatorOutline:boolean):Palette => ({
   indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline,
 });
 export const gainPalettes = {
+  default: paletteOf({...defaultSettings.gainButton,...defaultSettings.dial.styles[0].palette}),
   standard: { ...base },
-  voicemeeter,
   standardTransparent: transparent(base,false),
   standardTransparentOutlined: transparent(base,true),
+  voicemeeter,
   voicemeeterTransparent: transparent(voicemeeter,false),
   voicemeeterTransparentOutlined: transparent(voicemeeter,true),
 } satisfies Record<string, Palette>;

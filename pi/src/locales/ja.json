@@ -166,7 +166,8 @@
     "button.palette.standardTransparent": "白黒（透過・縁なし）",
     "button.palette.standardTransparentOutlined": "白黒（透過・縁あり）",
     "button.palette.voicemeeterTransparent": "VoiceMeeter（透過・縁なし）",
-    "button.palette.voicemeeterTransparentOutlined": "VoiceMeeter（透過・縁あり）"
+    "button.palette.voicemeeterTransparentOutlined": "VoiceMeeter（透過・縁あり）",
+    "button.palette.default": "標準"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

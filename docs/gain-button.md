@@ -225,3 +225,9 @@ each with and without inactive indicator outlines. They retain their base
 palette colors, set both background opacities to zero, and use black inactive
 indicators at 62% opacity. Like the other built-ins, they are read-only and can
 be copied into a named user preset.
+
+The first built-in palette, Default, is the initial appearance for new dials:
+transparent backgrounds, green/red gain bar, #2c3d4d empty rail and inactive
+indicators (100%, no outline), and white dial text. Other built-ins are grouped
+as white/black then VoiceMeeter, each followed by transparent no-outline and
+outlined variants. Saved action palettes are not replaced by the new default.

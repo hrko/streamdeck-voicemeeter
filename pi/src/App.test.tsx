@@ -26,6 +26,13 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("selects the default palette for a new dial and lists it first", async () => {
+    await setup("gain-control",{});
+    const select=screen.getByLabelText("Color preset") as HTMLSelectElement;
+    expect(select.value).toBe("default");
+    expect(select.options[0].text).toBe("Default");
+    expect(select.options[0].value).toBe("default");
+  });
   it("applies and recognizes the four transparent presets in the PI", async () => {
     const {client}=await setup("gain-control");
     for(const id of ["standardTransparent","standardTransparentOutlined","voicemeeterTransparent","voicemeeterTransparentOutlined"]){
