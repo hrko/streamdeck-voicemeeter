@@ -174,7 +174,13 @@
     "touch.holdOperation": "長押し",
     "touch.toggleMute": "Muteを切り替える",
     "touch.resetGain": "0 dBへ戻す",
-    "touch.none": "何もしない"
+    "touch.none": "何もしない",
+    "touch.script": "VoiceMeeterコマンドを実行",
+    "touch.tapScript": "タップのコマンド",
+    "touch.holdScript": "長押しのコマンド",
+    "touch.scriptHelp": "Remote APIのコマンドをセミコロンで区切って入力します（UTF-16で4096単位まで）。編集時には実行されず、タッチ操作時に実行されます。",
+    "error.invalidScript": "UTF-16で4096単位以内、NUL文字を含まないコマンドを入力してください。",
+    "error.scriptError": "VoiceMeeterコマンドの実行に失敗しました。空欄でないことと、Remote APIで対応する構文かを確認してください。詳細はプラグインのログに記録されます。"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

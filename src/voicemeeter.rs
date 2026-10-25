@@ -172,6 +172,22 @@ impl Remote {
 }
 
 impl Backend for Remote {
+    fn execute_script(&mut self, script: &str) -> Result<()> {
+        ensure!(
+            !script.trim().is_empty()
+                && !script.contains('\0')
+                && script.encode_utf16().count() <= 4096,
+            "invalid script"
+        );
+        let mut buffer: Vec<u16> = script.encode_utf16().chain(Some(0)).collect();
+        // Arbitrary writes can invalidate any optimistic parameter value, even
+        // when the API rejects a later line after applying an earlier one.
+        self.pending.clear();
+        // SAFETY: a live, writable, NUL-terminated UTF-16 buffer; worker-only API.
+        let code = unsafe { self.api()?.VBVMR_SetParametersW(buffer.as_mut_ptr()) };
+        status(code, "execute script")
+    }
+
     fn connect(&mut self) -> Result<Option<Edition>> {
         // Native protocol smoke tests must never consume a real mixer session.
         if std::env::var_os("STREAMDECK_SMOKE_TEST").is_some_and(|value| value == "1") {

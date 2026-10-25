@@ -40,6 +40,7 @@ pub enum ActionKind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Command {
+    Script(String),
     AdjustGain { target: Target, delta: f32 },
     SetGain { target: Target, gain: f32 },
     ToggleMute(Target),
@@ -87,6 +88,11 @@ pub fn touched(kind: ActionKind, settings: &Settings, x: u32, hold: bool) -> Opt
     };
     let target = settings.channels[0].target;
     match operation {
+        TouchOperation::Script => Some(Command::Script(if hold {
+            settings.dial.hold_script.clone()
+        } else {
+            settings.dial.tap_script.clone()
+        })),
         TouchOperation::None => None,
         TouchOperation::ToggleMute => Some(Command::ToggleMute(target)),
         TouchOperation::ResetGain => Some(Command::SetGain { target, gain: 0.0 }),
@@ -264,6 +270,11 @@ mod touch_tests {
                     s.dial.tap_operation = op;
                 }
                 let expected = match op {
+                    TouchOperation::Script => Some(Command::Script(if hold {
+                        s.dial.hold_script.clone()
+                    } else {
+                        s.dial.tap_script.clone()
+                    })),
                     TouchOperation::None => None,
                     TouchOperation::ToggleMute => Some(Command::ToggleMute(target)),
                     TouchOperation::ResetGain => Some(Command::SetGain { target, gain: 0.0 }),

@@ -42,6 +42,23 @@ describe("property inspector forms", () => {
     await setup("gain-control-combo");
     expect(screen.queryByLabelText("Long press")).toBeNull();
   });
+  it("stores separate scripts and restores them without executing while editing", async()=>{
+    const {client,emit}=await setup("gain-control",{});
+    fireEvent.change(screen.getByLabelText("Tap"),{target:{value:"script"}});
+    fireEvent.change(screen.getByLabelText("Tap command"),{target:{value:"Strip[0].Gain=-6;\nStrip[0].Mute=0;"}});
+    fireEvent.change(screen.getByLabelText("Long press"),{target:{value:"script"}});
+    fireEvent.change(screen.getByLabelText("Long-press command"),{target:{value:"Bus[0].Gain=0;"}});
+    const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial.tapScript).toBe("Strip[0].Gain=-6;\nStrip[0].Mute=0;");
+    expect(saved.dial.holdScript).toBe("Bus[0].Gain=0;");
+    emit("didReceiveSettings",saved);
+    expect((screen.getByLabelText("Tap command") as HTMLTextAreaElement).value).toBe(saved.dial.tapScript);
+    const calls=vi.mocked(client.setSettings).mock.calls.length;
+    fireEvent.change(screen.getByLabelText("Tap command"),{target:{value:"x".repeat(4097)}});
+    expect(vi.mocked(client.setSettings).mock.calls.length).toBe(calls);
+    expect(screen.getByRole("alert").textContent).toContain("4096");
+    expect(client.sendToPlugin).toHaveBeenCalledTimes(1); // status request only
+  });
   it("selects the default palette for a new dial and lists it first", async () => {
     await setup("gain-control",{});
     const select=screen.getByLabelText("Color preset") as HTMLSelectElement;

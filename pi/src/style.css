@@ -44,3 +44,6 @@ button { cursor: pointer; }
 .picker-more { display: block; margin: 8px auto; }
 .picker-content footer { margin-block-start: 8px; border-block-start: 1px solid #555; padding-block-start: 8px; min-block-size: 30px; overflow-wrap: anywhere; font-size: 11px; }
 @media (max-width: 260px) { .row { flex-wrap: wrap; } .row-label { flex-basis: 100%; text-align: start; } }
+
+.script-editor { width: 100%; box-sizing: border-box; resize: vertical; min-height: 6em; background: #3d3d3d; color: inherit; border: 1px solid #555; border-radius: 3px; padding: 6px; font-family: monospace; }
+.script-editor:focus-visible { outline: 2px solid #0099ff; outline-offset: 1px; }

@@ -89,6 +89,15 @@ impl<B: Backend> Engine<B> {
             .edition
             .ok_or_else(|| anyhow::anyhow!("disconnected"))?;
         match command {
+            Command::Script(script) => {
+                anyhow::ensure!(
+                    !script.trim().is_empty()
+                        && !script.contains('\0')
+                        && script.encode_utf16().count() <= 4096,
+                    "invalid script"
+                );
+                self.backend.execute_script(&script)
+            }
             Command::SetGain { target, gain } => {
                 anyhow::ensure!(edition.contains(target), "targetOutOfRange");
                 anyhow::ensure!(
@@ -129,6 +138,7 @@ impl<B: Backend> Engine<B> {
         {
             return false;
         }
+        let script = matches!(&command, Command::Script(_));
         match self.apply(command) {
             Ok(()) => {
                 self.snapshot.errors.remove(context);
@@ -136,9 +146,10 @@ impl<B: Backend> Engine<B> {
             }
             Err(error) => {
                 tracing::warn!(context, %error, "VoiceMeeter command failed");
-                self.snapshot
-                    .errors
-                    .insert(context.into(), "apiError".into());
+                self.snapshot.errors.insert(
+                    context.into(),
+                    if script { "scriptError" } else { "apiError" }.into(),
+                );
                 false
             }
         }
@@ -192,7 +203,16 @@ impl<B: Backend> Engine<B> {
         let mut targets = BTreeSet::new();
         let mut macros = BTreeSet::new();
         for (context, sub) in &self.subscriptions {
-            self.snapshot.errors.remove(context);
+            // Preserve command failures long enough for the PI to display them.
+            // A successful command, settings update or removal clears the error.
+            if self
+                .snapshot
+                .errors
+                .get(context)
+                .is_none_or(|code| code != "scriptError")
+            {
+                self.snapshot.errors.remove(context);
+            }
             if sub.kind == ActionKind::Macro {
                 macros.insert(sub.settings.macro_button.logical_id);
                 continue;

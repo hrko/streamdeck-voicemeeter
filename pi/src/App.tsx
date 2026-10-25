@@ -32,6 +32,18 @@ function Input({ label, value, onCommit, validate, numeric = false }: {
     }} />{error && <span id={`${id}-error`} className="error" role="alert">{t(`error.${error}`)}</span>}</Row>;
 }
 
+function ScriptEditor({label,value,onChange}:{label:string;value:string;onChange:(value:string)=>void}) {
+  const {t}=useTranslation();
+  const [draft,setDraft]=useState(value);
+  useEffect(()=>setDraft(value),[value]);
+  const invalid=draft.length>4096 || draft.includes("\0");
+  const id=useId();
+  return <Row label={label}><textarea className="script-editor" aria-label={label} aria-invalid={invalid} aria-describedby={invalid?id:undefined} dir="ltr" rows={5} spellCheck={false} value={draft} onChange={e=>{
+    const next=e.target.value;setDraft(next);
+    if(next.length<=4096 && !next.includes("\0")) onChange(next);
+  }}/>{invalid && <span id={id} className="error" role="alert">{t("error.invalidScript")}</span>}<p className="help">{t("touch.scriptHelp")}</p></Row>;
+}
+
 function ColorEditor({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   const { t } = useTranslation();
   const id = useId();
@@ -313,7 +325,11 @@ export function App({ client }: { client: StreamDeckPiApi }) {
         save({ ...settings, channels });
       }} />)}
       {action === "gain-control" && <fieldset><legend>{t("touch.title")}</legend>
-        {(["tapOperation","holdOperation"] as const).map(key => <Select key={key} label={t(`touch.${key}`)} value={settings.dial[key]} options={[["toggleMute",t("touch.toggleMute")],["resetGain",t("touch.resetGain")],["none",t("touch.none")]]} onChange={operation=>save({...settings,dial:{...settings.dial,[key]:operation}})}/>)}
+        {(["tapOperation","holdOperation"] as const).map(key => {
+          const scriptKey=key==="tapOperation"?"tapScript":"holdScript";
+          return <div key={key}><Select label={t(`touch.${key}`)} value={settings.dial[key]} options={[["toggleMute",t("touch.toggleMute")],["resetGain",t("touch.resetGain")],["script",t("touch.script")],["none",t("touch.none")]]} onChange={operation=>save({...settings,dial:{...settings.dial,[key]:operation}})}/>
+            {settings.dial[key]==="script" && <ScriptEditor label={t(`touch.${scriptKey}`)} value={settings.dial[scriptKey]} onChange={script=>save({...settings,dial:{...settings.dial,[scriptKey]:script}})}/>}</div>;
+        })}
       </fieldset>}
       {action === "gain-control-combo" && <p className="help">{t("help.combo")}</p>}
       {action === "gain-control-combo" && <Row label={t("dial.shared")}><input type="checkbox" aria-label={t("dial.shared")} checked={settings.dial.shared} onChange={e=>save({...settings,dial:{...settings.dial,shared:e.target.checked}})}/></Row>}

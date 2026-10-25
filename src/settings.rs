@@ -360,11 +360,14 @@ pub enum TouchOperation {
     None,
     ToggleMute,
     ResetGain,
+    Script,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DialSettings {
+    pub tap_script: String,
+    pub hold_script: String,
     pub tap_operation: TouchOperation,
     pub hold_operation: TouchOperation,
     pub shared: bool,
@@ -373,6 +376,8 @@ pub struct DialSettings {
 impl Default for DialSettings {
     fn default() -> Self {
         Self {
+            tap_script: String::new(),
+            hold_script: String::new(),
             tap_operation: TouchOperation::ToggleMute,
             hold_operation: TouchOperation::ResetGain,
             shared: true,
@@ -459,6 +464,14 @@ impl IconSettings {
 
 impl Settings {
     pub fn validate(&self) -> Result<(), ValidationError> {
+        for (field, script) in [
+            ("dial.tapScript", &self.dial.tap_script),
+            ("dial.holdScript", &self.dial.hold_script),
+        ] {
+            if script.contains('\0') || script.encode_utf16().count() > 4096 {
+                return Err(ValidationError::new("invalidScript", field));
+            }
+        }
         if self.schema_version != SCHEMA_VERSION {
             return Err(ValidationError::new("unsupportedSchema", "schemaVersion"));
         }

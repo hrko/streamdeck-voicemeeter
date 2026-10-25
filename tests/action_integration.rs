@@ -32,6 +32,15 @@ impl Drop for Fake {
     }
 }
 impl Backend for Fake {
+    fn execute_script(&mut self, script: &str) -> anyhow::Result<()> {
+        self.0
+            .lock()
+            .unwrap()
+            .writes
+            .push(format!("script:{script}"));
+        anyhow::ensure!(script != "bad", "simulated script error on line 1");
+        Ok(())
+    }
     fn flush(&mut self) -> anyhow::Result<()> {
         let mut state = self.0.lock().unwrap();
         assert!(state.writes_at_drop.is_none());
@@ -898,4 +907,66 @@ async fn single_dial_touch_events_distinguish_hold_and_allow_disabling() {
     }
     settle(&worker).await;
     assert_eq!(state.lock().unwrap().writes, before);
+}
+
+#[tokio::test]
+async fn scripts_use_gesture_text_report_errors_and_discard_offline_input() {
+    use streamdeck_voicemeeter::settings::TouchOperation;
+    let mut settings = Settings::default();
+    settings.dial.tap_operation = TouchOperation::Script;
+    settings.dial.hold_operation = TouchOperation::Script;
+    settings.dial.tap_script = "Strip[0].Gain=-6;\nStrip[0].Label=\"音声\";".into();
+    settings.dial.hold_script = "bad".into();
+    let (worker, mut action, sender, _output, state) =
+        setup::<0>(serde_json::to_value(&settings).unwrap()).await;
+    for hold in [false, true] {
+        action
+            .handle(
+                event("touchTap", json!({"tapPos":[50,50],"hold":hold})),
+                sender.clone(),
+            )
+            .await
+            .unwrap();
+        settle(&worker).await;
+    }
+    assert_eq!(
+        state.lock().unwrap().writes,
+        vec![
+            format!("script:{}", settings.dial.tap_script),
+            "script:bad".into()
+        ]
+    );
+    settle(&worker).await;
+    assert_eq!(
+        worker
+            .client
+            .snapshots
+            .borrow()
+            .errors
+            .get("ctx")
+            .map(String::as_str),
+        Some("scriptError")
+    );
+    action
+        .handle(
+            event("touchTap", json!({"tapPos":[50,50],"hold":false})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert!(!worker.client.snapshots.borrow().errors.contains_key("ctx"));
+    state.lock().unwrap().unavailable = true;
+    settle(&worker).await;
+    let count = state.lock().unwrap().writes.len();
+    action
+        .handle(
+            event("touchTap", json!({"tapPos":[50,50],"hold":false})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    state.lock().unwrap().unavailable = false;
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().writes.len(), count);
 }

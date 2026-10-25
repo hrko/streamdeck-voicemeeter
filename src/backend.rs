@@ -14,6 +14,9 @@ pub struct ChannelSnapshot {
 
 /// No SDK objects cross this boundary. All calls are made by one worker thread.
 pub trait Backend {
+    fn execute_script(&mut self, _script: &str) -> anyhow::Result<()> {
+        anyhow::bail!("Script execution is unsupported by this backend")
+    }
     fn connect(&mut self) -> anyhow::Result<Option<Edition>>;
     fn poll(&mut self) -> anyhow::Result<()>;
     fn channel(&mut self, target: Target) -> anyhow::Result<ChannelSnapshot>;

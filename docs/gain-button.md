@@ -241,3 +241,18 @@ colors remain semantic colors.
 Monochrome palettes also use #a6a6a6 for active low-level meter cells. Mid/high,
 and Default/VoiceMeeter low-level colors remain unchanged. Muted low-level cells
 in monochrome palettes use neutral #424242; muted mid/high colors are retained.
+
+### Single-channel dial touch commands
+
+Tap and hold independently select mute, reset-to-zero, disabled, or a Remote
+API script. The script fields are separate from appearance presets and retain
+contents when switching operations. Scripts use `VBVMR_SetParametersW` on the
+existing worker/connection, support multiple semicolon-separated commands, and
+are limited to 4096 UTF-16 code units with no embedded NUL. Empty drafts can be
+saved but fail on execution. Editing never executes a script. API errors remain
+visible in the PI until a successful command or settings update; return codes
+are logged without logging script contents. Commands rejected while disconnected
+or belonging to an old connection generation are never replayed. MacroButtons-
+specific scripting commands are not implicitly supported; edition-specific
+parameters are interpreted by VoiceMeeter. A failed multi-command script may
+have applied earlier commands; no rollback or automatic retry is performed.
