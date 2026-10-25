@@ -1,203 +1,103 @@
-# Installation and diagnostics
+# User guide
 
-Version 0.1.5 is a [public prerelease](https://github.com/hrko/streamdeck-voicemeeter/releases/tag/rust-v0.1.5). Hardware acceptance is not
-complete; see implementation-status.md before treating it as a stable release.
-Use [hardware-validation.md](hardware-validation.md) to record actual device
-results and untested environments.
+English | [日本語](usage.ja.md) | [README](../README.md)
 
-## Install and configure
+This guide describes the **0.1.6 development build**. Features and settings differ from the published [0.1.5 prerelease](https://github.com/hrko/streamdeck-voicemeeter/releases/tag/rust-v0.1.5). To use the development build, follow the [development guide](development.md).
 
-1. Install VoiceMeeter separately from VB-Audio, and Stream Deck 6.4 or later on
-   Windows x64. The plugin does not redistribute the VoiceMeeter DLL.
-2. Obtain a reviewed package for this version, or follow the development guide to build it.
-   Compare `Get-FileHash -Algorithm SHA256 <file>` with its `.sha256` sidecar.
-3. Open the `.streamDeckPlugin` file with Stream Deck and accept its installation.
-4. Add actions from **VoiceMeeter (Rust)**. Select Strip/Bus and its zero-based
-   index, or a zero-based MacroButton ID. Configure MacroButtons in VoiceMeeter.
-5. Recreate the desired settings. The Rust plugin has a separate ID and does not
-   migrate the old Go plugin's settings. Both versions can coexist.
+## Installation and channel selection
 
-Gain Control: turn to change gain, press or tap to toggle mute. Combo: turn for
-the left channel; hold and turn for the right; tap the corresponding half to
-mute. Macro Push holds ON until release; Toggle changes state on each press.
-Saved targets are retained while VoiceMeeter is unavailable, but disconnected
-operations are not replayed after recovery.
+1. Install VoiceMeeter and Stream Deck software 6.4 or later on Windows x64. The plugin does not include the VoiceMeeter DLL.
+2. Download the `.streamDeckPlugin` package from its release page. Compare PowerShell's `Get-FileHash -Algorithm SHA256 <path>` output with the attached `.sha256` file.
+3. Open the package and approve installation in Stream Deck.
+4. Add an action from **VoiceMeeter (Rust)** and select its target.
 
-For building, development installation and release preparation, see the
-[development guide](development.md).
+Choose **Strip (input)** or **Bus (output)**. Indices start at zero. Named channels appear as `Strip 6 — Voice`, and name changes refresh about once a second. Targets are saved by index, so renaming a channel does not change which channel is controlled.
 
-## Gain Button (0.1.6 development build)
+Available channels follow the connected Basic/Banana/Potato edition. If a saved target is unavailable in that edition, select a valid channel. The old plugin can coexist, but its settings are not migrated automatically.
 
-Add **Gain Button** to a key and select a Strip/Bus channel. Choose **Adjust gain**
-with a nonzero signed change (−72..+72 dB), **Set gain** (−60..+12 dB), or
-**Toggle mute**. Adjust performs one operation on press, then repeats every 0.25 seconds while
-held. Set gain and toggle mute operate only once. Repetition stops on release,
-settings changes, page exit or disconnect; reconnect never resumes a held command.
-Gain is clamped to −60..+12 dB. Offline input is discarded, and external changes
-update the display through the same channel snapshot used by the dial actions.
+## Dial controls
 
-For relative adjustments, choose a static icon or a horizontal/vertical fader.
-Horizontal faders use the left half for negative changes and right half for
-positive changes. Vertical faders use the upper half for positive changes and
-lower half for negative changes. Place two keys for the same channel next to
-each other and match their display options/colors. Step magnitudes can differ.
-The pair displays the full −60..+12 dB range.
-These are key images, not draggable sliders.
+### Gain Control
 
-The default fader uses a black background and white rounded rail/ring thumb.
-Customize rail, thumb, normal/muted background and positive-gain color separately.
-**Highlight above 0 dB** changes the rail, thumb and label color only when the gain is positive.
-Current gain and stereo meters are available only for fader styles. Gain is
-displayed horizontally inside the thumb (for example −12.5, 0.0 or +6.0),
-without the dB suffix. Enabling it enlarges the thumb without moving either track. A thumb crossing the key boundary
-is split between the two keys, including its number. Enabling a
-meter shifts the fader to a separate track. Both stereo lanes span the full
-key pair with their ends aligned to the fader bar. The default is meter
-left / fader right (vertical), or meter above / fader below (horizontal); **Swap fader and meter** exchanges the tracks (above/below for
-horizontal, left/right for vertical). At 72px key size, the meter is 12px wide, the gap to the 14px bar is
-12px, and the outer margins measured from the meter background and bar are
-both 17px. Set the same options on both keys.
+Turn to adjust gain by the configured step; press the knob to toggle mute. Gain is limited to −60..+12 dB. By default, tapping toggles mute and long-pressing resets gain to 0 dB. Change or disable either gesture under **Touch controls**.
 
-The decrease (left/lower) key has a separate **Label inside fader** option. The
-text is clipped inside its bar and never continues onto the right/upper key.
-It starts 4px from the rounded bar end. Normal and positive-gain text colors
-are under **Adjust colors → Fader and label** and included in presets.
-Static styles ignore saved dB/meter preferences. Their channel label uses Stream
-Deck's native title; new keys default to bottom alignment. Existing keys retain
-their saved title formatting, which can be changed in the title controls.
-Disabling the channel label restores the user-entered title. Meters reuse
-the shared decay state. **Mark current level with an unlit cell** optionally
-adds a notch at the instantaneous signal level below the falling peak. It is
-off by default, including existing settings, and is synchronized between fader
-halves. This marks signal level, not the channel gain setting. Select the VoiceMeeter
-color preset for the corresponding rail, label, background and meter colors.
+### Gain Control Combo
 
-Static mode reuses the icon picker/font controls and separate normal/muted icons
-and backgrounds. Adjust buttons have a +/− badge; absolute buttons show their
-target gain. Set and mute operations always use the static display while retaining
-the saved fader preference for switching back to Adjust. Existing actions/settings
-remain compatible: missing gain-button settings receive defaults.
+The default mode is **Select channel by touch**. Tap a side to select it; rotation and knob presses control that channel. Choose whether taps select the touched side or switch to the other channel regardless of tap position.
 
-### Meter colors and shared presets
+Long press selects the touched side and performs that side's assigned action, defaulting to mute toggle. Eight selection markers are available; the default is G, a short bottom line.
 
-The stereo meter uses VoiceMeeter-style cells. Expand **Adjust colors → Meter colors** to edit
-its background, unlit cells, low/middle/high level colors and their muted
-counterparts. The level/decay continues while muted; only the active-cell colors
-change. These colors are independent of the key background.
+In **Hold and turn for right channel** mode, turn normally for the left channel and press and turn for the right. Tap either half to toggle its mute. Channels and gain steps are independent.
 
-Choose **Color preset** to apply a built-in or shared user palette. Under
-**Manage presets**, enter a name and **Save as new preset** to copy the current
-colors. Select a user preset, adjust its colors/name and **Update selected
-preset** to edit it, or delete it with confirmation. Built-ins are read-only.
-All Gain Button panels share the list. Edits/deletions do not affect keys that
-already copied the palette; reapply to update those keys. Presets include meter
-colors and positive-gain highlighting, but not target, step, layout or visibility.
+### VoiceMeeter commands
 
-## Choose an icon
+Assign **Run VoiceMeeter command** to single-channel tap/long press or either side's long press in channel-selection mode. Enter Remote API commands separated by semicolons. Editing does not execute commands.
 
-Click the icon preview or **Choose icon** to open the picker. Frequently useful
-audio icons appear first, followed by the remaining icons in name order, without
-categories. Search by English name (for example `volume up` or `mic`) or code
-point (`e050`, `U+E050`). No localized search keywords are required.
+Commands are limited to 4096 UTF-16 code units and cannot contain NUL characters. Execution errors appear in the inspector; details are recorded in the log.
 
-Click an icon to apply it and close the picker. Escape, the close button or the
-backdrop dismisses it without changing settings. Tab and arrow keys navigate
-the choices; Enter selects. Scrolling loads more icons; **Show more** is also
-available for keyboard users. Font style/axes and Macro colors are preserved.
-Code points can be searched in the picker; there is no separate input field.
-All catalog data and fonts are bundled,
-so searching does not require network access.
+## Key controls
 
-## Choose a background color
+### Gain Button
 
-Macro ON/OFF backgrounds each have a color swatch that opens the native color
-picker and a text field for `#RRGGBB` input. Both update the same setting and icon
-preview. Incomplete or invalid text is not saved; the picker keeps the last valid
-color until a valid value is selected or entered.
+Choose **Adjust gain**, **Set gain**, or **Toggle mute**. Relative change accepts −72..+72 dB except zero; absolute gain accepts −60..+12 dB. Actual gain is clamped to −60..+12 dB.
 
-## Collect logs
+Adjust runs once on press, then every 0.25 seconds while held. Set and mute run once per press. Adjust supports static icons or horizontal/vertical faders; Set and Mute use static icons. Faders are key images, not draggable sliders.
 
-Logs are in `%LOCALAPPDATA%\jp.hrko.streamdeck.voicemeeter.rust\logs`:
-`plugin.log`, `plugin.1.log`, and `plugin.2.log`. Each is limited to 1 MiB.
-Startup failures and panics are recorded, with timestamps, levels and fields.
-The default level is info; `RUST_LOG` can override it for a process launched from
-a diagnostic shell. This does not change settings saved in Stream Deck.
-Stream Deck also passes its inherited environment to plugins: for example,
-`RUST_LOG=warn` suppresses startup and normal-shutdown INFO records. For a full
-diagnostic session, close Stream Deck and launch it from a shell with
-`$env:RUST_LOG = 'info'`, then reproduce the issue. Changing the variable after
-Stream Deck has started does not change its existing child processes.
+| Orientation | Increase key | Decrease key |
+| --- | --- | --- |
+| Horizontal | Right | Left |
+| Vertical | Upper | Lower |
 
-When reporting a problem, provide the logs, Windows/Stream Deck/VoiceMeeter
-versions and edition, the action type, and reproduction steps. Inspect logs
-before sharing them because local paths and context identifiers may be present.
+Place complementary keys for the same channel next to each other to form a fader. **Sync adjacent fader** defaults to on. When enabled on both halves, subsequent edits synchronize channel, step magnitude and appearance. Each key retains its increase/decrease sign.
 
-For translations, see [translating.md](translating.md). User-defined labels and
-VoiceMeeter names remain unchanged by localization.
+Pairs must be visible on the same device, target the same channel and use matching orientations in the arrangement above. Opening a page does not overwrite existing settings. Changing orientation, operation or step sign breaks the pair. Disable synchronization to use different step magnitudes.
 
-### Adjacent fader synchronization
+Gain values and stereo meters are fader-only options. Values appear inside the thumb, and the meter sits beside the fader. **Swap fader and meter** exchanges their positions.
 
-**Sync adjacent fader** defaults to on, including existing settings. Both keys
-must enable it and be visible on the same device, with the same channel and
-orientation: decrease on the left and increase on the right, or increase above
-and decrease below. Multi-actions and ambiguous slots are excluded.
+Fader labels appear only on the left/lower half and are clipped to the filled part as gain falls. With synchronization enabled, either half can edit the label. Static icons use Stream Deck's native title for the channel name, with bottom alignment by default. Disabling the channel label restores the user-entered title.
 
-Edits synchronize channel, step magnitude, colors, meter options, gain display
-and label options. Each half keeps its increase/decrease sign. With sync enabled,
-either PI can edit the label; only the left/lower key draws it. The keys must
-already target the same channel to form a pair; after that, changing the channel
-updates both. Orientation, operation or sign changes break the current pair.
+### Macro
 
-Opening a page does not overwrite either key's existing settings. Synchronization
-starts with the next edit. Turning sync off on either half stops synchronization;
-a hidden or removed key is never updated. User-entered Stream Deck titles and
-shared palette definitions are not synchronized.
+Enter the ID (0–79) of a button configured in VoiceMeeter MacroButtons. **Toggle** changes ON/OFF on each press; **Push (hold)** turns OFF on release. If multiple Push keys hold the same target, it stays ON until all are released.
 
-Fader labels are clipped to the filled segment: lowering the gain hides text
-above the thumb (vertical) or to its right (horizontal). Text stays anchored
-at the bar end instead of moving or shrinking.
+## Appearance and colors
 
-### Dial appearance
+### Icons and colors
 
-Gain Control and Gain Control Combo retain their original positions and sizes.
-Under **Dial appearance**, independently show or hide the label, gain value,
-icon, gain bar, stereo meter, Mute, Solo, routing, Mono/MC/K and EQ. Hidden items
-leave their space empty; the remaining items do not move. Hiding an indicator
-does not disable its corresponding VoiceMeeter operation.
+Open **Choose icon** to search by English name or code point (`e050`, `U+E050`). Audio icons appear first. Click to apply; Escape or Close cancels. Search works offline.
 
-Color presets and saved user palettes are shared with Gain Button. Applying a
-preset changes the common colors only, keeping channels, steps, icons and display
-options intact. **Adjust colors** contains bar, label, background and normal/muted
-meter colors. The channel-label colors, background opacity, empty-bar color and normal/positive gain-number colors are
-separate dial options; they are not part of the common palette. Positive-gain
-highlighting controls the positive bar, label and gain-number colors together.
+Change font style, weight, fill, grade and optical size. Colors support both a native picker and `#RRGGBB` input. Incomplete or invalid input is not saved.
 
-Combo defaults to **Use the same appearance on both sides**. Turn it off to edit
-the right-hand style separately. The right-hand style is retained while sharing
-is enabled; turning sharing off restores it. Channel selection, gain steps and
-icon choices always remain independent. The shared style is the left-hand style.
+### Color presets
 
-Existing settings receive the original layout, green/red gain bar and white text.
-The current-level unlit-cell marker defaults to off, and muted meters use the
-muted palette colors. Stream Deck still renders the native text (font size,
-alignment and overflow); the appearance controls specify its color and visibility.
+Choose Default, White on black, VoiceMeeter, or transparent white/black and VoiceMeeter variants with or without outlines. In transparent preset names, “outline” refers to inactive dial indicators.
 
-### Transparent dial backgrounds
+Presets are shared by Gain Button and dial actions. They include colors, background and component opacities, positive-gain highlighting, indicator outlines and selection-marker color. They exclude channels, steps, icons, visible items, control mode and refresh rate.
 
-Under **Adjust colors → Background colors**, set normal and muted background
-opacity independently in 10% steps. 0% hides only the background layer so the
-Stream Deck wallpaper remains visible; 100% draws the selected solid color.
-Intermediate values blend the background with the wallpaper. Meter backgrounds,
-icons and text keep their own colors and opacity. Combo follows shared/independent
-appearance selection. Applying a color preset preserves opacity.
+Under **Manage presets**, save the current palette with a name, or update/delete a user preset. Built-ins cannot be edited. Applying a preset copies its settings; updating or deleting it leaves previously applied appearances unchanged. Reapply to use updated values.
 
-New actions start transparent. Existing serialized settings missing the opacity
-fields retain 100%, even if they predate dial appearance settings. Explicitly
-saved opacity values always win. To make an existing action transparent, set
-both sliders to 0% (or set only the desired normal/muted state).
+Transparent presets make the outer background fully transparent. On Gain Button, meter backing, unlit cells, empty rail and thumb fill use 40% opacity, with no clearance outside the thumb ring. Change individual values under **Adjust colors**.
 
-Dial channel-label colors are separate from the text drawn inside button faders.
-Both Combo halves use the same native text element behavior; the host's generic
-Title color/text no longer overrides the left label. Labels show the VoiceMeeter
-channel name (or channel identifier), and their color/visibility is controlled
-by the dial appearance options in the PI.
+### Dial display
+
+Independently show or hide labels, gain values, icons, gain bars, meters and status indicators. Hiding an item does not disable its operation. Hiding meters compacts the text/status spacing while leaving the gain bar in place.
+
+Combo enables **Use the same appearance on both sides** by default. Disable it for separate appearances. Channels, steps and icons remain independent.
+
+Meters support cells or continuous bars. Levels continue updating while muted, using muted active colors. **Mark current level with an unlit cell** marks the instantaneous signal below the falling peak; it does not mark the gain setting and defaults to off.
+
+## Refresh rate
+
+At the bottom of the inspector, **Plugin-wide settings → Refresh rate** offers 15 (default), 20, 25 and 30 fps. Changes apply immediately to all keys and dials and persist after restart. Lower the rate if the display stutters.
+
+## Connection and troubleshooting
+
+The plugin reconnects when VoiceMeeter becomes available. Disconnected operations and held repeats are not replayed after recovery.
+
+Leaving a page or changing the target during Macro Push attempts to release the original target, as does normal Stream Deck shutdown. Releases are not carried across a VoiceMeeter connection loss. If a restarted session retains ON, press and release the key again.
+
+Logs are in `%LOCALAPPDATA%\jp.hrko.streamdeck.voicemeeter.rust\logs`: `plugin.log`, `plugin.1.log` and `plugin.2.log`, each limited to 1 MiB. Include logs, Windows/Stream Deck/VoiceMeeter versions, action type and reproduction steps in issue reports.
+
+If normal logs are missing, close Stream Deck, set `$env:RUST_LOG = 'info'` in PowerShell, and launch Stream Deck from that shell. Changing the variable after launch does not affect the running plugin. Review local paths in logs before sharing them.
+
+See [hardware validation](hardware-validation.md) for tested environments, the [development guide](development.md) for builds, and [translation instructions](translating.md) to add a language.
