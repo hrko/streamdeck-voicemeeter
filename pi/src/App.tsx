@@ -184,26 +184,40 @@ function GainButtonEditor({ client, value, onChange }: { client: StreamDeckPiApi
     {value.operation === "adjust" && <Input label={t("button.delta")} numeric value={value.delta} validate={text => text.trim() && Number.isFinite(Number(text)) && Number(text) !== 0 && Math.abs(Number(text)) <= 72 ? undefined : "invalidButtonDelta"} onCommit={text => patch({ delta: Number(text) })} />}
     {value.operation === "set" && <Input label={t("button.gain")} numeric value={value.gain} validate={text => text.trim() && Number.isFinite(Number(text)) && Number(text) >= -60 && Number(text) <= 12 ? undefined : "invalidButtonGain"} onCommit={text => patch({ gain: Number(text) })} />}
     {value.operation === "adjust" && <Select label={t("button.appearance")} value={value.appearance} options={(["static", "horizontal", "vertical"] as const).map(key => [key, t(`button.${key}`)])} onChange={appearance => patch({ appearance })} />}
-    {fader ? <>
-      <p className="help">{t(value.appearance === "horizontal" ? (value.delta > 0 ? "button.rightHalf" : "button.leftHalf") : (value.delta > 0 ? "button.upperHalf" : "button.lowerHalf"))}</p>
-      <PaletteEditor client={client} value={value} onChange={onChange} />
-      <ColorEditor label={t("button.barColor")} value={value.barColor} onChange={barColor => patch({ barColor })} />
-      <ColorEditor label={t("button.thumbColor")} value={value.thumbColor} onChange={thumbColor => patch({ thumbColor })} />
-      <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.highlightPositive} onChange={event => patch({ highlightPositive: event.target.checked })} /></Row>
-      {value.highlightPositive && <ColorEditor label={t("button.positiveColor")} value={value.positiveColor} onChange={positiveColor => patch({ positiveColor })} />}
-    </> : <>
+    {fader ? <p className="help">{t(value.appearance === "horizontal" ? (value.delta > 0 ? "button.rightHalf" : "button.leftHalf") : (value.delta > 0 ? "button.upperHalf" : "button.lowerHalf"))}</p> : <>
       <fieldset><legend>{t("button.normalIcon")}</legend><IconEditor value={value.icon} background={value.background} onChange={icon => patch({ icon })} /></fieldset>
       <fieldset><legend>{t("button.mutedIcon")}</legend><IconEditor value={value.mutedIcon} background={value.mutedBackground} onChange={mutedIcon => patch({ mutedIcon })} /></fieldset>
     </>}
-    <ColorEditor label={t("button.background")} value={value.background} onChange={background => patch({ background })} />
-    <ColorEditor label={t("button.mutedBackground")} value={value.mutedBackground} onChange={mutedBackground => patch({ mutedBackground })} />
     <fieldset><legend>{t("button.details")}</legend>
-      {((fader ? ["showLabel", "showDb", "showMeter"] : ["showLabel"]) as ("showLabel" | "showDb" | "showMeter")[]).map(key => <Row key={key} label={t(`button.${key}`)}><input type="checkbox" aria-label={t(`button.${key}`)} checked={value[key]} onChange={event => patch({ [key]: event.target.checked })} /></Row>)}
+      {((fader ? [...(value.delta < 0 ? ["faderLabel"] : []), "showDb", "showMeter"] : ["showLabel"]) as ("faderLabel" | "showLabel" | "showDb" | "showMeter")[]).map(key => <Row key={key} label={t(`button.${key}`)}><input type="checkbox" aria-label={t(`button.${key}`)} checked={value[key]} onChange={event => patch({ [key]: event.target.checked })} /></Row>)}
+      {fader && value.delta > 0 && <p className="help">{t("button.labelNegativeOnly")}</p>}
       {fader && value.showMeter && <Row label={t("button.swapMeter")}><input type="checkbox" aria-label={t("button.swapMeter")} checked={value.swapMeter} onChange={event => patch({ swapMeter: event.target.checked })} /></Row>}
     </fieldset>
-    {fader && value.showMeter && <details><summary>{t("meter.colors")}</summary>
-      {meterColorKeys.map(key => <ColorEditor key={key} label={t(`meter.${key}`)} value={value[key]} onChange={color => patch({ [key]: color })} />)}
-    </details>}
+    {fader ? <>
+      <PaletteEditor client={client} value={value} onChange={onChange} />
+      <details><summary>{t("palette.adjustColors")}</summary>
+        <p className="help">{t("palette.includesMeter")}</p>
+        <fieldset><legend>{t("palette.faderColors")}</legend>
+          <ColorEditor label={t("button.barColor")} value={value.barColor} onChange={barColor => patch({ barColor })} />
+          <ColorEditor label={t("button.thumbColor")} value={value.thumbColor} onChange={thumbColor => patch({ thumbColor })} />
+          <ColorEditor label={t("button.labelColor")} value={value.labelColor} onChange={labelColor => patch({ labelColor })} />
+          <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.highlightPositive} onChange={event => patch({ highlightPositive: event.target.checked })} /></Row>
+          {value.highlightPositive && <ColorEditor label={t("button.positiveColor")} value={value.positiveColor} onChange={positiveColor => patch({ positiveColor })} />}
+        </fieldset>
+        <fieldset><legend>{t("palette.keyColors")}</legend>
+          <ColorEditor label={t("button.background")} value={value.background} onChange={background => patch({ background })} />
+          <ColorEditor label={t("button.mutedBackground")} value={value.mutedBackground} onChange={mutedBackground => patch({ mutedBackground })} />
+        </fieldset>
+        <fieldset><legend>{t("meter.colors")}</legend>
+          {meterColorKeys.slice(0,2).map(key => <ColorEditor key={key} label={t(`meter.${key}`)} value={value[key]} onChange={color => patch({ [key]: color })} />)}
+          <fieldset><legend>{t("meter.normal")}</legend>{meterColorKeys.slice(2,5).map(key => <ColorEditor key={key} label={t(`meter.${key}`)} value={value[key]} onChange={color => patch({ [key]: color })} />)}</fieldset>
+          <fieldset><legend>{t("meter.muted")}</legend>{meterColorKeys.slice(5).map(key => <ColorEditor key={key} label={t(`meter.${key}`)} value={value[key]} onChange={color => patch({ [key]: color })} />)}</fieldset>
+        </fieldset>
+      </details>
+    </> : <>
+      <ColorEditor label={t("button.background")} value={value.background} onChange={background => patch({ background })} />
+      <ColorEditor label={t("button.mutedBackground")} value={value.mutedBackground} onChange={mutedBackground => patch({ mutedBackground })} />
+    </>}
     <p className="help">{t("button.help")}</p>
   </>;
 }

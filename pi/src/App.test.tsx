@@ -25,6 +25,20 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("offers fader labels only on the negative half and keeps them separate from static titles", async () => {
+    const settings=structuredClone(defaultSettings);settings.gainButton.appearance="vertical";
+    const {client}=await setup("gain-button",settings);
+    expect(screen.queryByLabelText("Label inside fader (left/lower key)")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Change (dB)"),{target:{value:"-3"}});
+    fireEvent.click(screen.getByLabelText("Label inside fader (left/lower key)"));
+    fireEvent.change(screen.getByLabelText("Fader label color"),{target:{value:"#123456"}});
+    const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.gainButton).toMatchObject({faderLabel:true,labelColor:"#123456",showLabel:false});
+    fireEvent.change(screen.getByLabelText("Display style"),{target:{value:"static"}});
+    expect(screen.queryByLabelText("Label inside fader (left/lower key)")).toBeNull();
+    expect((screen.getByLabelText("Show channel label") as HTMLInputElement).checked).toBe(false);
+  });
+
   it("shares user palettes across panels and edits/deletes copies without mutating keys", async () => {
     const settings = structuredClone(defaultSettings);
     settings.gainButton.appearance = "horizontal";
@@ -39,6 +53,7 @@ describe("property inspector forms", () => {
     fireEvent.click(screen.getByRole("button",{name:"Save as new preset"}));
     const items = (global.gainColorPresets as {items:{id:string;name:string;colors:Record<string,unknown>}[]}).items;
     expect(items).toHaveLength(1);
+    expect(items[0].colors).toMatchObject({meterLow:"#85adb9",meterMutedHigh:"#583328",labelColor:"#000000"});
     expect(global.unrelated).toEqual({keep:true});
     cleanup();
     const second = await setup("gain-button", settings);
@@ -121,11 +136,11 @@ describe("property inspector forms", () => {
     expect(screen.getByText(/Lower half/)).toBeTruthy();
     fireEvent.click(screen.getByLabelText("Highlight above 0 dB"));
     fireEvent.change(screen.getByLabelText("Positive gain color"), { target: { value: "#ff0000" } });
-    fireEvent.click(screen.getByLabelText("Show channel label"));
+    fireEvent.click(screen.getByLabelText("Label inside fader (left/lower key)"));
     fireEvent.click(screen.getByLabelText("Show gain (dB)"));
     fireEvent.click(screen.getByLabelText("Show stereo meter"));
     let saved = vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
-    expect(saved.gainButton).toMatchObject({ delta: -2.5, appearance: "vertical", highlightPositive: true, positiveColor: "#ff0000", showLabel: true, showDb: true, showMeter: true });
+    expect(saved.gainButton).toMatchObject({ delta: -2.5, appearance: "vertical", highlightPositive: true, positiveColor: "#ff0000", faderLabel: true, showDb: true, showMeter: true });
     fireEvent.change(screen.getByLabelText("Action"), { target: { value: "set" } });
     expect(screen.queryByLabelText("Display style")).toBeNull();
     vi.mocked(client.setSettings).mockClear();

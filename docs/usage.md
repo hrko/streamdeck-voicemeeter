@@ -30,7 +30,9 @@ For building, development installation and release preparation, see the
 
 Add **Gain Button** to a key and select a Strip/Bus channel. Choose **Adjust gain**
 with a nonzero signed change (−72..+72 dB), **Set gain** (−60..+12 dB), or
-**Toggle mute**. Each press performs one operation; holding does not repeat.
+**Toggle mute**. Adjust performs one operation on press, then repeats every 0.25 seconds while
+held. Set gain and toggle mute operate only once. Repetition stops on release,
+settings changes, page exit or disconnect; reconnect never resumes a held command.
 Gain is clamped to −60..+12 dB. Offline input is discarded, and external changes
 update the display through the same channel snapshot used by the dial actions.
 
@@ -49,14 +51,19 @@ Current dB and stereo meters are available only for fader styles. Enabling a
 meter shifts the fader to a separate track. Both stereo lanes span the full
 key pair with their ends aligned to the fader bar. The default is meter
 left / fader right (vertical), or meter above / fader below (horizontal); **Swap fader and meter** exchanges the tracks (above/below for
-horizontal, left/right for vertical). Set the same options on both keys.
+horizontal, left/right for vertical). Both center axes are equally spaced from
+the key center, with 10 px between meter background and thumb ring at 72px key
+size. Set the same options on both keys.
+
+The decrease (left/lower) key has a separate **Label inside fader** option. The
+text is clipped inside its bar and never continues onto the right/upper key.
+Its color is under **Adjust colors → Fader and label** and included in presets.
 Static styles ignore saved dB/meter preferences. Their channel label uses Stream
 Deck's native title; new keys default to bottom alignment. Existing keys retain
 their saved title formatting, which can be changed in the title controls.
 Disabling the channel label restores the user-entered title. Meters reuse
-the shared decay state and instantaneous-level marks. To approximate VoiceMeeter,
-choose a green rail/thumb (for example `#7bc99e`), enable positive-gain highlighting
-with red (`#ff6347`), and turn on the desired detail fields.
+the shared decay state and instantaneous-level marks. Select the VoiceMeeter
+color preset for the corresponding rail, label, background and meter colors.
 
 Static mode reuses the icon picker/font controls and separate normal/muted icons
 and backgrounds. Adjust buttons have a +/− badge; absolute buttons show their
@@ -66,7 +73,7 @@ remain compatible: missing gain-button settings receive defaults.
 
 ### Meter colors and shared presets
 
-The stereo meter uses VoiceMeeter-style cells. Expand **Meter colors** to edit
+The stereo meter uses VoiceMeeter-style cells. Expand **Adjust colors → Meter colors** to edit
 its background, unlit cells, low/middle/high level colors and their muted
 counterparts. The level/decay continues while muted; only the active-cell colors
 change. These colors are independent of the key background.

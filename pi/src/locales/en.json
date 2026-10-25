@@ -76,7 +76,7 @@
     "button.vertical": "Vertical fader",
     "error.invalidButtonGain": "Enter a gain between −60 and +12 dB.",
     "button.showDb": "Show gain (dB)",
-    "button.help": "One operation per press; holding does not repeat. Faders show −60 to +12 dB. Match display settings on both keys for a continuous fader.",
+    "button.help": "Adjust gain once on press, then every 0.25 seconds while held. Set gain and mute do not repeat. Faders show −60 to +12 dB. Match display settings on both keys.",
     "button.positiveColor": "Positive gain color",
     "button.rightHalf": "Right half: place to the right of a decrease key for the same channel.",
     "button.barColor": "Fader color",
@@ -116,7 +116,16 @@
     "meter.meterHigh": "High level",
     "meter.meterMutedLow": "Muted low level",
     "meter.meterMutedMid": "Muted middle level",
-    "meter.meterMutedHigh": "Muted high level"
+    "meter.meterMutedHigh": "Muted high level",
+    "button.faderLabel": "Label inside fader (left/lower key)",
+    "button.labelNegativeOnly": "Enable the fader label on the decrease (left/lower) key.",
+    "button.labelColor": "Fader label color",
+    "palette.adjustColors": "Adjust colors",
+    "palette.includesMeter": "Presets include fader, label, background and all meter colors, including muted colors.",
+    "palette.faderColors": "Fader and label",
+    "palette.keyColors": "Key background",
+    "meter.normal": "Active cells",
+    "meter.muted": "Muted cells"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

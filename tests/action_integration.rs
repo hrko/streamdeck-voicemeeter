@@ -256,7 +256,7 @@ async fn gain_keys_adjust_set_mute_sync_and_reject_offline_input() {
     assert_eq!(
         state.lock().unwrap().writes.len(),
         writes,
-        "holding must not repeat"
+        "released keys must not repeat"
     );
     settings.gain_button.delta = -72.0;
     action
@@ -625,4 +625,97 @@ async fn gain_key_native_title_tracks_labels_and_resets_when_disabled() {
         .handle(event("willDisappear", json!({})), sender)
         .await
         .unwrap();
+}
+
+#[tokio::test]
+async fn gain_hold_repeats_every_quarter_second_and_cancels_on_lifecycle_changes() {
+    let mut settings = Settings::default();
+    settings.gain_button.delta = -0.5;
+    let (worker, mut action, sender, _output, state) =
+        setup::<3>(serde_json::to_value(&settings).unwrap()).await;
+    let before = state.lock().unwrap().writes.len();
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    tokio::time::sleep(Duration::from_millis(150)).await;
+    assert_eq!(
+        state.lock().unwrap().writes.len(),
+        before + 1,
+        "first repeat must wait 250ms"
+    );
+    tokio::time::sleep(Duration::from_millis(450)).await;
+    action
+        .handle(event("keyUp", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(
+        state.lock().unwrap().writes.len(),
+        before + 3,
+        "press, 250ms, 500ms"
+    );
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    assert_eq!(state.lock().unwrap().writes.len(), before + 3);
+    assert_eq!(
+        state.lock().unwrap().channels[&settings.channels[0].target].gain,
+        -1.5
+    );
+
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settings.gain_button.delta = 0.5;
+    action
+        .handle(
+            event("didReceiveSettings", json!({"settings":settings})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    let count = state.lock().unwrap().writes.len();
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    assert_eq!(
+        state.lock().unwrap().writes.len(),
+        count,
+        "settings changes cancel repeats"
+    );
+
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    state.lock().unwrap().unavailable = true;
+    wait_connected(&worker, false).await;
+    state.lock().unwrap().unavailable = false;
+    wait_connected(&worker, true).await;
+    let count = state.lock().unwrap().writes.len();
+    tokio::time::sleep(Duration::from_millis(350)).await;
+    assert_eq!(
+        state.lock().unwrap().writes.len(),
+        count,
+        "reconnect must not resume a held command"
+    );
+    action
+        .handle(event("keyUp", json!({})), sender.clone())
+        .await
+        .unwrap();
+    action
+        .handle(event("keyDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    action
+        .handle(event("willDisappear", json!({})), sender)
+        .await
+        .unwrap();
+    settle(&worker).await;
+    let count = state.lock().unwrap().writes.len();
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    assert_eq!(
+        state.lock().unwrap().writes.len(),
+        count,
+        "page exit cancels repeats"
+    );
 }

@@ -52,7 +52,9 @@ channel, operation, step, orientation and label/dB/meter options are retained.
 Presets are inferred from saved color values; individual edits display Custom.
 The `swapMeter` flag defaults to false: the meter is above a horizontal fader
 and left of a vertical fader. Swapping reverses these positions. The rail is
-at canonical y=96 and stereo lanes at y=30/40 (swapped: y=48 and y=98/108).
+at canonical y=97 and stereo lanes at y=39/49 (swapped: y=47 and y=89/99).
+The meter center and rail center lie at 47/97 around the key center 72; the
+10px display-size clearance is between the meter background and thumb ring.
 Both lanes span the rounded rail's outer cap extents across the shared pair
 (x=20.5..264 horizontally, x=22.5..266 before vertical rotation).
 The meter has 40 cells per channel, with a shared grid across both keys.
@@ -77,7 +79,11 @@ are supported. Stored palette IDs cannot address built-ins. No external storage
 or network is used.
 
 Only fader styles render dB and meters; static styles retain but ignore those
-preferences. Fader labels are SVG-clipped. Static channel names instead use
+preferences. `faderLabel` is independent of the static `showLabel`. It renders
+inside the negative (left/lower) rail only, clipped before the split and
+overlaid by the thumb. `labelColor` is a palette field; older user palettes
+without it receive the default black. Raster tests verify label pixels stay
+inside the rail and the positive half remains completely unchanged. Static channel names instead use
 `setTitle`, including external name updates; disabling labels or returning to a
 fader sends a null title to restore the host's title. New Gain Button instances
 have bottom title alignment. Existing host title-format preferences are retained.
@@ -103,3 +109,13 @@ generate `target/gain-button-preview.html` from the production renderer.
 
 The owner has not yet confirmed this new action on hardware. The existing 0.1.5
 release remains public; 0.1.6 has not been published.
+
+## Held gain adjustment
+
+Adjust keys apply immediately and repeat every 250 ms. Missed ticks are skipped,
+not replayed in a burst. The captured connection generation is shared by the
+initial command and repeats. Release, settings replacement, disappearance and
+Drop abort the task; connection loss or generation change ends it. Offline
+presses never start a repeat task. Set and mute operations do not repeat.
+SDK/worker tests cover first-tick delay, repeated changes, release, settings
+changes, disappearance and reconnect while held.

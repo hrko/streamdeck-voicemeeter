@@ -76,7 +76,7 @@
     "button.vertical": "フェーダー（縦向き）",
     "error.invalidButtonGain": "−60〜＋12 dBの範囲でゲインを入力してください。",
     "button.showDb": "ゲイン値 (dB) を表示",
-    "button.help": "1回の押下につき1回操作します。長押しでの繰り返しはありません。フェーダーの範囲は−60〜＋12 dBです。連続したフェーダーにする場合は、両キーの表示設定を揃えてください。",
+    "button.help": "ゲインの増減は押下時に1回、その後は長押し中0.25秒ごとに繰り返します。指定ゲイン・ミュートは繰り返しません。フェーダーの範囲は−60〜＋12 dBです。両キーの表示設定を揃えてください。",
     "button.positiveColor": "正ゲインの色",
     "button.rightHalf": "右半分を表示します。同じチャンネルの減少キーの右に配置してください。",
     "button.barColor": "フェーダーの色",
@@ -116,7 +116,16 @@
     "meter.meterHigh": "高域の点灯色",
     "meter.meterMutedLow": "ミュート時の低域色",
     "meter.meterMutedMid": "ミュート時の中域色",
-    "meter.meterMutedHigh": "ミュート時の高域色"
+    "meter.meterMutedHigh": "ミュート時の高域色",
+    "button.faderLabel": "フェーダー内ラベル（左／下側のみ）",
+    "button.labelNegativeOnly": "フェーダー内ラベルは減少キー（左／下側）で設定します。",
+    "button.labelColor": "フェーダー内の文字色",
+    "palette.adjustColors": "配色を調整",
+    "palette.includesMeter": "プリセットにはフェーダー・文字・背景と、ミュート時を含むメーターの全配色を保存します。",
+    "palette.faderColors": "フェーダーと文字",
+    "palette.keyColors": "キー背景",
+    "meter.normal": "通常の点灯色",
+    "meter.muted": "ミュート時の点灯色"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

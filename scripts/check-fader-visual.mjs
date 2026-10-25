@@ -48,7 +48,9 @@ for (const vertical of [false,true]) for (const swap of [false,true]) {
     const i=((vertical ? y+half*144 : y)*(vertical?144:288)+(vertical?x:x+half*144))*3;
     assert.deepEqual(pixel(b,x,y), [...full.subarray(i,i+3)], 'both keys must preserve the uninterrupted cell grid');
   }
-  const meterMin=swap?98:30, faderCenter=swap?48:96;
+  const meterMin=swap?89:39, faderCenter=swap?47:97;
+  assert.equal((meterMin+8+faderCenter)/2,72, 'track axes must be symmetric about the key center');
+  assert.equal((Math.abs(meterMin+8-faderCenter)-10-20)/2,10,'visible clearance is 10px at 72px key size');
   let green=0, white=0;
   const railExtents=[], meterExtents=[];
   for(const [half,b] of buffers.entries()) for(let y=0;y<144;y++) for(let x=0;x<144;x++) {
@@ -66,6 +68,21 @@ for (const vertical of [false,true]) for (const swap of [false,true]) {
     }
   }
   assert.ok(green>100 && white>100,'both meter and fader must be visible');
+  for(const [half,name] of names.entries()) {
+    const labeled=await sharp(await readFile(`target/fader-visual/${name}-label-${swap}.svg`)).removeAlpha().raw().toBuffer();
+    if(name==='right' || name==='upper') assert.deepEqual(labeled,buffers[half],'positive half must never render a label');
+    else {
+      let changed=0;
+      for(let y=0;y<144;y++) for(let x=0;x<144;x++) {
+        if(!pixel(labeled,x,y).every((v,i)=>v===pixel(buffers[half],x,y)[i])) {
+          changed++;
+          assert.ok(Math.abs((vertical?x:y)-faderCenter)<=13,'label must be clipped inside the rail');
+        }
+      }
+      assert.ok(changed>20,'negative half must actually display its label');
+    }
+  }
+
   assert.ok(Math.abs(Math.min(...railExtents)-Math.min(...meterExtents))<=2, 'rail and meter start must align within antialiasing');
   assert.ok(Math.abs(Math.max(...railExtents)-Math.max(...meterExtents))<=2, 'rail and meter end must align within antialiasing');
   const width=vertical?144:288,height=vertical?288:144;

@@ -30,6 +30,7 @@ fn main() -> anyhow::Result<()> {
                 ChannelSnapshot {
                     gain,
                     levels: [-12.0, -36.0],
+                    label: "Voice / HDMI / a long label".into(),
                     ..Default::default()
                 },
             )],
@@ -46,6 +47,12 @@ fn main() -> anyhow::Result<()> {
                 format!("{directory}/{name}-meter-{swap}.svg"),
                 gain_button::frame(&snapshot, &settings, &mut cache, "en").svg,
             )?;
+            settings.gain_button.fader_label = true;
+            std::fs::write(
+                format!("{directory}/{name}-label-{swap}.svg"),
+                gain_button::frame(&snapshot, &settings, &mut cache, "en").svg,
+            )?;
+            settings.gain_button.fader_label = false;
         }
     }
     Ok(())

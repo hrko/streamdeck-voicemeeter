@@ -81,7 +81,7 @@ pub fn frame(
     if fader {
         let transform = pair_transform(vertical, b.delta > 0.0);
         let offset = if b.show_meter {
-            if b.swap_meter { -24 } else { 24 }
+            if b.swap_meter { -25 } else { 25 }
         } else {
             0
         };
@@ -95,7 +95,27 @@ pub fn frame(
             let x = position(channel.gain, vertical);
             let _ = write!(
                 body,
-                r#"<path d="M{start} 72H{x}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><circle cx="{x}" cy="72" r="26" fill="{bg}"/><circle cx="{x}" cy="72" r="17" fill="{bg}" stroke="{thumb}" stroke-width="6"/>"#
+                r#"<path d="M{start} 72H{x}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/>"#
+            );
+        }
+        // Only the negative half owns the label. Clip within that key and rail;
+        // never draw the overflow on the positive half. The thumb overlays text.
+        if b.fader_label && b.delta < 0.0 {
+            let left = start - 6.0;
+            let width = 144.0 - left;
+            let _ = write!(
+                body,
+                r#"<defs><clipPath id="fader-label"><rect x="{left}" y="60" width="{width}" height="24"/></clipPath></defs><text x="{}" y="78" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" font-weight="600" fill="{}" clip-path="url(#fader-label)">{}</text>"#,
+                (left + 144.0) / 2.0,
+                render::escape(&b.label_color),
+                render::escape(&label(snapshot, settings))
+            );
+        }
+        if let Some(channel) = channel {
+            let x = position(channel.gain, vertical);
+            let _ = write!(
+                body,
+                r#"<circle cx="{x}" cy="72" r="26" fill="{bg}"/><circle cx="{x}" cy="72" r="17" fill="{bg}" stroke="{thumb}" stroke-width="6"/>"#
             );
         }
         body.push_str("</g></g>");
@@ -131,22 +151,6 @@ pub fn frame(
             render::escape(&badge)
         );
     }
-    body.push_str(r#"<defs><clipPath id="label"><rect x="6" y="0" width="132" height="24"/></clipPath></defs>"#);
-    if fader && b.show_label {
-        let label = label(snapshot, settings);
-        let text = format!(
-            r##"<text x="72" y="19" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" fill="#ffffff" clip-path="url(#label)">{}</text>"##,
-            render::escape(&label)
-        );
-        if vertical {
-            let _ = write!(
-                body,
-                r#"<g transform="translate(110 144) rotate(-90)">{text}</g>"#
-            );
-        } else {
-            body.push_str(&text);
-        }
-    }
     if fader && b.show_db {
         let value = channel
             .map(|c| format!("{} dB", crate::numbers::gain(c.gain, language)))
@@ -177,7 +181,7 @@ pub fn frame(
             .map(|(_, peaks)| *peaks)
             .unwrap_or(levels);
         let transform = pair_transform(vertical, b.delta > 0.0);
-        let top = if b.swap_meter { 98 } else { 30 };
+        let top = if b.swap_meter { 89 } else { 39 };
         let _ = write!(
             body,
             r#"<g transform="{transform}"><rect x="{meter_start}" y="{}" width="{meter_width}" height="20" fill="{}"/>"#,
@@ -291,6 +295,37 @@ mod tests {
     }
 
     #[test]
+    fn fader_label_only_renders_inside_negative_half_and_uses_custom_color() {
+        let mut settings = Settings::default();
+        settings.gain_button.fader_label = true;
+        settings.gain_button.label_color = "#123456".into();
+        settings.gain_button.show_meter = true;
+        let snapshot = Snapshot {
+            channels: vec![(
+                settings.channels[0].target,
+                ChannelSnapshot {
+                    label: "Very long 日本語 Voice <&> channel label".into(),
+                    ..Default::default()
+                },
+            )],
+            ..Default::default()
+        };
+        let mut cache = IconCache::default();
+        for appearance in [GainAppearance::Horizontal, GainAppearance::Vertical] {
+            settings.gain_button.appearance = appearance;
+            settings.gain_button.delta = -3.0;
+            let negative = frame(&snapshot, &settings, &mut cache, "en").svg;
+            assert!(negative.contains("clip-path=\"url(#fader-label)\""));
+            assert!(negative.contains("fill=\"#123456\""));
+            assert!(negative.contains("日本語 Voice &lt;&amp;&gt;"));
+            settings.gain_button.delta = 3.0;
+            let positive = frame(&snapshot, &settings, &mut cache, "en").svg;
+            assert!(!positive.contains("fader-label"));
+            assert!(!positive.contains("Very long"));
+        }
+    }
+
+    #[test]
     fn cell_meter_uses_independent_background_and_muted_zone_colors() {
         let mut settings = Settings::default();
         settings.gain_button.appearance = GainAppearance::Horizontal;
@@ -383,7 +418,8 @@ mod tests {
         let mut s = Settings::default();
         s.gain_button.appearance = GainAppearance::Vertical;
         s.gain_button.highlight_positive = true;
-        s.gain_button.show_label = true;
+        s.gain_button.fader_label = true;
+        s.gain_button.delta = -3.0;
         s.gain_button.show_db = true;
         s.gain_button.show_meter = true;
         let mut snapshot = Snapshot {

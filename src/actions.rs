@@ -21,6 +21,7 @@ pub struct DeckAction<const KIND: u8> {
     client: Arc<WorkerClient>,
     context: Option<String>,
     rendering: Option<JoinHandle<()>>,
+    repeating: Option<JoinHandle<()>>,
     active: Arc<AtomicBool>,
     invalid_settings: bool,
 }
@@ -41,7 +42,13 @@ impl<const KIND: u8> DeckAction<KIND> {
             .send(request)
             .map_err(|error| streamdeck_plugin::Error::State(error.to_string()))
     }
+    fn stop_repeating(&mut self) {
+        if let Some(task) = self.repeating.take() {
+            task.abort();
+        }
+    }
     fn stop_rendering(&mut self) {
+        self.stop_repeating();
         self.active.store(false, Ordering::Release);
         if let Some(task) = self.rendering.take() {
             task.abort();
@@ -232,6 +239,7 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
             client: state,
             context: None,
             rendering: None,
+            repeating: None,
             active: Arc::new(AtomicBool::new(false)),
             invalid_settings: false,
         }
@@ -292,7 +300,49 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
     }
     async fn on_key_down(&mut self, _: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
         if Self::kind() == ActionKind::GainButton {
-            self.command(ctx, domain::gain_button_command(&ctx.settings()))?;
+            if self.repeating.is_some() {
+                return Ok(());
+            }
+            let settings = ctx.settings();
+            let command = domain::gain_button_command(&settings);
+            let generation = self.client.generation();
+            self.send(Request::Command {
+                context: ctx.identity().context.clone(),
+                generation,
+                command: command.clone(),
+            })?;
+            if settings.gain_button.operation == crate::settings::GainOperation::Adjust
+                && !self.invalid_settings
+                && settings.validate().is_ok()
+                && self.client.snapshots.borrow().edition.is_some()
+            {
+                let client = self.client.clone();
+                let context = ctx.identity().context.clone();
+                self.repeating = Some(tokio::spawn(async move {
+                    let period = std::time::Duration::from_millis(250);
+                    let mut timer =
+                        tokio::time::interval_at(tokio::time::Instant::now() + period, period);
+                    timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+                    loop {
+                        timer.tick().await;
+                        if client.generation() != generation
+                            || client.snapshots.borrow().edition.is_none()
+                        {
+                            break;
+                        }
+                        if client
+                            .send(Request::Command {
+                                context: context.clone(),
+                                generation,
+                                command: command.clone(),
+                            })
+                            .is_err()
+                        {
+                            break;
+                        }
+                    }
+                }));
+            }
         }
         if Self::kind() == ActionKind::Macro {
             self.send(Request::Press {
@@ -303,6 +353,7 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
         Ok(())
     }
     async fn on_key_up(&mut self, _: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
+        self.stop_repeating();
         if Self::kind() == ActionKind::Macro {
             self.send(Request::Release(ctx.identity().context.clone()))?;
         }
