@@ -44,6 +44,138 @@ fn pair_transform(vertical: bool, positive: bool) -> &'static str {
     }
 }
 
+// A geometrically cut rail prevents semi-transparent fills exposing underlying
+// white paint. Quarter-unit scan strips are 1/8 of a native key pixel.
+#[allow(clippy::too_many_arguments)]
+fn translucent_rail(
+    snapshot: &Snapshot,
+    settings: &Settings,
+    start: f32,
+    end: f32,
+    offset: i32,
+    transform: &str,
+    bar: &str,
+    thumb: &str,
+    bg: &str,
+    positive: bool,
+    language: &str,
+) -> String {
+    let b = &settings.gain_button;
+    let channel = snapshot
+        .channels
+        .iter()
+        .find(|(t, _)| *t == settings.channels[0].target)
+        .map(|(_, c)| c);
+    let x = channel
+        .map(|c| position(c.gain, b.appearance == GainAppearance::Vertical))
+        .unwrap_or(start);
+    let radius: f32 = if b.show_db { 25.0 } else { 17.0 };
+    let cut = if b.key_thumb_clearance {
+        radius + 9.0
+    } else {
+        radius
+    };
+    let mut result = format!(r#"<g transform="{transform}"><g transform="translate(0 {offset})">"#);
+    let mut lit = String::new();
+    let mut empty = String::new();
+    for row in 0..112 {
+        let y = 58.0 + row as f32 * 0.25;
+        let dy = y + 0.125 - 72.0;
+        let outer = (196.0 - dy * dy).max(0.0).sqrt();
+        let a = start - outer;
+        let z = end + outer;
+        let inner = if dy.abs() < 8.0 {
+            Some((
+                start - (64.0 - dy * dy).sqrt(),
+                end + (64.0 - dy * dy).sqrt(),
+            ))
+        } else {
+            None
+        };
+        let hole = if channel.is_some() && dy.abs() < cut {
+            Some((
+                x - (cut * cut - dy * dy).sqrt(),
+                x + (cut * cut - dy * dy).sqrt(),
+            ))
+        } else {
+            None
+        };
+        let mut edges = vec![a, z, x];
+        if let Some((l, r)) = inner {
+            edges.extend([l, r]);
+        }
+        if let Some((l, r)) = hole {
+            edges.extend([l, r]);
+        }
+        edges.sort_by(f32::total_cmp);
+        for pair in edges.windows(2) {
+            let l = pair[0].max(a);
+            let r = pair[1].min(z);
+            if r <= l {
+                continue;
+            }
+            let mid = (l + r) * 0.5;
+            if hole.is_some_and(|(a, z)| mid > a && mid < z) {
+                continue;
+            }
+            let is_empty = mid > x && inner.is_some_and(|(a, z)| mid > a && mid < z);
+            let dst = if is_empty { &mut empty } else { &mut lit };
+            let _ = write!(dst, "M{l:.3} {y:.3}h{:.3}v0.25H{l:.3}Z", r - l);
+        }
+    }
+    let _ = write!(
+        result,
+        r#"<path d="{lit}" fill="{bar}"/><path d="{empty}" fill="black" fill-opacity="{}"/>"#,
+        f32::from(b.key_rail_opacity) / 100.0
+    );
+    if b.fader_label && b.delta < 0.0 {
+        let right = (x - cut).min(144.0);
+        let left = start - 6.0;
+        if right > left {
+            result.push_str(&crate::gain_label::clipped(
+                &label(snapshot, settings),
+                left,
+                right,
+                if positive {
+                    &b.positive_label_color
+                } else {
+                    &b.label_color
+                },
+            ));
+        }
+    }
+    if let Some(c) = channel {
+        if b.key_thumb_clearance {
+            let _ = write!(
+                result,
+                r#"<circle cx="{x}" cy="72" r="{}" fill="none" stroke="{bg}" stroke-width="9"/>"#,
+                radius + 4.5
+            );
+        }
+        let _ = write!(
+            result,
+            r#"<circle cx="{x}" cy="72" r="{radius}" fill="black" fill-opacity="{}" stroke="{thumb}" stroke-width="6"/>"#,
+            f32::from(b.key_thumb_opacity) / 100.0
+        );
+        if b.show_db {
+            let n = crate::numbers::gain(c.gain, language);
+            let n = if c.gain > 0.0 { format!("+{n}") } else { n };
+            let rot = if b.appearance == GainAppearance::Vertical {
+                90
+            } else {
+                0
+            };
+            let _ = write!(
+                result,
+                r##"<text x="{x}" y="76.5" transform="rotate({rot} {x} 72)" text-anchor="middle" font-family="Consolas, monospace" font-size="13" font-weight="bold" fill="#ffffff">{}</text>"##,
+                render::escape(&n)
+            );
+        }
+    }
+    result.push_str("</g></g>");
+    result
+}
+
 pub fn frame(
     snapshot: &Snapshot,
     settings: &Settings,
@@ -96,84 +228,93 @@ pub fn frame(
         };
         let start = position(-60.0, vertical);
         let end = position(12.0, vertical);
-        let _ = write!(
-            body,
-            r#"<g transform="{transform}"><g transform="translate(0 {offset})"><path d="M{start} 72H{end}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><path d="M{start} 72H{end}" fill="none" stroke="{bg}" stroke-width="16" stroke-linecap="round"/>"#
-        );
-        if let Some(channel) = channel {
-            let x = position(channel.gain, vertical);
+        let translucent =
+            b.key_rail_opacity < 100 || b.key_thumb_opacity < 100 || !b.key_thumb_clearance;
+        if translucent {
+            body.push_str(&translucent_rail(
+                snapshot, settings, start, end, offset, transform, &bar, &thumb, &bg, positive,
+                language,
+            ));
+        } else {
             let _ = write!(
                 body,
-                r#"<path d="M{start} 72H{x}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/>"#
+                r#"<g transform="{transform}"><g transform="translate(0 {offset})"><path d="M{start} 72H{end}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><path d="M{start} 72H{end}" fill="none" stroke="{bg}" stroke-width="16" stroke-linecap="round"/>"#
             );
-        }
-        // Only the negative half owns the label. Clip within that key and rail;
-        // and filled segment; never draw into the empty rail or positive half.
-        // The thumb overlays the remaining text.
-        if b.fader_label && b.delta < 0.0 {
-            let left = start - 6.0;
-            let filled_end = channel
-                .map(|value| position(value.gain, vertical))
-                .unwrap_or(left);
-            let width = (filled_end.min(144.0) - left).max(0.0);
-            let _ = write!(
-                body,
-                r#"<defs><clipPath id="fader-label"><rect x="{left}" y="60" width="{width}" height="24"/></clipPath></defs><text x="{}" y="78" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="17" font-weight="600" fill="{}" clip-path="url(#fader-label)">{}</text>"#,
-                left,
-                render::escape(if positive {
-                    &b.positive_label_color
-                } else {
-                    &b.label_color
-                }),
-                render::escape(&label(snapshot, settings))
-            );
-            // Stream Deck's SVG renderer may ignore text clip paths. Paint the
-            // empty rail over the label as well, using only basic SVG primitives.
-            if filled_end < end {
-                let hidden_width = end + 14.0 - filled_end;
+            if let Some(channel) = channel {
+                let x = position(channel.gain, vertical);
                 let _ = write!(
                     body,
-                    r#"<rect x="{filled_end}" y="58" width="{hidden_width}" height="28" fill="{bg}"/><path d="M{filled_end} 72H{end}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><path d="M{filled_end} 72H{end}" fill="none" stroke="{bg}" stroke-width="16" stroke-linecap="round"/>"#
+                    r#"<path d="M{start} 72H{x}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/>"#
                 );
             }
-        }
-        if let Some(channel) = channel {
-            let x = position(channel.gain, vertical);
-            let (radius, clearance) = if b.show_db { (25, 34) } else { (17, 26) };
-            let _ = write!(
-                body,
-                r#"<circle cx="{x}" cy="72" r="{clearance}" fill="{bg}"/><circle cx="{x}" cy="72" r="{radius}" fill="{bg}" stroke="{thumb}" stroke-width="6"/>"#
-            );
-            if b.show_db {
-                let gain = if channel.gain.abs() < 0.05 {
-                    0.0
-                } else {
-                    channel.gain
-                };
-                let number = crate::numbers::gain(gain, language);
-                let number = if gain > 0.0 {
-                    format!("+{number}")
-                } else {
-                    number
-                };
-                let rotation = if vertical { 90 } else { 0 };
-                // Keep text horizontal after the vertical pair's -90 degree turn.
-                let rgb = u32::from_str_radix(bg.trim_start_matches('#'), 16).unwrap_or(0);
-                let brightness =
-                    ((rgb >> 16) & 255) * 299 + ((rgb >> 8) & 255) * 587 + (rgb & 255) * 114;
-                let ink = if brightness > 128000 {
-                    "#000000"
-                } else {
-                    "#ffffff"
-                };
+            // Only the negative half owns the label. Clip within that key and rail;
+            // and filled segment; never draw into the empty rail or positive half.
+            // The thumb overlays the remaining text.
+            if b.fader_label && b.delta < 0.0 {
+                let left = start - 6.0;
+                let filled_end = channel
+                    .map(|value| position(value.gain, vertical))
+                    .unwrap_or(left);
+                let width = (filled_end.min(144.0) - left).max(0.0);
                 let _ = write!(
                     body,
-                    r#"<defs><clipPath id="gain-number"><circle cx="{x}" cy="72" r="22"/></clipPath></defs><text x="{x}" y="76.5" transform="rotate({rotation} {x} 72)" text-anchor="middle" font-family="Consolas, monospace" font-size="13" font-weight="bold" fill="{ink}" clip-path="url(#gain-number)">{}</text>"#,
-                    render::escape(&number)
+                    r#"<defs><clipPath id="fader-label"><rect x="{left}" y="60" width="{width}" height="24"/></clipPath></defs><text x="{}" y="78" text-anchor="start" font-family="Segoe UI, sans-serif" font-size="17" font-weight="600" fill="{}" clip-path="url(#fader-label)">{}</text>"#,
+                    left,
+                    render::escape(if positive {
+                        &b.positive_label_color
+                    } else {
+                        &b.label_color
+                    }),
+                    render::escape(&label(snapshot, settings))
                 );
+                // Stream Deck's SVG renderer may ignore text clip paths. Paint the
+                // empty rail over the label as well, using only basic SVG primitives.
+                if filled_end < end {
+                    let hidden_width = end + 14.0 - filled_end;
+                    let _ = write!(
+                        body,
+                        r#"<rect x="{filled_end}" y="58" width="{hidden_width}" height="28" fill="{bg}"/><path d="M{filled_end} 72H{end}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><path d="M{filled_end} 72H{end}" fill="none" stroke="{bg}" stroke-width="16" stroke-linecap="round"/>"#
+                    );
+                }
             }
+            if let Some(channel) = channel {
+                let x = position(channel.gain, vertical);
+                let (radius, clearance) = if b.show_db { (25, 34) } else { (17, 26) };
+                let _ = write!(
+                    body,
+                    r#"<circle cx="{x}" cy="72" r="{clearance}" fill="{bg}"/><circle cx="{x}" cy="72" r="{radius}" fill="{bg}" stroke="{thumb}" stroke-width="6"/>"#
+                );
+                if b.show_db {
+                    let gain = if channel.gain.abs() < 0.05 {
+                        0.0
+                    } else {
+                        channel.gain
+                    };
+                    let number = crate::numbers::gain(gain, language);
+                    let number = if gain > 0.0 {
+                        format!("+{number}")
+                    } else {
+                        number
+                    };
+                    let rotation = if vertical { 90 } else { 0 };
+                    // Keep text horizontal after the vertical pair's -90 degree turn.
+                    let rgb = u32::from_str_radix(bg.trim_start_matches('#'), 16).unwrap_or(0);
+                    let brightness =
+                        ((rgb >> 16) & 255) * 299 + ((rgb >> 8) & 255) * 587 + (rgb & 255) * 114;
+                    let ink = if brightness > 128000 {
+                        "#000000"
+                    } else {
+                        "#ffffff"
+                    };
+                    let _ = write!(
+                        body,
+                        r#"<defs><clipPath id="gain-number"><circle cx="{x}" cy="72" r="22"/></clipPath></defs><text x="{x}" y="76.5" transform="rotate({rotation} {x} 72)" text-anchor="middle" font-family="Consolas, monospace" font-size="13" font-weight="bold" fill="{ink}" clip-path="url(#gain-number)">{}</text>"#,
+                        render::escape(&number)
+                    );
+                }
+            }
+            body.push_str("</g></g>");
         }
-        body.push_str("</g></g>");
     } else {
         let icon = if muted { &b.muted_icon } else { &b.icon };
         body.push_str(&render::place_icon(
@@ -221,9 +362,10 @@ pub fn frame(
         let top = if b.swap_meter { 88 } else { 36 };
         let _ = write!(
             body,
-            r#"<g transform="{transform}"><rect x="{meter_start}" y="{}" width="{meter_width}" height="24" fill="{}"/>"#,
+            r#"<g transform="{transform}"><rect x="{meter_start}" y="{}" width="{meter_width}" height="24" rx="3" fill="{}" fill-opacity="{}"/>"#,
             top - 2,
-            render::escape(&b.meter_background)
+            render::escape(&b.meter_background),
+            f32::from(b.key_meter_opacity) / 100.0
         );
         const CELLS: usize = 40;
         let pitch = meter_width / CELLS as f32;
@@ -261,11 +403,16 @@ pub fn frame(
                 };
                 let _ = write!(
                     body,
-                    r#"<rect x="{}" y="{}" width="{}" height="8" fill="{}"/>"#,
+                    r#"<rect x="{}" y="{}" width="{}" height="8" fill="{}" fill-opacity="{}"/>"#,
                     meter_start + cell as f32 * pitch + 1.0,
                     top + side * 12,
                     pitch - 2.0,
-                    render::escape(color)
+                    render::escape(color),
+                    if active {
+                        1.0
+                    } else {
+                        f32::from(b.key_inactive_opacity) / 100.0
+                    }
                 );
             }
         }
@@ -287,6 +434,43 @@ pub fn frame(
 mod tests {
     use super::*;
     use crate::backend::ChannelSnapshot;
+
+    #[test]
+    fn translucent_faders_keep_ring_and_clip_labels_without_host_masks() {
+        let mut s = Settings::default();
+        s.gain_button.key_rail_opacity = 40;
+        s.gain_button.key_thumb_opacity = 80;
+        s.gain_button.key_meter_opacity = 40;
+        s.gain_button.key_inactive_opacity = 40;
+        s.gain_button.key_thumb_clearance = false;
+        s.gain_button.show_meter = true;
+        s.gain_button.show_db = true;
+        s.gain_button.fader_label = true;
+        s.gain_button.delta = -3.0;
+        let snapshot = Snapshot {
+            channels: vec![(
+                s.channels[0].target,
+                ChannelSnapshot {
+                    gain: -60.0,
+                    label: "Voice".into(),
+                    levels: [-120.0; 2],
+                    ..Default::default()
+                },
+            )],
+            ..Default::default()
+        };
+        for appearance in [GainAppearance::Horizontal, GainAppearance::Vertical] {
+            s.gain_button.appearance = appearance;
+            let svg = frame(&snapshot, &s, &mut IconCache::default(), "en").svg;
+            assert!(svg.contains("fill-opacity=\"0.8\" stroke="));
+            assert!(svg.contains("rx=\"3\""));
+            assert!(!svg.contains("clip-path"));
+            assert!(!svg.contains("<mask"));
+            assert!(!svg.contains("Voice"));
+            assert!(!svg.contains("r=\"34\""));
+            assert!(svg.matches("fill-opacity=\"0.4\"").count() >= 82);
+        }
+    }
 
     #[test]
     fn key_background_respects_normal_and_muted_palette_opacity() {

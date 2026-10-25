@@ -35,7 +35,7 @@ it("recognizes all four transparent variants without changing their base colors"
  for(const name of ["standardTransparent","standardTransparentOutlined","voicemeeterTransparent","voicemeeterTransparentOutlined"] as const){
   const value=gainPalettes[name];
   const base=name.startsWith("standard")?gainPalettes.standard:gainPalettes.voicemeeter;
-  expect(value).toEqual({...base,backgroundOpacity:0,mutedBackgroundOpacity:0,indicatorBackground:"#000000",indicatorOpacity:62,indicatorOutline:name.endsWith("Outlined")});
+  expect(value).toEqual({...base,keyMeterOpacity:40,keyInactiveOpacity:40,keyRailOpacity:40,keyThumbOpacity:80,keyThumbClearance:false,backgroundOpacity:0,mutedBackgroundOpacity:0,indicatorBackground:"#000000",indicatorOpacity:62,indicatorOutline:name.endsWith("Outlined")});
   expect(gainPaletteName({...defaultSettings.gainButton,...value})).toBe(name);
  }
 });
@@ -58,4 +58,13 @@ it("uses neutral inactive cells and outlines only in monochrome presets", () => 
  const old={...gainPalettes.standard} as Record<string,unknown>;
  delete old.indicatorOutlineColor;
  expect(readPalettes({gainColorPresets:{version:1,items:[{id:"user:old",name:"Old",colors:old}]}})?.[0].colors.indicatorOutlineColor).toBe("#91a4b5");
+});
+
+it("migrates old key transparency and validates saved user opacity", () => {
+ const old={...gainPalettes.standard} as Record<string,unknown>;
+ for(const key of ["keyMeterOpacity","keyInactiveOpacity","keyRailOpacity","keyThumbOpacity","keyThumbClearance"]) delete old[key];
+ const wrap=(colors:unknown)=>({gainColorPresets:{version:1,items:[{id:"user:old",name:"Old",colors}]}});
+ expect(readPalettes(wrap(old))?.[0].colors).toMatchObject({keyMeterOpacity:100,keyInactiveOpacity:100,keyRailOpacity:100,keyThumbOpacity:100,keyThumbClearance:true});
+ expect(readPalettes(wrap(gainPalettes.standardTransparent))?.[0].colors).toEqual(gainPalettes.standardTransparent);
+ for(const key of ["keyMeterOpacity","keyInactiveOpacity","keyRailOpacity","keyThumbOpacity"]) expect(readPalettes(wrap({...old,[key]:101}))).toBeUndefined();
 });

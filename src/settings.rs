@@ -176,6 +176,11 @@ pub struct GainButtonSettings {
     pub dial_positive_label_color: String,
     pub dial_gain_color: String,
     pub dial_positive_gain_color: String,
+    pub key_meter_opacity: u8,
+    pub key_inactive_opacity: u8,
+    pub key_rail_opacity: u8,
+    pub key_thumb_opacity: u8,
+    pub key_thumb_clearance: bool,
     pub selection_color: String,
     pub indicator_outline_color: String,
     pub indicator_background: String,
@@ -229,6 +234,11 @@ impl Default for GainButtonSettings {
             dial_positive_label_color: "#ffffff".into(),
             dial_gain_color: "#ffffff".into(),
             dial_positive_gain_color: "#ffffff".into(),
+            key_meter_opacity: 100,
+            key_inactive_opacity: 100,
+            key_rail_opacity: 100,
+            key_thumb_opacity: 100,
+            key_thumb_clearance: true,
             selection_color: "#ffffff".into(),
             indicator_outline_color: "#a0a0a0".into(),
             indicator_background: "#808080".into(),
@@ -264,6 +274,11 @@ pub struct DialPalette {
     pub dial_positive_label_color: String,
     pub dial_gain_color: String,
     pub dial_positive_gain_color: String,
+    pub key_meter_opacity: u8,
+    pub key_inactive_opacity: u8,
+    pub key_rail_opacity: u8,
+    pub key_thumb_opacity: u8,
+    pub key_thumb_clearance: bool,
     pub selection_color: String,
     pub indicator_outline_color: String,
     pub indicator_background: String,
@@ -298,6 +313,11 @@ impl Default for DialPalette {
             dial_positive_label_color: "#ffffff".into(),
             dial_gain_color: "#ffffff".into(),
             dial_positive_gain_color: "#ffffff".into(),
+            key_meter_opacity: 100,
+            key_inactive_opacity: 100,
+            key_rail_opacity: 100,
+            key_thumb_opacity: 100,
+            key_thumb_clearance: true,
             selection_color: "#ffffff".into(),
             indicator_outline_color: "#91a4b5".into(),
             indicator_background: "#2c3d4d".into(),
@@ -535,7 +555,11 @@ impl Settings {
             channel.icon.validate(&format!("{field}.icon"))?;
         }
         for style in &self.dial.styles {
-            if style.palette.background_opacity > 100
+            if style.palette.key_meter_opacity > 100
+                || style.palette.key_inactive_opacity > 100
+                || style.palette.key_rail_opacity > 100
+                || style.palette.key_thumb_opacity > 100
+                || style.palette.background_opacity > 100
                 || style.palette.muted_background_opacity > 100
                 || style.palette.meter_track_opacity > 100
                 || style.palette.indicator_opacity > 100
@@ -584,7 +608,11 @@ impl Settings {
         if !b.gain.is_finite() || !(-60.0..=12.0).contains(&b.gain) {
             return Err(ValidationError::new("invalidButtonGain", "gainButton.gain"));
         }
-        if b.indicator_opacity > 100
+        if b.key_meter_opacity > 100
+            || b.key_inactive_opacity > 100
+            || b.key_rail_opacity > 100
+            || b.key_thumb_opacity > 100
+            || b.indicator_opacity > 100
             || b.background_opacity > 100
             || b.muted_background_opacity > 100
             || b.meter_track_opacity > 100

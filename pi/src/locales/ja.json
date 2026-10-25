@@ -202,7 +202,12 @@
     "selection.switchMethod": "チャンネルの切替方法",
     "selection.position": "タップした側を選択",
     "selection.toggle": "どこでもタップで左右を切り替え",
-    "selection.toggleHelp": "どこをタップしても反対側に切り替えます。長押しは触れた側を選択し、指定の操作を実行します。回転で選択側のゲインを調整し、ノブ押下でMuteを切り替えます。"
+    "selection.toggleHelp": "どこをタップしても反対側に切り替えます。長押しは触れた側を選択し、指定の操作を実行します。回転で選択側のゲインを調整し、ノブ押下でMuteを切り替えます。",
+    "button.keyMeterOpacity": "メーター下地の不透明度",
+    "button.keyInactiveOpacity": "消灯セルの不透明度",
+    "button.keyRailOpacity": "フェーダー空き部分の不透明度",
+    "button.keyThumbOpacity": "つまみ内部の不透明度",
+    "button.keyThumbClearance": "つまみの外周に余白を設ける"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

@@ -94,17 +94,17 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
     if(style.meterStyle!=="cells" && style.meterStyle!=="continuous") return error("invalidSettings","dial.meterStyle");
     for(const key of Object.keys(defaultSettings.dial.styles[0].palette)) {
       const v=style.palette[key];
-      if(["indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].includes(key) ? !Number.isInteger(v) || (v as number)<0 || (v as number)>100 : key==="highlightPositive" || key==="indicatorOutline" ? typeof v!=="boolean" : typeof v!=="string" || !/^#[\da-f]{6}$/i.test(v)) return error(["indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].includes(key)?"invalidOpacity":"invalidColor",`dial.palette.${key}`);
+      if(["keyMeterOpacity","keyInactiveOpacity","keyRailOpacity","keyThumbOpacity","indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].includes(key) ? !Number.isInteger(v) || (v as number)<0 || (v as number)>100 : key==="keyThumbClearance" || key==="highlightPositive" || key==="indicatorOutline" ? typeof v!=="boolean" : typeof v!=="string" || !/^#[\da-f]{6}$/i.test(v)) return error(["keyMeterOpacity","keyInactiveOpacity","keyRailOpacity","keyThumbOpacity","indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].includes(key)?"invalidOpacity":"invalidColor",`dial.palette.${key}`);
     }
   }
   const macro = value.macroButton;
   const button = value.gainButton;
   if (!record(button)) return error("invalidSettings", "gainButton");
-  if(["indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].some(key=>!Number.isInteger(button[key]) || (button[key] as number)<0 || (button[key] as number)>100)) return error("invalidOpacity","gainButton.indicatorOpacity");
+  if(["keyMeterOpacity","keyInactiveOpacity","keyRailOpacity","keyThumbOpacity","indicatorOpacity","backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"].some(key=>!Number.isInteger(button[key]) || (button[key] as number)<0 || (button[key] as number)>100)) return error("invalidOpacity","gainButton.indicatorOpacity");
   if (!["adjust", "set", "mute"].includes(String(button.operation)) || !["static", "horizontal", "vertical"].includes(String(button.appearance))) return error("invalidSettings", "gainButton");
   if (typeof button.delta !== "number" || !Number.isFinite(button.delta) || button.delta === 0 || Math.abs(button.delta) > 72) return error("invalidButtonDelta", "gainButton.delta");
   if (typeof button.gain !== "number" || !Number.isFinite(button.gain) || button.gain < -60 || button.gain > 12) return error("invalidButtonGain", "gainButton.gain");
-  for (const key of ["indicatorOutline", "syncPair", "meterNotch", "highlightPositive", "showLabel", "faderLabel", "showDb", "showMeter", "swapMeter"]) {
+  for (const key of ["keyThumbClearance", "indicatorOutline", "syncPair", "meterNotch", "highlightPositive", "showLabel", "faderLabel", "showDb", "showMeter", "swapMeter"]) {
     if (typeof button[key] !== "boolean") return error("invalidSettings", `gainButton.${key}`);
   }
   for (const key of ["selectionColor", "indicatorOutlineColor", "dialLabelColor", "dialPositiveLabelColor", "dialGainColor", "dialPositiveGainColor", "emptyBarColor", "indicatorBackground", "background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {

@@ -213,6 +213,8 @@ function GainButtonEditor({ client, value, onChange }: { client: StreamDeckPiApi
         <p className="help">{t("palette.includesMeter")}</p>
         <fieldset><legend>{t("palette.faderColors")}</legend>
           <ColorEditor label={t("button.barColor")} value={value.barColor} onChange={barColor => patch({ barColor })} />
+          {(["keyMeterOpacity","keyInactiveOpacity","keyRailOpacity","keyThumbOpacity"] as const).map(key=><Row key={key} label={t(`button.${key}`)}><input type="range" min="0" max="100" aria-label={t(`button.${key}`)} value={value[key]} onChange={e=>patch({[key]:Number(e.target.value)})}/><output>{value[key]}%</output></Row>)}
+          <Row label={t("button.keyThumbClearance")}><input type="checkbox" aria-label={t("button.keyThumbClearance")} checked={value.keyThumbClearance} onChange={e=>patch({keyThumbClearance:e.target.checked})}/></Row>
           <ColorEditor label={t("button.thumbColor")} value={value.thumbColor} onChange={thumbColor => patch({ thumbColor })} />
           <ColorEditor label={t("button.labelColor")} value={value.labelColor} onChange={labelColor => patch({ labelColor })} />
           <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.highlightPositive} onChange={event => patch({ highlightPositive: event.target.checked })} /></Row>

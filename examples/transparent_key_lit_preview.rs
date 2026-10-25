@@ -16,6 +16,11 @@ fn main() -> anyhow::Result<()> {
         s.gain_button.meter_low = (*color).into();
         s.gain_button.background_opacity = 0;
         s.gain_button.muted_background_opacity = 0;
+        s.gain_button.key_meter_opacity = 40;
+        s.gain_button.key_inactive_opacity = 40;
+        s.gain_button.key_rail_opacity = 40;
+        s.gain_button.key_thumb_opacity = 80;
+        s.gain_button.key_thumb_clearance = false;
         s.gain_button.show_meter = true;
         s.gain_button.show_db = true;
         s.gain_button.fader_label = true;
@@ -32,11 +37,7 @@ fn main() -> anyhow::Result<()> {
                         c.target,
                         ChannelSnapshot {
                             gain: 0.0,
-                            levels: if i == 0 {
-                                [6.0, -18.0]
-                            } else {
-                                [-18.0, -36.0]
-                            },
+                            levels: if i == 0 { [6.0, -18.0] } else { [-18.0, -36.0] },
                             label: if i == 0 {
                                 "Voice".into()
                             } else {

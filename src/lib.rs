@@ -16,3 +16,5 @@ pub mod voicemeeter;
 pub mod worker;
 
 mod pairs;
+
+mod gain_label;

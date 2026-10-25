@@ -202,7 +202,12 @@
     "selection.switchMethod": "Channel switching",
     "selection.position": "Select the tapped side",
     "selection.toggle": "Tap anywhere to switch sides",
-    "selection.toggleHelp": "Tap anywhere to switch to the other channel. Long press selects the touched side and runs its assigned action. Turn to adjust the selection; press the knob to toggle mute."
+    "selection.toggleHelp": "Tap anywhere to switch to the other channel. Long press selects the touched side and runs its assigned action. Turn to adjust the selection; press the knob to toggle mute.",
+    "button.keyMeterOpacity": "Meter background opacity",
+    "button.keyInactiveOpacity": "Inactive cell opacity",
+    "button.keyRailOpacity": "Empty fader opacity",
+    "button.keyThumbOpacity": "Thumb fill opacity",
+    "button.keyThumbClearance": "Space outside thumb ring"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",
