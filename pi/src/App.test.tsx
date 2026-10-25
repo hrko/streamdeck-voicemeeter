@@ -131,7 +131,7 @@ describe("property inspector forms", () => {
     fireEvent.click(screen.getByRole("button",{name:"Save as new preset"}));
     const items = (global.gainColorPresets as {items:{id:string;name:string;colors:Record<string,unknown>}[]}).items;
     expect(items).toHaveLength(1);
-    expect(items[0].colors).toMatchObject({meterLow:"#85adb9",meterMutedHigh:"#583328",labelColor:"#000000"});
+    expect(items[0].colors).toMatchObject({meterLow:"#a6a6a6",meterMutedHigh:"#583328",labelColor:"#000000"});
     expect(global.unrelated).toEqual({keep:true});
     cleanup();
     const second = await setup("gain-button", settings);

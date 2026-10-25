@@ -52,9 +52,9 @@ it("keeps the default button thumb and label colors distinct from dial text", ()
 
 it("uses neutral inactive cells and outlines only in monochrome presets", () => {
  for(const key of ["standard","standardTransparent","standardTransparentOutlined"] as const)
-  expect(gainPalettes[key]).toMatchObject({meterInactive:"#1b1b1b",indicatorOutlineColor:"#a0a0a0"});
+  expect(gainPalettes[key]).toMatchObject({meterLow:"#a6a6a6",meterInactive:"#1b1b1b",indicatorOutlineColor:"#a0a0a0"});
  for(const key of ["default","voicemeeter","voicemeeterTransparent","voicemeeterTransparentOutlined"] as const)
-  expect(gainPalettes[key]).toMatchObject({meterInactive:"#191b1b",indicatorOutlineColor:"#91a4b5"});
+  expect(gainPalettes[key]).toMatchObject({meterLow:"#85adb9",meterInactive:"#191b1b",indicatorOutlineColor:"#91a4b5"});
  const old={...gainPalettes.standard} as Record<string,unknown>;
  delete old.indicatorOutlineColor;
  expect(readPalettes({gainColorPresets:{version:1,items:[{id:"user:old",name:"Old",colors:old}]}})?.[0].colors.indicatorOutlineColor).toBe("#91a4b5");

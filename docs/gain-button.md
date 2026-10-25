@@ -237,3 +237,6 @@ meter cells and #a0a0a0 inactive indicator outlines. Default and VoiceMeeter ret
 their existing colors. Indicator outline color is editable and saved in shared
 palettes; older presets retain the former #91a4b5 outline. Active status and meter
 colors remain semantic colors.
+
+Monochrome palettes also use #a6a6a6 for active low-level meter cells. Mid/high,
+muted colors, and Default/VoiceMeeter low-level colors remain unchanged.

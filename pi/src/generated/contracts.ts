@@ -217,7 +217,7 @@ export const defaultSettings: Settings = {
     "indicatorOutline": false,
     "meterBackground": "#000000",
     "meterInactive": "#1b1b1b",
-    "meterLow": "#85adb9",
+    "meterLow": "#a6a6a6",
     "meterMid": "#1efe5b",
     "meterHigh": "#fa0000",
     "meterMutedLow": "#394547",
