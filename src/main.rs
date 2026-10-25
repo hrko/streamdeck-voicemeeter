@@ -32,8 +32,12 @@ async fn run() -> anyhow::Result<()> {
         .add_action::<DeckAction<0>>()
         .add_action::<DeckAction<1>>()
         .add_action::<DeckAction<2>>()
-        .add_action::<DeckAction<3>>()
-        .run();
+        .add_action::<DeckAction<3>>();
+    #[cfg(debug_assertions)]
+    let plugin = plugin
+        .add_action::<streamdeck_voicemeeter::frame_test::FrameTest<false>>()
+        .add_action::<streamdeck_voicemeeter::frame_test::FrameTest<true>>();
+    let plugin = plugin.run();
     let result = tokio::select! {
         result = plugin => result,
         () = shutdown.requested() => {

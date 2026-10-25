@@ -18,3 +18,6 @@ pub mod worker;
 mod pairs;
 
 mod gain_label;
+
+#[cfg(debug_assertions)]
+pub mod frame_test;

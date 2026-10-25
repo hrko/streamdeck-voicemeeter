@@ -39,6 +39,16 @@ export async function buildPlugin(profile = "release") {
       : [{ Image: "imgs/key", ShowTitle: true, TitleAlignment: suffix === "gain-button" ? "bottom" : "middle", FontSize: suffix === "gain-button" ? 12 : 16 }],
     ...(suffix === "macro" || suffix === "gain-button" ? {} : { Encoder: { layout: `layouts/${suffix === "gain-control-combo" ? "combo" : "gain"}.json` } }),
   }));
+  if (profile === "debug") {
+    for (const dial of [false, true]) actions.push({
+      Name: dial ? "Frame Test (Dial)" : "Frame Test (Key)",
+      Tooltip: "30 fps frame counter. Large number: source frame; small number: elapsed milliseconds.",
+      UUID: `${id}.frame-test-${dial ? "dial" : "key"}`, Icon: "imgs/action",
+      Controllers: [dial ? "Encoder" : "Keypad"], DisableAutomaticStates: true,
+      States: [{ Image: "imgs/key", ShowTitle: true, FontSize: 16, TitleAlignment: "middle" }],
+      ...(dial ? {Encoder: {layout: "layouts/frame-test.json"}} : {}),
+    });
+  }
   await writeJson(path.join(destination, "manifest.json"), {
     $schema: "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
     Name: english.manifest.Name, Description: english.manifest.Description, Category: english.manifest.Name,

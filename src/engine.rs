@@ -16,6 +16,8 @@ pub struct Subscription {
 #[derive(Debug, Clone, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
+    pub frame_sequence: u64,
+    pub frame_elapsed_ms: u64,
     pub generation: u64,
     pub edition: Option<Edition>,
     pub channels: Vec<(Target, ChannelSnapshot)>,
@@ -192,6 +194,11 @@ impl<B: Backend> Engine<B> {
     }
 
     /// Read each visible target once even when multiple actions refer to it.
+    pub fn record_frame(&mut self, elapsed_ms: u64) {
+        self.snapshot.frame_sequence += 1;
+        self.snapshot.frame_elapsed_ms = elapsed_ms;
+    }
+
     pub fn refresh(&mut self) {
         self.refresh_at(Instant::now());
     }

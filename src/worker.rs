@@ -99,7 +99,8 @@ impl Worker {
                 let mut reconnect_at = Instant::now();
                 let mut backoff = Duration::from_secs(1);
                 let mut poll_at = Instant::now();
-                let mut frame_at = Instant::now();
+                let started = Instant::now();
+                let mut frame_at = started;
                 while !stopped.load(Ordering::Acquire) {
                     let now = Instant::now();
                     if engine.snapshot().edition.is_none() && now >= reconnect_at {
@@ -126,8 +127,9 @@ impl Worker {
                         }
                         poll_at = now + Duration::from_millis(10);
                     }
-                    if engine.snapshot().edition.is_some() && now >= frame_at {
+                    if now >= frame_at {
                         engine.refresh();
+                        engine.record_frame(started.elapsed().as_millis() as u64);
                         snapshots.send_replace(engine.snapshot().clone());
                         frame_at = now + Duration::from_micros(33_333);
                     }
