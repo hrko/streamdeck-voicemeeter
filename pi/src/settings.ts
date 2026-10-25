@@ -50,16 +50,29 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
     const failure = icon(channel.icon, `${path}.icon`);
     if (failure) return failure;
   }
+  const dial=value.dial;
+  if (!record(dial) || typeof dial.shared!=="boolean" || !Array.isArray(dial.styles) || dial.styles.length!==2) return error("invalidSettings","dial");
+  for(const style of dial.styles) {
+    if(!record(style) || !record(style.palette)) return error("invalidSettings","dial");
+    for(const key of ["showLabel","showGain","showIcon","showBar","showMeter","showMute","showSolo","showRouting","showMono","showEq","meterNotch"]) {
+      if(typeof style[key]!=="boolean") return error("invalidSettings",`dial.${key}`);
+    }
+    for(const key of Object.keys(defaultSettings.dial.styles[0].palette)) {
+      const v=style.palette[key];
+      if(key==="highlightPositive" ? typeof v!=="boolean" : typeof v!=="string" || !/^#[\da-f]{6}$/i.test(v)) return error("invalidColor",`dial.palette.${key}`);
+    }
+    for(const key of ["emptyBarColor","gainColor","positiveGainColor"]) if(typeof style[key]!=="string" || !/^#[\da-f]{6}$/i.test(style[key] as string)) return error("invalidColor",`dial.${key}`);
+  }
   const macro = value.macroButton;
   const button = value.gainButton;
   if (!record(button)) return error("invalidSettings", "gainButton");
   if (!["adjust", "set", "mute"].includes(String(button.operation)) || !["static", "horizontal", "vertical"].includes(String(button.appearance))) return error("invalidSettings", "gainButton");
   if (typeof button.delta !== "number" || !Number.isFinite(button.delta) || button.delta === 0 || Math.abs(button.delta) > 72) return error("invalidButtonDelta", "gainButton.delta");
   if (typeof button.gain !== "number" || !Number.isFinite(button.gain) || button.gain < -60 || button.gain > 12) return error("invalidButtonGain", "gainButton.gain");
-  for (const key of ["highlightPositive", "showLabel", "faderLabel", "showDb", "showMeter", "swapMeter"]) {
+  for (const key of ["syncPair", "meterNotch", "highlightPositive", "showLabel", "faderLabel", "showDb", "showMeter", "swapMeter"]) {
     if (typeof button[key] !== "boolean") return error("invalidSettings", `gainButton.${key}`);
   }
-  for (const key of ["background", "mutedBackground", "barColor", "labelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
+  for (const key of ["background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
     if (typeof button[key] !== "string" || !/^#[\da-f]{6}$/i.test(button[key])) return error("invalidColor", `gainButton.${key}`);
   }
   const buttonIconError = icon(button.icon, "gainButton.icon") ?? icon(button.mutedIcon, "gainButton.mutedIcon");

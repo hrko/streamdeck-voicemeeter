@@ -156,3 +156,19 @@ existing settings and follows pair synchronization. Dial meters are unchanged.
 Fader labels are clipped to the filled segment: lowering the gain hides text
 above the thumb (vertical) or to its right (horizontal). Text stays anchored
 at the bar end instead of moving or shrinking.
+
+## Dial color interoperability
+
+`dial.styles[2]` stores independent `DialStyle` values; `dial.shared` selects the
+left style for both halves without copying over the saved right style. The
+`DialPalette` keys match the common gain-button palette so saved user presets
+work in both inspectors. Dial-only gain-number and empty-bar colors are kept
+outside the shared palette. Boolean visibility controls and channel/icon settings
+are never overwritten by palette selection.
+
+Native feedback text uses `{value, enabled, color}` and pixmaps use
+`{value, enabled}`. Per-half background pixmaps have zOrder 0; existing layout
+items remain at their original rectangles with zOrder 1. Status visibility skips
+the original slot rather than compacting the other indicators. The native
+loopback test checks these structured feedback messages. Renderer tests cover
+muted colors, shared/independent Combo styles and retained status positions.

@@ -2,9 +2,22 @@
   "id": "gain_controll_combo",
   "items": [
     {
+      "key": "background",
+      "rect": [0, 0, 100, 100],
+      "type": "pixmap",
+      "zOrder": 0
+    },
+    {
+      "key": "background1",
+      "rect": [100, 0, 100, 100],
+      "type": "pixmap",
+      "zOrder": 0
+    },
+    {
       "key": "icon",
       "rect": [8, 13, 20, 20],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "alignment": "right",
@@ -14,17 +27,20 @@
       },
       "key": "gainValue",
       "rect": [44, 40, 48, 24],
-      "type": "text"
+      "type": "text",
+      "zOrder": 1
     },
     {
       "key": "levelMeter",
       "rect": [8, 66, 84, 5],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "key": "gainSlider",
       "rect": [8, 74, 84, 12],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "alignment": "left",
@@ -35,17 +51,20 @@
       "key": "title",
       "rect": [30, 10, 62, 24],
       "text-overflow": "fade",
-      "type": "text"
+      "type": "text",
+      "zOrder": 1
     },
     {
       "key": "status",
       "rect": [8, 40, 36, 24],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "key": "icon1",
       "rect": [108, 13, 20, 20],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "alignment": "left",
@@ -56,7 +75,8 @@
       "key": "title1",
       "rect": [130, 10, 62, 24],
       "text-overflow": "fade",
-      "type": "text"
+      "type": "text",
+      "zOrder": 1
     },
     {
       "alignment": "right",
@@ -66,22 +86,26 @@
       },
       "key": "gainValue1",
       "rect": [144, 40, 48, 24],
-      "type": "text"
+      "type": "text",
+      "zOrder": 1
     },
     {
       "key": "levelMeter1",
       "rect": [108, 66, 84, 5],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "key": "gainSlider1",
       "rect": [108, 74, 84, 12],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "key": "status1",
       "rect": [108, 40, 36, 24],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     }
   ]
 }

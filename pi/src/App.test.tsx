@@ -25,6 +25,25 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("edits shared and independent dial appearances without changing targets or steps", async () => {
+    const {client}=await setup();
+    expect((screen.getByLabelText("Use the same appearance on both sides") as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(screen.getByLabelText("Show gain value"));
+    let saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial.styles[0].showGain).toBe(false);
+    expect(saved.channels).toEqual(defaultSettings.channels);
+    fireEvent.change(screen.getByLabelText("Color preset"),{target:{value:"voicemeeter"}});
+    saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial.styles[0].palette.barColor).toBe("#70c399");
+    expect(saved.dial.styles[0].showGain).toBe(false);
+    fireEvent.click(screen.getByLabelText("Use the same appearance on both sides"));
+    const right=within(screen.getByRole("group",{name:"Right dial appearance"}));
+    fireEvent.click(right.getByLabelText("Show routing"));
+    saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial.styles[1].showRouting).toBe(false);
+    expect(saved.dial.styles[0].showRouting).toBe(true);
+  });
+
   it("defaults the current-level notch off and saves the explicit toggle", async () => {
     const settings=structuredClone(defaultSettings);
     settings.gainButton.appearance="horizontal";
@@ -312,7 +331,7 @@ describe("property inspector forms", () => {
     const { emit } = await setup("gain-control", defaultSettings, "ja-JP");
     expect(screen.queryByLabelText("Step (dB)")).toBeNull();
     emit("sendToPropertyInspector", { event: "status", connected: true, edition: "banana" });
-    expect(screen.getByRole("status").textContent).toContain("banana");
+    expect(screen.getAllByRole("status")[0].textContent).toContain("banana");
     emit("sendToPropertyInspector", { event: "status", connected: true, error: { code: "apiError", field: "" } });
     expect(screen.getByRole("alert").textContent).not.toContain("error.apiError");
   });

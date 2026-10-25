@@ -2,9 +2,16 @@
   "id": "gain_controll",
   "items": [
     {
+      "key": "background",
+      "rect": [0, 0, 200, 100],
+      "type": "pixmap",
+      "zOrder": 0
+    },
+    {
       "key": "icon",
       "rect": [16, 40, 48, 48],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "alignment": "right",
@@ -14,17 +21,20 @@
       },
       "key": "gainValue",
       "rect": [112, 40, 72, 24],
-      "type": "text"
+      "type": "text",
+      "zOrder": 1
     },
     {
       "key": "levelMeter",
       "rect": [76, 66, 108, 5],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "key": "gainSlider",
       "rect": [76, 74, 108, 12],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     },
     {
       "alignment": "left",
@@ -34,12 +44,14 @@
       },
       "key": "title",
       "rect": [16, 10, 136, 24],
-      "type": "text"
+      "type": "text",
+      "zOrder": 1
     },
     {
       "key": "status",
       "rect": [76, 40, 36, 24],
-      "type": "pixmap"
+      "type": "pixmap",
+      "zOrder": 1
     }
   ]
 }

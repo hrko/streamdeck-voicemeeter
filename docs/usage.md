@@ -156,3 +156,28 @@ shared palette definitions are not synchronized.
 Fader labels are clipped to the filled segment: lowering the gain hides text
 above the thumb (vertical) or to its right (horizontal). Text stays anchored
 at the bar end instead of moving or shrinking.
+
+### Dial appearance
+
+Gain Control and Gain Control Combo retain their original positions and sizes.
+Under **Dial appearance**, independently show or hide the label, gain value,
+icon, gain bar, stereo meter, Mute, Solo, routing, Mono/MC/K and EQ. Hidden items
+leave their space empty; the remaining items do not move. Hiding an indicator
+does not disable its corresponding VoiceMeeter operation.
+
+Color presets and saved user palettes are shared with Gain Button. Applying a
+preset changes the common colors only, keeping channels, steps, icons and display
+options intact. **Adjust colors** contains bar, label, background and normal/muted
+meter colors. The empty-bar color and normal/positive gain-number colors are
+separate dial options; they are not part of the common palette. Positive-gain
+highlighting controls the positive bar, label and gain-number colors together.
+
+Combo defaults to **Use the same appearance on both sides**. Turn it off to edit
+the right-hand style separately. The right-hand style is retained while sharing
+is enabled; turning sharing off restores it. Channel selection, gain steps and
+icon choices always remain independent. The shared style is the left-hand style.
+
+Existing settings receive the original layout, green/red gain bar and white text.
+The current-level unlit-cell marker defaults to off, and muted meters use the
+muted palette colors. Stream Deck still renders the native text (font size,
+alignment and overflow); the appearance controls specify its color and visibility.

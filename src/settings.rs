@@ -119,6 +119,7 @@ impl Default for MacroSettings {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Settings {
+    pub dial: DialSettings,
     pub schema_version: u32,
     pub channels: [ChannelSettings; 2],
     pub macro_button: MacroSettings,
@@ -219,10 +220,109 @@ impl Default for GainButtonSettings {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(default, rename_all = "camelCase")]
+pub struct DialPalette {
+    pub bar_color: String,
+    pub label_color: String,
+    pub positive_label_color: String,
+    pub thumb_color: String,
+    pub background: String,
+    pub muted_background: String,
+    pub positive_color: String,
+    pub meter_background: String,
+    pub meter_inactive: String,
+    pub meter_low: String,
+    pub meter_mid: String,
+    pub meter_high: String,
+    pub meter_muted_low: String,
+    pub meter_muted_mid: String,
+    pub meter_muted_high: String,
+    pub highlight_positive: bool,
+}
+impl Default for DialPalette {
+    fn default() -> Self {
+        let b = GainButtonSettings::default();
+        Self {
+            bar_color: "#70c399".into(),
+            label_color: "#ffffff".into(),
+            positive_label_color: "#ffffff".into(),
+            thumb_color: "#2c3d4d".into(),
+            background: b.background,
+            muted_background: b.muted_background,
+            positive_color: "#f8634d".into(),
+            meter_background: b.meter_background,
+            meter_inactive: b.meter_inactive,
+            meter_low: b.meter_low,
+            meter_mid: b.meter_mid,
+            meter_high: b.meter_high,
+            meter_muted_low: b.meter_muted_low,
+            meter_muted_mid: b.meter_muted_mid,
+            meter_muted_high: b.meter_muted_high,
+            highlight_positive: true,
+        }
+    }
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(default, rename_all = "camelCase")]
+pub struct DialStyle {
+    pub palette: DialPalette,
+    pub show_label: bool,
+    pub show_gain: bool,
+    pub show_icon: bool,
+    pub show_meter: bool,
+    pub show_bar: bool,
+    pub show_mute: bool,
+    pub show_solo: bool,
+    pub show_routing: bool,
+    pub show_mono: bool,
+    pub show_eq: bool,
+    pub meter_notch: bool,
+    pub empty_bar_color: String,
+    pub gain_color: String,
+    pub positive_gain_color: String,
+}
+impl Default for DialStyle {
+    fn default() -> Self {
+        Self {
+            palette: DialPalette::default(),
+            show_label: true,
+            show_gain: true,
+            show_icon: true,
+            show_meter: true,
+            show_bar: true,
+            show_mute: true,
+            show_solo: true,
+            show_routing: true,
+            show_mono: true,
+            show_eq: true,
+            meter_notch: false,
+            empty_bar_color: "#2c3d4d".into(),
+            gain_color: "#ffffff".into(),
+            positive_gain_color: "#ffffff".into(),
+        }
+    }
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[serde(default, rename_all = "camelCase")]
+pub struct DialSettings {
+    pub shared: bool,
+    pub styles: [DialStyle; 2],
+}
+impl Default for DialSettings {
+    fn default() -> Self {
+        Self {
+            shared: true,
+            styles: [DialStyle::default(), DialStyle::default()],
+        }
+    }
+}
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
             schema_version: SCHEMA_VERSION,
+            dial: DialSettings::default(),
             channels: [
                 ChannelSettings::default(),
                 ChannelSettings {
@@ -319,6 +419,33 @@ impl Settings {
             }
             channel.icon.validate(&format!("{field}.icon"))?;
         }
+        for style in &self.dial.styles {
+            let p = &style.palette;
+            for color in [
+                &p.bar_color,
+                &p.label_color,
+                &p.positive_label_color,
+                &p.thumb_color,
+                &p.background,
+                &p.muted_background,
+                &p.positive_color,
+                &p.meter_background,
+                &p.meter_inactive,
+                &p.meter_low,
+                &p.meter_mid,
+                &p.meter_high,
+                &p.meter_muted_low,
+                &p.meter_muted_mid,
+                &p.meter_muted_high,
+                &style.empty_bar_color,
+                &style.gain_color,
+                &style.positive_gain_color,
+            ] {
+                if !valid_color(color) {
+                    return Err(ValidationError::new("invalidColor", "dial"));
+                }
+            }
+        }
         let m = &self.macro_button;
         let b = &self.gain_button;
         if !b.delta.is_finite() || b.delta == 0.0 || b.delta.abs() > 72.0 {
@@ -385,6 +512,9 @@ pub fn typescript() -> String {
         GainOperation::decl(),
         GainAppearance::decl(),
         GainButtonSettings::decl(),
+        DialPalette::decl(),
+        DialStyle::decl(),
+        DialSettings::decl(),
         Settings::decl(),
         ValidationError::decl(),
     ];

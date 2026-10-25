@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
-import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError, type GainButtonSettings } from "./generated/contracts";
+import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError, type GainButtonSettings, type DialStyle } from "./generated/contracts";
 import { channelLimits, restoreSettings, validateSettings } from "./settings";
 import glyphs from "./generated/glyphs.json";
 import { gainPalettes, gainPaletteName, meterColorKeys, paletteOf, readPalettes, samePalette, type UserPalette } from "./gainColors";
@@ -225,6 +225,34 @@ function GainButtonEditor({ client, value, onChange }: { client: StreamDeckPiApi
   </>;
 }
 
+function DialEditor({client,value,onChange}: {client:StreamDeckPiApi;value:DialStyle;onChange:(value:DialStyle)=>void}) {
+  const {t}=useTranslation();
+  const patch=(change:Partial<DialStyle>)=>onChange({...value,...change});
+  const color=(key:keyof DialStyle["palette"],v:string|boolean)=>patch({palette:{...value.palette,[key]:v}});
+  return <>
+    <fieldset><legend>{t("dial.items")}</legend>
+      {(["showLabel","showGain","showIcon","showBar","showMeter","showMute","showSolo","showRouting","showMono","showEq"] as const).map(key=><Row key={key} label={t(`dial.${key}`)}><input type="checkbox" aria-label={t(`dial.${key}`)} checked={value[key]} onChange={e=>patch({[key]:e.target.checked})}/></Row>)}
+      {value.showMeter && <Row label={t("button.meterNotch")}><input type="checkbox" aria-label={t("button.meterNotch")} checked={value.meterNotch} onChange={e=>patch({meterNotch:e.target.checked})}/></Row>}
+    </fieldset>
+    <PaletteEditor client={client} value={{...defaultSettings.gainButton,...value.palette}} onChange={v=>patch({palette:paletteOf(v)})}/>
+    <details><summary>{t("palette.adjustColors")}</summary>
+      <fieldset><legend>{t("dial.barColors")}</legend>
+        {(["barColor","positiveColor","labelColor","positiveLabelColor"] as const).map(key=><ColorEditor key={key} label={t(`button.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
+        <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.palette.highlightPositive} onChange={e=>color("highlightPositive",e.target.checked)}/></Row>
+        <ColorEditor label={t("dial.emptyBarColor")} value={value.emptyBarColor} onChange={emptyBarColor=>patch({emptyBarColor})}/>
+        <ColorEditor label={t("dial.gainColor")} value={value.gainColor} onChange={gainColor=>patch({gainColor})}/>
+        <ColorEditor label={t("dial.positiveGainColor")} value={value.positiveGainColor} onChange={positiveGainColor=>patch({positiveGainColor})}/>
+      </fieldset>
+      <fieldset><legend>{t("dial.background")}</legend>
+        {(["background","mutedBackground"] as const).map(key=><ColorEditor key={key} label={t(`button.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
+      </fieldset>
+      <fieldset><legend>{t("meter.colors")}</legend>
+        {meterColorKeys.map(key=><ColorEditor key={key} label={t(`meter.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
+      </fieldset>
+    </details>
+  </>;
+}
+
 export function App({ client }: { client: StreamDeckPiApi }) {
   const { t } = useTranslation();
   const [restored, setRestored] = useState(() => restoreSettings(client.actionInfo?.payload?.settings ?? {}));
@@ -271,6 +299,11 @@ export function App({ client }: { client: StreamDeckPiApi }) {
         save({ ...settings, channels });
       }} />)}
       {action === "gain-control-combo" && <p className="help">{t("help.combo")}</p>}
+      {action === "gain-control-combo" && <Row label={t("dial.shared")}><input type="checkbox" aria-label={t("dial.shared")} checked={settings.dial.shared} onChange={e=>save({...settings,dial:{...settings.dial,shared:e.target.checked}})}/></Row>}
+      {(action === "gain-control-combo" && !settings.dial.shared ? [0,1] as const : [0] as const).map(index=><fieldset key={index}><legend>{t(index===1?"dial.rightAppearance":"dial.appearance")}</legend><DialEditor client={client} value={settings.dial.styles[index]} onChange={style=>{
+        const styles:Settings["dial"]["styles"]=[...settings.dial.styles]; styles[index]=style;
+        save({...settings,dial:{...settings.dial,styles}});
+      }}/></fieldset>)}
     </>}
     {!status.connected && <p className="help">{t("help.offline")}</p>}
   </main>;
