@@ -278,9 +278,9 @@ impl Default for DialPalette {
         let b = GainButtonSettings::default();
         Self {
             bar_color: "#70c399".into(),
-            label_color: "#ffffff".into(),
-            positive_label_color: "#ffffff".into(),
-            thumb_color: "#2c3d4d".into(),
+            label_color: "#286442".into(),
+            positive_label_color: "#862b20".into(),
+            thumb_color: "#70c399".into(),
             background: b.background,
             muted_background: b.muted_background,
             positive_color: "#f8634d".into(),

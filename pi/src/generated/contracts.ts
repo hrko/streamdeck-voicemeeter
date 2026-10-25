@@ -25,9 +25,9 @@ export const defaultSettings: Settings = {
       {
         "palette": {
           "barColor": "#70c399",
-          "labelColor": "#ffffff",
-          "positiveLabelColor": "#ffffff",
-          "thumbColor": "#2c3d4d",
+          "labelColor": "#286442",
+          "positiveLabelColor": "#862b20",
+          "thumbColor": "#70c399",
           "background": "#000000",
           "mutedBackground": "#000000",
           "positiveColor": "#f8634d",
@@ -68,9 +68,9 @@ export const defaultSettings: Settings = {
       {
         "palette": {
           "barColor": "#70c399",
-          "labelColor": "#ffffff",
-          "positiveLabelColor": "#ffffff",
-          "thumbColor": "#2c3d4d",
+          "labelColor": "#286442",
+          "positiveLabelColor": "#862b20",
+          "thumbColor": "#70c399",
           "background": "#000000",
           "mutedBackground": "#000000",
           "positiveColor": "#f8634d",

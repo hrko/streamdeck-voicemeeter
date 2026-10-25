@@ -45,3 +45,7 @@ it("places the default first and groups each opaque palette with its transparent
  expect(gainPaletteName({...defaultSettings.gainButton,...defaultSettings.dial.styles[0].palette})).toBe("default");
  expect(gainPalettes.default).toMatchObject({barColor:"#70c399",positiveColor:"#f8634d",emptyBarColor:"#2c3d4d",indicatorBackground:"#2c3d4d",indicatorOpacity:100,indicatorOutline:false,backgroundOpacity:0,mutedBackgroundOpacity:0});
 });
+
+it("keeps the default button thumb and label colors distinct from dial text", () => {
+ expect(gainPalettes.default).toMatchObject({barColor:"#70c399",thumbColor:"#70c399",labelColor:"#286442",positiveLabelColor:"#862b20",dialLabelColor:"#ffffff",dialPositiveLabelColor:"#ffffff"});
+});
