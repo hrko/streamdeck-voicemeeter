@@ -237,7 +237,7 @@ impl Default for GainButtonSettings {
             meter_low: "#a6a6a6".into(),
             meter_mid: "#1efe5b".into(),
             meter_high: "#fa0000".into(),
-            meter_muted_low: "#394547".into(),
+            meter_muted_low: "#424242".into(),
             meter_muted_mid: "#384b34".into(),
             meter_muted_high: "#583328".into(),
         }
@@ -304,7 +304,7 @@ impl Default for DialPalette {
             meter_low: "#85adb9".into(),
             meter_mid: b.meter_mid,
             meter_high: b.meter_high,
-            meter_muted_low: b.meter_muted_low,
+            meter_muted_low: "#394547".into(),
             meter_muted_mid: b.meter_muted_mid,
             meter_muted_high: b.meter_muted_high,
             highlight_positive: true,

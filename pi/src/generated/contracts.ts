@@ -220,7 +220,7 @@ export const defaultSettings: Settings = {
     "meterLow": "#a6a6a6",
     "meterMid": "#1efe5b",
     "meterHigh": "#fa0000",
-    "meterMutedLow": "#394547",
+    "meterMutedLow": "#424242",
     "meterMutedMid": "#384b34",
     "meterMutedHigh": "#583328"
   }

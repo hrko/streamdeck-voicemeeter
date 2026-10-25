@@ -9,8 +9,8 @@ export function paletteOf(value: GainButtonSettings): Palette {
   return Object.fromEntries(paletteKeys.map(key => [key, value[key]])) as Palette;
 }
 const base = paletteOf(defaultSettings.gainButton);
-const monochrome: Palette={...base,meterLow:"#a6a6a6",meterInactive:"#1b1b1b",indicatorOutlineColor:"#a0a0a0"};
-const voicemeeter: Palette = { ...base, meterLow:"#85adb9", meterInactive:"#191b1b", indicatorOutlineColor:"#91a4b5", emptyBarColor:"#2c3d4d", indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline:false, barColor: "#70c399", labelColor: "#286442", positiveLabelColor: "#862b20", thumbColor: "#70c399", background: "#2c3d4d", mutedBackground: "#2c3d4d", positiveColor: "#f8634d", highlightPositive: true };
+const monochrome: Palette={...base,meterMutedLow:"#424242",meterLow:"#a6a6a6",meterInactive:"#1b1b1b",indicatorOutlineColor:"#a0a0a0"};
+const voicemeeter: Palette = { ...base, meterMutedLow:"#394547", meterLow:"#85adb9", meterInactive:"#191b1b", indicatorOutlineColor:"#91a4b5", emptyBarColor:"#2c3d4d", indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline:false, barColor: "#70c399", labelColor: "#286442", positiveLabelColor: "#862b20", thumbColor: "#70c399", background: "#2c3d4d", mutedBackground: "#2c3d4d", positiveColor: "#f8634d", highlightPositive: true };
 const transparent = (palette:Palette, indicatorOutline:boolean):Palette => ({
   ...palette, backgroundOpacity:0, mutedBackgroundOpacity:0,
   indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline,

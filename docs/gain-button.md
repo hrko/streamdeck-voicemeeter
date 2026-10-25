@@ -239,4 +239,5 @@ palettes; older presets retain the former #91a4b5 outline. Active status and met
 colors remain semantic colors.
 
 Monochrome palettes also use #a6a6a6 for active low-level meter cells. Mid/high,
-muted colors, and Default/VoiceMeeter low-level colors remain unchanged.
+and Default/VoiceMeeter low-level colors remain unchanged. Muted low-level cells
+in monochrome palettes use neutral #424242; muted mid/high colors are retained.
