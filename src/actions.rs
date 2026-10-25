@@ -311,7 +311,12 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
         if !(0..200).contains(&payload.tap_x) {
             return Ok(());
         }
-        if let Some(command) = domain::tapped(Self::kind(), &ctx.settings(), payload.tap_x as u32) {
+        if let Some(command) = domain::touched(
+            Self::kind(),
+            &ctx.settings(),
+            payload.tap_x as u32,
+            payload.hold,
+        ) {
             self.command(ctx, command)?;
         }
         Ok(())

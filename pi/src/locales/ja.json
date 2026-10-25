@@ -168,7 +168,13 @@
     "button.palette.voicemeeterTransparent": "VoiceMeeter（透過・縁なし）",
     "button.palette.voicemeeterTransparentOutlined": "VoiceMeeter（透過・縁あり）",
     "button.palette.default": "標準",
-    "dial.indicatorOutlineColor": "縁の色"
+    "dial.indicatorOutlineColor": "縁の色",
+    "touch.title": "タッチ操作",
+    "touch.tapOperation": "タップ",
+    "touch.holdOperation": "長押し",
+    "touch.toggleMute": "Muteを切り替える",
+    "touch.resetGain": "0 dBへ戻す",
+    "touch.none": "何もしない"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

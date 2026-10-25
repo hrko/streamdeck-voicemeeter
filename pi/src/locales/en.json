@@ -168,7 +168,13 @@
     "button.palette.voicemeeterTransparent": "VoiceMeeter (transparent, no outline)",
     "button.palette.voicemeeterTransparentOutlined": "VoiceMeeter (transparent, outlined)",
     "button.palette.default": "Default",
-    "dial.indicatorOutlineColor": "Indicator outline color"
+    "dial.indicatorOutlineColor": "Indicator outline color",
+    "touch.title": "Touch controls",
+    "touch.tapOperation": "Tap",
+    "touch.holdOperation": "Long press",
+    "touch.toggleMute": "Toggle mute",
+    "touch.resetGain": "Reset to 0 dB",
+    "touch.none": "Do nothing"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

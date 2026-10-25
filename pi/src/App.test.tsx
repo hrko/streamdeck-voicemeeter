@@ -26,6 +26,22 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("saves independent single-channel tap and hold operations", async () => {
+    const {client,emit}=await setup("gain-control",{});
+    expect((screen.getByLabelText("Tap") as HTMLSelectElement).value).toBe("toggleMute");
+    expect((screen.getByLabelText("Long press") as HTMLSelectElement).value).toBe("resetGain");
+    fireEvent.change(screen.getByLabelText("Tap"),{target:{value:"none"}});
+    fireEvent.change(screen.getByLabelText("Long press"),{target:{value:"toggleMute"}});
+    const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial).toMatchObject({tapOperation:"none",holdOperation:"toggleMute"});
+    emit("didReceiveSettings",saved);
+    expect((screen.getByLabelText("Tap") as HTMLSelectElement).value).toBe("none");
+    expect((screen.getByLabelText("Long press") as HTMLSelectElement).value).toBe("toggleMute");
+  });
+  it("does not offer single-channel touch controls on Combo",async()=>{
+    await setup("gain-control-combo");
+    expect(screen.queryByLabelText("Long press")).toBeNull();
+  });
   it("selects the default palette for a new dial and lists it first", async () => {
     await setup("gain-control",{});
     const select=screen.getByLabelText("Color preset") as HTMLSelectElement;

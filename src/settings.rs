@@ -354,15 +354,27 @@ impl Default for DialStyle {
         }
     }
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum TouchOperation {
+    None,
+    ToggleMute,
+    ResetGain,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DialSettings {
+    pub tap_operation: TouchOperation,
+    pub hold_operation: TouchOperation,
     pub shared: bool,
     pub styles: [DialStyle; 2],
 }
 impl Default for DialSettings {
     fn default() -> Self {
         Self {
+            tap_operation: TouchOperation::ToggleMute,
+            hold_operation: TouchOperation::ResetGain,
             shared: true,
             styles: [DialStyle::default(), DialStyle::default()],
         }
@@ -594,6 +606,7 @@ pub fn typescript() -> String {
         DialPalette::decl(),
         DialMeterStyle::decl(),
         DialStyle::decl(),
+        TouchOperation::decl(),
         DialSettings::decl(),
         Settings::decl(),
         ValidationError::decl(),

@@ -10,7 +10,7 @@ or assign MacroButtons to keys.
 
 | Action | Controls |
 | --- | --- |
-| Gain Control | Turn to adjust gain; press or tap to toggle mute. |
+| Gain Control | Turn to adjust gain; press to toggle mute. By default, tap toggles mute and long press resets gain to 0 dB. Both touch actions can be changed or disabled in the settings. |
 | Gain Control Combo | Turn for the left channel; hold and turn for the right. Tap either half to toggle its mute. |
 | Macro | Toggle a MacroButton on each press, or keep it ON while holding the key in Push mode. |
 | Gain Button (development version) | Adjust or set channel gain, or toggle mute from a key. Static icons or paired horizontal/vertical faders. |

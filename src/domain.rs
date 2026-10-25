@@ -73,6 +73,26 @@ pub fn tapped(kind: ActionKind, settings: &Settings, x: u32) -> Option<Command> 
     }
 }
 
+/// Single-channel touch actions distinguish a tap from a hold. Combo keeps
+/// its existing left/right mute behavior regardless of the hold flag.
+pub fn touched(kind: ActionKind, settings: &Settings, x: u32, hold: bool) -> Option<Command> {
+    if kind != ActionKind::Gain {
+        return tapped(kind, settings, x);
+    }
+    use crate::settings::TouchOperation;
+    let operation = if hold {
+        settings.dial.hold_operation
+    } else {
+        settings.dial.tap_operation
+    };
+    let target = settings.channels[0].target;
+    match operation {
+        TouchOperation::None => None,
+        TouchOperation::ToggleMute => Some(Command::ToggleMute(target)),
+        TouchOperation::ResetGain => Some(Command::SetGain { target, gain: 0.0 }),
+    }
+}
+
 pub fn adjusted_gain(current: f32, delta: f32) -> Option<f32> {
     if !current.is_finite() || !delta.is_finite() {
         return None;
@@ -213,5 +233,56 @@ mod tests {
         s.macro_button.mode = ButtonMode::Toggle;
         assert_eq!(p.down("b", &s), Some(Command::ToggleMacro(0)));
         assert_eq!(p.release("b"), None);
+    }
+}
+
+#[cfg(test)]
+mod touch_tests {
+    use super::*;
+    use crate::settings::TouchOperation;
+    #[test]
+    fn gestures_have_independent_defaults_and_operations() {
+        let mut s = Settings::default();
+        let target = s.channels[0].target;
+        assert_eq!(
+            touched(ActionKind::Gain, &s, 50, false),
+            Some(Command::ToggleMute(target))
+        );
+        assert_eq!(
+            touched(ActionKind::Gain, &s, 50, true),
+            Some(Command::SetGain { target, gain: 0.0 })
+        );
+        for hold in [false, true] {
+            for op in [
+                TouchOperation::None,
+                TouchOperation::ToggleMute,
+                TouchOperation::ResetGain,
+            ] {
+                if hold {
+                    s.dial.hold_operation = op;
+                } else {
+                    s.dial.tap_operation = op;
+                }
+                let expected = match op {
+                    TouchOperation::None => None,
+                    TouchOperation::ToggleMute => Some(Command::ToggleMute(target)),
+                    TouchOperation::ResetGain => Some(Command::SetGain { target, gain: 0.0 }),
+                };
+                assert_eq!(touched(ActionKind::Gain, &s, 50, hold), expected);
+                assert_eq!(
+                    touched(ActionKind::Combo, &s, 150, hold),
+                    Some(Command::ToggleMute(s.channels[1].target))
+                );
+            }
+        }
+        let restored: Settings = serde_json::from_value(serde_json::json!({"dial":{}})).unwrap();
+        assert_eq!(restored.dial.tap_operation, TouchOperation::ToggleMute);
+        assert_eq!(restored.dial.hold_operation, TouchOperation::ResetGain);
+        assert!(
+            serde_json::from_value::<Settings>(
+                serde_json::json!({"dial":{"tapOperation":"unknown"}})
+            )
+            .is_err()
+        );
     }
 }

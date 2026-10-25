@@ -81,6 +81,7 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
   }
   const dial=value.dial;
   if (!record(dial) || typeof dial.shared!=="boolean" || !Array.isArray(dial.styles) || dial.styles.length!==2) return error("invalidSettings","dial");
+  for(const key of ["tapOperation","holdOperation"]) if(!["none","toggleMute","resetGain"].includes(String(dial[key]))) return error("invalidSettings",`dial.${key}`);
   for(const style of dial.styles) {
     if(!record(style) || !record(style.palette)) return error("invalidSettings","dial");
     for(const key of ["showLabel","showGain","showIcon","showBar","showMeter","showMute","showSolo","showRouting","showMono","showEq","meterNotch"]) {

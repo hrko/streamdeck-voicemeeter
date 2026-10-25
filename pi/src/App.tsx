@@ -312,6 +312,9 @@ export function App({ client }: { client: StreamDeckPiApi }) {
         channels[index] = channel;
         save({ ...settings, channels });
       }} />)}
+      {action === "gain-control" && <fieldset><legend>{t("touch.title")}</legend>
+        {(["tapOperation","holdOperation"] as const).map(key => <Select key={key} label={t(`touch.${key}`)} value={settings.dial[key]} options={[["toggleMute",t("touch.toggleMute")],["resetGain",t("touch.resetGain")],["none",t("touch.none")]]} onChange={operation=>save({...settings,dial:{...settings.dial,[key]:operation}})}/>)}
+      </fieldset>}
       {action === "gain-control-combo" && <p className="help">{t("help.combo")}</p>}
       {action === "gain-control-combo" && <Row label={t("dial.shared")}><input type="checkbox" aria-label={t("dial.shared")} checked={settings.dial.shared} onChange={e=>save({...settings,dial:{...settings.dial,shared:e.target.checked}})}/></Row>}
       {(action === "gain-control-combo" && !settings.dial.shared ? [0,1] as const : [0] as const).map(index=><fieldset key={index}><legend>{t(index===1?"dial.rightAppearance":"dial.appearance")}</legend><DialEditor client={client} value={settings.dial.styles[index]} onChange={style=>{

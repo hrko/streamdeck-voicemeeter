@@ -12,7 +12,8 @@ export type GainButtonSettings = { operation: GainOperation, delta: number, gain
 export type DialPalette = { barColor: string, labelColor: string, positiveLabelColor: string, thumbColor: string, background: string, mutedBackground: string, positiveColor: string, emptyBarColor: string, backgroundOpacity: number, mutedBackgroundOpacity: number, meterTrackOpacity: number, dialLabelColor: string, dialPositiveLabelColor: string, dialGainColor: string, dialPositiveGainColor: string, indicatorOutlineColor: string, indicatorBackground: string, indicatorOpacity: number, indicatorOutline: boolean, meterBackground: string, meterInactive: string, meterLow: string, meterMid: string, meterHigh: string, meterMutedLow: string, meterMutedMid: string, meterMutedHigh: string, highlightPositive: boolean, };
 export type DialMeterStyle = "cells" | "continuous";
 export type DialStyle = { palette: DialPalette, showLabel: boolean, showGain: boolean, showIcon: boolean, showMeter: boolean, showBar: boolean, showMute: boolean, showSolo: boolean, showRouting: boolean, showMono: boolean, showEq: boolean, meterNotch: boolean, meterStyle: DialMeterStyle, };
-export type DialSettings = { shared: boolean, styles: [DialStyle, DialStyle], };
+export type TouchOperation = "none" | "toggleMute" | "resetGain";
+export type DialSettings = { tapOperation: TouchOperation, holdOperation: TouchOperation, shared: boolean, styles: [DialStyle, DialStyle], };
 export type Settings = { dial: DialSettings, schemaVersion: number, channels: [ChannelSettings, ChannelSettings], macroButton: MacroSettings, gainButton: GainButtonSettings, };
 export type ValidationError = { code: string, field: string, };
 
@@ -20,6 +21,8 @@ export type Edition = "basic" | "banana" | "potato";
 
 export const defaultSettings: Settings = {
   "dial": {
+    "tapOperation": "toggleMute",
+    "holdOperation": "resetGain",
     "shared": true,
     "styles": [
       {

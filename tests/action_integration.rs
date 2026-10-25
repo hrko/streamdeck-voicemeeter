@@ -847,3 +847,55 @@ async fn adjacent_faders_sync_settings_and_refresh_sdk_without_echo_loops() {
         }
     }
 }
+
+#[tokio::test]
+async fn single_dial_touch_events_distinguish_hold_and_allow_disabling() {
+    let settings = Settings::default();
+    let target = settings.channels[0].target;
+    let (worker, mut action, sender, _output, state) =
+        setup::<0>(serde_json::to_value(&settings).unwrap()).await;
+    action
+        .handle(
+            event("dialRotate", json!({"ticks":2,"pressed":false})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().channels[&target].gain, 6.0);
+    action
+        .handle(
+            event("touchTap", json!({"tapPos":[50,50],"hold":true})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().channels[&target].gain, 0.0);
+    assert!(!state.lock().unwrap().channels[&target].mute);
+    action
+        .handle(
+            event("touchTap", json!({"tapPos":[50,50],"hold":false})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert!(state.lock().unwrap().channels[&target].mute);
+    let mut disabled = settings;
+    disabled.dial.tap_operation = streamdeck_voicemeeter::settings::TouchOperation::None;
+    disabled.dial.hold_operation = streamdeck_voicemeeter::settings::TouchOperation::None;
+    action.apply_settings(&serde_json::to_value(disabled).unwrap());
+    let before = state.lock().unwrap().writes.clone();
+    for hold in [true, false] {
+        action
+            .handle(
+                event("touchTap", json!({"tapPos":[50,50],"hold":hold})),
+                sender.clone(),
+            )
+            .await
+            .unwrap();
+    }
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().writes, before);
+}
