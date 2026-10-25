@@ -240,7 +240,6 @@ function GainButtonEditor({ client, value, onChange }: { client: StreamDeckPiApi
     {fader ? <>
       <PaletteEditor client={client} value={value} onChange={onChange} />
       <details><summary>{t("palette.adjustColors")}</summary>
-        <p className="help">{t("palette.includesMeter")}</p>
         <fieldset><legend>{t("palette.faderColors")}</legend>
           <ColorEditor label={t("button.barColor")} value={value.barColor} onChange={barColor => patch({ barColor })} />
           {(["keyMeterOpacity","keyInactiveOpacity","keyRailOpacity","keyThumbOpacity"] as const).map(key=><Row key={key} label={t(`button.${key}`)}><input type="range" min="0" max="100" aria-label={t(`button.${key}`)} value={value[key]} onChange={e=>patch({[key]:Number(e.target.value)})}/><output>{value[key]}%</output></Row>)}
@@ -265,7 +264,7 @@ function GainButtonEditor({ client, value, onChange }: { client: StreamDeckPiApi
       <ColorEditor label={t("button.background")} value={value.background} onChange={background => patch({ background })} />
       <ColorEditor label={t("button.mutedBackground")} value={value.mutedBackground} onChange={mutedBackground => patch({ mutedBackground })} />
     </>}
-    <p className="help">{t("button.help")}</p>
+    {value.operation === "adjust" && <p className="help">{t("button.help")}</p>}
   </>;
 }
 
@@ -368,7 +367,7 @@ export function App({ client }: { client: StreamDeckPiApi }) {
         <Select label={t("selection.mode")} value={settings.dial.selectChannel?"select":"hold"} options={[["hold",t("selection.hold")],["select",t("selection.select")]]} onChange={mode=>save({...settings,dial:{...settings.dial,selectChannel:mode==="select"}})}/>
         {settings.dial.selectChannel && <>
           <Select label={t("selection.switchMethod")} value={settings.dial.toggleSelection?"toggle":"position"} options={[["position",t("selection.position")],["toggle",t("selection.toggle")]]} onChange={method=>save({...settings,dial:{...settings.dial,toggleSelection:method==="toggle"}})}/>
-          <p className="help">{t(settings.dial.toggleSelection?"selection.toggleHelp":"selection.help")}</p>
+          <p className="help">{t("selection.help")}</p>
           <Select label={t("selection.marker")} value={settings.dial.selectionMarker} options={(["A","B","C","D","E","F","G","H"] as const).map(v=>[v,t(`selection.${v}`)])} onChange={selectionMarker=>save({...settings,dial:{...settings.dial,selectionMarker}})}/>
           {([0,1] as const).map(index=><div key={index}>
             <Select label={t(index===0?"selection.leftHold":"selection.rightHold")} value={settings.dial.comboHold[index]} options={[["none",t("touch.none")],["toggleMute",t("touch.toggleMute")],["resetGain",t("touch.resetGain")],["script",t("touch.script")]]} onChange={op=>{const comboHold=[...settings.dial.comboHold] as Settings["dial"]["comboHold"];comboHold[index]=op;save({...settings,dial:{...settings.dial,comboHold}});}}/>
@@ -378,12 +377,11 @@ export function App({ client }: { client: StreamDeckPiApi }) {
       </fieldset>}
       {action === "gain-control-combo" && !settings.dial.selectChannel && <p className="help">{t("help.combo")}</p>}
       {action === "gain-control-combo" && <Row label={t("dial.shared")}><input type="checkbox" aria-label={t("dial.shared")} checked={settings.dial.shared} onChange={e=>save({...settings,dial:{...settings.dial,shared:e.target.checked}})}/></Row>}
-      {(action === "gain-control-combo" && !settings.dial.shared ? [0,1] as const : [0] as const).map(index=><fieldset key={index}><legend>{t(index===1?"dial.rightAppearance":"dial.appearance")}</legend><DialEditor client={client} value={settings.dial.styles[index]} onChange={style=>{
+      {(action === "gain-control-combo" && !settings.dial.shared ? [0,1] as const : [0] as const).map(index=><fieldset key={index}><legend>{t(action !== "gain-control-combo" ? "dial.appearance" : settings.dial.shared ? "dial.sharedAppearance" : index===1 ? "dial.rightAppearance" : "dial.leftAppearance")}</legend><DialEditor client={client} value={settings.dial.styles[index]} onChange={style=>{
         const styles:Settings["dial"]["styles"]=[...settings.dial.styles]; styles[index]=style;
         save({...settings,dial:{...settings.dial,styles}});
       }}/></fieldset>)}
     </>}
     <GlobalSettingsEditor client={client}/>
-    {!status.connected && <p className="help">{t("help.offline")}</p>}
   </main>;
 }

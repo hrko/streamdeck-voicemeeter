@@ -56,7 +56,7 @@ describe("property inspector forms", () => {
     const calls=vi.mocked(client.setSettings).mock.calls.length;
     fireEvent.change(screen.getByLabelText("Tap command"),{target:{value:"x".repeat(4097)}});
     expect(vi.mocked(client.setSettings).mock.calls.length).toBe(calls);
-    expect(screen.getByRole("alert").textContent).toContain("4096");
+    expect(screen.getByRole("alert").textContent).toContain("too long");
     expect(client.sendToPlugin).toHaveBeenCalledTimes(1); // status request only
   });
   it("configures all Combo selection markers and saves their color in presets",async()=>{
@@ -141,7 +141,7 @@ describe("property inspector forms", () => {
     expect(saved.dial.styles[0].showGain).toBe(false);
     expect(saved.dial.styles[0].palette).toMatchObject({backgroundOpacity:100,mutedBackgroundOpacity:100,meterTrackOpacity:0,dialLabelColor:"#ffffff",dialPositiveLabelColor:"#ffffff",dialGainColor:"#ffffff",dialPositiveGainColor:"#ffffff"});
     fireEvent.click(screen.getByLabelText("Use the same appearance on both sides"));
-    const right=within(screen.getByRole("group",{name:"Right dial appearance"}));
+    const right=within(screen.getByRole("group",{name:"Right appearance"}));
     fireEvent.click(right.getByLabelText("Show routing"));
     saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
     expect(saved.dial.styles[1].showRouting).toBe(false);
@@ -162,16 +162,16 @@ describe("property inspector forms", () => {
     const settings=structuredClone(defaultSettings);settings.gainButton.appearance="vertical";
     const {client}=await setup("gain-button",settings);
     expect((screen.getByLabelText("Sync adjacent fader") as HTMLInputElement).checked).toBe(true);
-    expect(screen.getByLabelText("Label inside fader (left/lower key)")).toBeTruthy();
+    expect(screen.getByLabelText("Show label inside fader")).toBeTruthy();
     fireEvent.click(screen.getByLabelText("Sync adjacent fader"));
-    expect(screen.queryByLabelText("Label inside fader (left/lower key)")).toBeNull();
+    expect(screen.queryByLabelText("Show label inside fader")).toBeNull();
     fireEvent.change(screen.getByLabelText("Change (dB)"),{target:{value:"-3"}});
-    fireEvent.click(screen.getByLabelText("Label inside fader (left/lower key)"));
+    fireEvent.click(screen.getByLabelText("Show label inside fader"));
     fireEvent.change(screen.getByLabelText("Fader label color"),{target:{value:"#123456"}});
     const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
     expect(saved.gainButton).toMatchObject({faderLabel:true,labelColor:"#123456",showLabel:false});
     fireEvent.change(screen.getByLabelText("Display style"),{target:{value:"static"}});
-    expect(screen.queryByLabelText("Label inside fader (left/lower key)")).toBeNull();
+    expect(screen.queryByLabelText("Show label inside fader")).toBeNull();
     expect((screen.getByLabelText("Show channel label") as HTMLInputElement).checked).toBe(false);
   });
 
@@ -217,7 +217,7 @@ describe("property inspector forms", () => {
     const settings=structuredClone(defaultSettings);settings.gainButton.appearance="vertical";
     const {client,emit}=await setup("gain-button",settings);
     emit("didReceiveGlobalSettings",{gainColorPresets:{version:99,items:[]}});
-    expect(screen.getByRole("alert").textContent).toContain("Cannot update shared presets");
+    expect(screen.getByRole("alert").textContent).toContain("Cannot load or update shared presets");
     fireEvent.change(screen.getByLabelText("Preset name"),{target:{value:"new"}});
     expect((screen.getByRole("button",{name:"Save as new preset"}) as HTMLButtonElement).disabled).toBe(true);
     expect(client.setGlobalSettings).not.toHaveBeenCalled();
@@ -272,7 +272,7 @@ describe("property inspector forms", () => {
     expect(screen.getByText(/Lower half/)).toBeTruthy();
     fireEvent.click(screen.getByLabelText("Highlight above 0 dB"));
     fireEvent.change(screen.getByLabelText("Positive gain color"), { target: { value: "#ff0000" } });
-    fireEvent.click(screen.getByLabelText("Label inside fader (left/lower key)"));
+    fireEvent.click(screen.getByLabelText("Show label inside fader"));
     fireEvent.click(screen.getByLabelText("Show gain (dB)"));
     fireEvent.click(screen.getByLabelText("Show stereo meter"));
     let saved = vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
