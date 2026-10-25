@@ -74,7 +74,14 @@ pub fn frame(
     } else {
         &b.thumb_color
     });
-    let mut body = format!(r#"<rect width="144" height="144" fill="{bg}"/>"#);
+    let background_opacity = f32::from(if muted {
+        b.muted_background_opacity
+    } else {
+        b.background_opacity
+    }) / 100.0;
+    let mut body = format!(
+        r#"<rect width="144" height="144" fill="{bg}" fill-opacity="{background_opacity}"/>"#
+    );
     let mut missing = false;
     let fader = is_fader(settings);
     let vertical = fader && b.appearance == GainAppearance::Vertical;
@@ -280,6 +287,33 @@ pub fn frame(
 mod tests {
     use super::*;
     use crate::backend::ChannelSnapshot;
+
+    #[test]
+    fn key_background_respects_normal_and_muted_palette_opacity() {
+        let mut settings = Settings::default();
+        settings.gain_button.background_opacity = 0;
+        settings.gain_button.muted_background_opacity = 35;
+        let target = settings.channels[0].target;
+        let mut snapshot = Snapshot {
+            channels: vec![(target, ChannelSnapshot::default())],
+            ..Default::default()
+        };
+        for appearance in [
+            GainAppearance::Static,
+            GainAppearance::Horizontal,
+            GainAppearance::Vertical,
+        ] {
+            settings.gain_button.appearance = appearance;
+            snapshot.channels[0].1.mute = false;
+            let normal = frame(&snapshot, &settings, &mut IconCache::default(), "en").svg;
+            assert!(
+                normal.contains(r##"width="144" height="144" fill="#000000" fill-opacity="0""##)
+            );
+            snapshot.channels[0].1.mute = true;
+            let muted = frame(&snapshot, &settings, &mut IconCache::default(), "en").svg;
+            assert!(muted.contains(r#"fill-opacity="0.35""#));
+        }
+    }
 
     #[test]
     fn current_level_notch_is_opt_in_and_does_not_change_peak_extent() {

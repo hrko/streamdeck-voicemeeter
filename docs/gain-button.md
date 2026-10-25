@@ -275,3 +275,8 @@ anywhere-toggle method alternates the selection on each tap, regardless of its
 position. Long press always selects the touched side and executes that side's
 hold action; it does not toggle first. Saved explicit mode/hold values remain
 unchanged when defaults change.
+
+Gain-button backgrounds also honor backgroundOpacity and mutedBackgroundOpacity
+from the shared palette, for static and both fader styles. Transparent presets
+therefore produce transparent key backgrounds; foreground elements retain their
+own colors and opacity.
