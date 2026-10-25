@@ -129,7 +129,7 @@ impl Worker {
                     if engine.snapshot().edition.is_some() && now >= frame_at {
                         engine.refresh();
                         snapshots.send_replace(engine.snapshot().clone());
-                        frame_at = now + Duration::from_micros(66_667);
+                        frame_at = now + Duration::from_micros(33_333);
                     }
                     let request = receiver
                         .recv_timeout(Duration::from_millis(2))

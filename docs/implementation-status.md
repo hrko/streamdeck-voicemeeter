@@ -45,7 +45,7 @@ observations below describe their status at the time of verification.
   settings updates and disappearance release held MacroButtons.
 - Backend boundary and session engine with deduplicated target snapshots,
   generation checks, lifecycle macro release and fake-backend tests.
-- Dedicated worker with 10 ms polling, 15 fps snapshots, bounded command queue
+- Dedicated worker with 10 ms polling, 30 fps snapshots, bounded command queue
   and 1–10 second reconnect backoff compiles and passes Clippy.
 - Input queue saturation preserves FIFO delivery of lifecycle/release messages.
   SDK integration tests verify Combo steps, stopped rendering after disappearance,
