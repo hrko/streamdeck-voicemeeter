@@ -14,6 +14,7 @@ function proposal(s){
  s=s.replace(m[0],'</g>');
  s=s.replace(/(<circle cx="[\d.]+" cy="72" r="25" fill=")[^"]+(" stroke=")[^"]+(" stroke-width="6"\/>)/,'$1#000000" fill-opacity="0.8" stroke="#ffffff" stroke-width="6"/>');
  s=s.replace(/(height="24" fill="#000000")/g,'$1 fill-opacity="0.4"');
+ s=s.replaceAll('fill="#1b1b1b"', 'fill="#1b1b1b" fill-opacity="0.4"');
  return s;
 }
 const backgrounds=[['Warm', '<rect width="72" height="152" fill="#aca48e"/><path d="M0 0H34V152H0Z" fill="#57584e"/><path d="M25 0H44V152H25Z" fill="#d8d1bd"/>'],['Dark','<rect width="72" height="152" fill="#293b4e"/><path d="M0 30L72 80V120L0 70Z" fill="#657b85"/>'],['Bright','<rect width="72" height="152" fill="#dfc799"/><path d="M0 0L72 100V152L0 52Z" fill="#c76e43"/>']];
@@ -38,5 +39,5 @@ for(const scale of [1,3]){
    layers.push({input:await sharp(pair).resize(72*scale,152*scale,{kernel:'nearest'}).png().toBuffer(),left:x,top:60});
   }
  }
- await sharp(svg(w,h,body)).composite(layers).png().toFile(`${dir}/comparison-ring-${scale}x.png`);
+ await sharp(svg(w,h,body)).composite(layers).png().toFile(`${dir}/comparison-cells-${scale}x.png`);
 }
