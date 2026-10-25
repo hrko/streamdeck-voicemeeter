@@ -67,4 +67,4 @@ run = "node scripts/update-dependencies.mjs"
 run = "node scripts/update-dependencies.mjs --audit"
 
 [tasks."test:visual"]
-run = ["cargo run --locked --example gain_button_fixtures", "node scripts/check-fader-visual.mjs"]
+run = ["cargo run --locked --example gain_button_fixtures", "node scripts/check-fader-visual.mjs", "cargo run --locked --example dial_readability", "node scripts/check-dial-cells.mjs"]

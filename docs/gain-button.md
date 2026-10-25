@@ -186,8 +186,9 @@ nonempty legacy settings to preserve the existing opaque background.
 
 Dial meters default to meterStyle "cells"; "continuous" draws two continuous
 stereo lanes. Both use the same level scale and symmetric 2 px inner margin as
-the gain bar. Cell gaps are centered within each interval, so switching styles
-does not change the level boundaries. Meter decay, mute colors and the optional
+the gain bar. Cells use whole-pixel 1 px lights and 1 px gaps within each 2 px interval,
+so native-size rasterization retains distinct cells. Switching styles does not
+change the level interval boundaries. Meter decay, mute colors and the optional
 current-level notch are unchanged.
 
 The outer meter background matches the gain bar rim (black, opacity 160/255).

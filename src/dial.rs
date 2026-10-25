@@ -192,9 +192,10 @@ fn meter_styled(
             if continuous && !active {
                 continue;
             }
-            // Identical level boundaries in both styles, with symmetric half-gaps for cells.
-            let gap = if continuous { 0.0 } else { 0.35 };
-            let x = 2.0 + cell as f32 * 2.0 + gap / 2.0;
+            // Keep each cell on a whole pixel. Subpixel gaps blend into the lit pixel
+            // and look like a darker continuous line at native dial resolution.
+            let gap = if continuous { 0.0 } else { 1.0 };
+            let x = 2.0 + cell as f32 * 2.0;
             let y = 1.0 + side as f32 * 2.0 - if continuous { 0.2 } else { 0.0 };
             let height = if continuous { 1.4 } else { 1.0 };
             let opacity = if active { 1.0 } else { 0.28 };
@@ -575,7 +576,7 @@ mod tests {
         let meter = meter(108, 3, [-60.0, 12.0], [12.0; 2]);
         assert_eq!(meter.matches("height=\"1\"").count(), 104);
         assert!(meter.contains("#fa0000"));
-        assert!(meter.contains(r##"x="2.175" y="1" width="1.65" height="1" fill="#191b1b""##));
+        assert!(meter.contains(r##"x="2" y="1" width="1" height="1" fill="#191b1b""##));
         assert_eq!(meter.matches("<svg").count(), 1);
         assert!(!fader(108, -60.0).contains("#70c399"));
         assert!(fader(108, 12.0).contains(r##"width="104" height="8" rx="4" fill="#f8634d""##));
