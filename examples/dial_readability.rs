@@ -12,7 +12,7 @@ fn main() -> anyhow::Result<()> {
     let dir = "target/dial-readability";
     std::fs::create_dir_all(dir)?;
     let mut cases = Vec::new();
-    for id in 0..9 {
+    for id in 0..11 {
         let mut s = Settings::default();
         let d = &mut s.dial.styles[0];
         d.palette.background_opacity = 70;
@@ -57,6 +57,16 @@ fn main() -> anyhow::Result<()> {
                 s.dial.shared = false;
                 s.dial.styles[1].palette.background_opacity = 70;
                 s.dial.styles[1].palette.bar_color = "#8db7ff".into();
+            }
+            9 | 10 => {
+                d.palette = serde_json::from_value(serde_json::to_value(
+                    streamdeck_voicemeeter::settings::GainButtonSettings::default(),
+                )?)?;
+                d.palette.background_opacity = 0;
+                d.palette.muted_background_opacity = 0;
+                d.palette.indicator_background = "#000000".into();
+                d.palette.indicator_opacity = 62;
+                d.palette.indicator_outline = id == 10;
             }
             _ => {}
         }
