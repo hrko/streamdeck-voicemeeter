@@ -12,7 +12,7 @@ fn main() -> anyhow::Result<()> {
     let dir = "target/dial-readability";
     std::fs::create_dir_all(dir)?;
     let mut cases = Vec::new();
-    for id in 0..11 {
+    for id in 0..14 {
         let mut s = Settings::default();
         let d = &mut s.dial.styles[0];
         d.palette.background_opacity = 70;
@@ -67,6 +67,16 @@ fn main() -> anyhow::Result<()> {
                 d.palette.indicator_background = "#000000".into();
                 d.palette.indicator_opacity = 62;
                 d.palette.indicator_outline = id == 10;
+            }
+            11..=13 => {
+                d.palette.background_opacity = 0;
+                d.palette.muted_background_opacity = 0;
+                d.palette.indicator_background = "#2c3d4d".into();
+                d.palette.indicator_opacity = 100;
+                d.palette.indicator_outline = false;
+                d.palette.empty_bar_color = "#2c3d4d".into();
+                gain = if id == 12 { 6.0 } else { -6.0 };
+                mute = id == 13;
             }
             _ => {}
         }
