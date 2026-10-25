@@ -9,15 +9,25 @@ export function paletteOf(value: GainButtonSettings): Palette {
   return Object.fromEntries(paletteKeys.map(key => [key, value[key]])) as Palette;
 }
 const base = paletteOf(defaultSettings.gainButton);
+const voicemeeter: Palette = { ...base, emptyBarColor:"#2c3d4d", indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline:false, barColor: "#70c399", labelColor: "#286442", positiveLabelColor: "#862b20", thumbColor: "#70c399", background: "#2c3d4d", mutedBackground: "#2c3d4d", positiveColor: "#f8634d", highlightPositive: true };
+const transparent = (palette:Palette, indicatorOutline:boolean):Palette => ({
+  ...palette, backgroundOpacity:0, mutedBackgroundOpacity:0,
+  indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline,
+});
 export const gainPalettes = {
   standard: { ...base },
-  voicemeeter: { ...base, emptyBarColor:"#2c3d4d", indicatorBackground:"#000000", indicatorOpacity:62, indicatorOutline:false, barColor: "#70c399", labelColor: "#286442", positiveLabelColor: "#862b20", thumbColor: "#70c399", background: "#2c3d4d", mutedBackground: "#2c3d4d", positiveColor: "#f8634d", highlightPositive: true },
+  voicemeeter,
+  standardTransparent: transparent(base,false),
+  standardTransparentOutlined: transparent(base,true),
+  voicemeeterTransparent: transparent(voicemeeter,false),
+  voicemeeterTransparentOutlined: transparent(voicemeeter,true),
 } satisfies Record<string, Palette>;
+export const builtinPaletteNames=Object.keys(gainPalettes) as (keyof typeof gainPalettes)[];
 export function samePalette(a: Palette, b: Palette): boolean {
   return paletteKeys.every(key => typeof a[key] === "string" ? a[key].toLowerCase() === b[key] : a[key] === b[key]);
 }
 export function gainPaletteName(value: GainButtonSettings): keyof typeof gainPalettes | "custom" {
-  return (["standard", "voicemeeter"] as const).find(name => samePalette(value, gainPalettes[name])) ?? "custom";
+  return builtinPaletteNames.find(name => samePalette(value, gainPalettes[name])) ?? "custom";
 }
 const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 // Refuse malformed/unknown-version stores rather than overwrite user presets.

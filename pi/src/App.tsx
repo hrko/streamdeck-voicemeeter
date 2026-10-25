@@ -4,7 +4,7 @@ import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
 import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError, type GainButtonSettings, type DialStyle } from "./generated/contracts";
 import { channelLimits, restoreSettings, validateSettings } from "./settings";
 import glyphs from "./generated/glyphs.json";
-import { gainPalettes, gainPaletteName, meterColorKeys, paletteOf, readPalettes, samePalette, type UserPalette } from "./gainColors";
+import { builtinPaletteNames, gainPalettes, gainPaletteName, meterColorKeys, paletteOf, readPalettes, samePalette, type UserPalette } from "./gainColors";
 import { IconPicker } from "./IconPicker";
 
 export interface Status { connected: boolean; edition?: Edition; error?: ValidationError | null }
@@ -143,14 +143,14 @@ function PaletteEditor({ client, value, onChange }: { client: StreamDeckPiApi; v
   };
   return <fieldset><legend>{t("button.palette")}</legend>
     <Select label={t("button.palette")} value={choice} options={[
-      ...(["standard", "voicemeeter", "custom"] as const).map(key => [key, t(`button.palette.${key}`)] as [string,string]),
+      ...([...builtinPaletteNames, "custom"] as const).map(key => [key, t(`button.palette.${key}`)] as [string,string]),
       ...(items ?? []).map(item => [item.id, item.name] as [string,string])
     ]} onChange={id => {
       setConfirmDelete(false);
       const user = items?.find(item => item.id === id);
       setEditing(user?.id ?? ""); setName(user?.name ?? "");
       if (user) onChange({ ...value, ...user.colors });
-      else if (id === "standard" || id === "voicemeeter") onChange({ ...value, ...gainPalettes[id] });
+      else if (Object.hasOwn(gainPalettes,id)) onChange({ ...value, ...gainPalettes[id as keyof typeof gainPalettes] });
     }} />
     <details><summary>{t("palette.manage")}</summary>
       <p className="help">{t("palette.help")}</p>

@@ -162,7 +162,11 @@
     "dial.indicatorOutline": "Outline inactive indicators",
     "dial.indicatorColors": "Inactive indicators",
     "dial.indicatorBackground": "Indicator background",
-    "dial.indicatorOpacity": "Indicator background opacity"
+    "dial.indicatorOpacity": "Indicator background opacity",
+    "button.palette.standardTransparent": "White on black (transparent, no outline)",
+    "button.palette.standardTransparentOutlined": "White on black (transparent, outlined)",
+    "button.palette.voicemeeterTransparent": "VoiceMeeter (transparent, no outline)",
+    "button.palette.voicemeeterTransparentOutlined": "VoiceMeeter (transparent, outlined)"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

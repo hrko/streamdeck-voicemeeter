@@ -162,7 +162,11 @@
     "dial.indicatorOutline": "消灯インジケーターの縁を表示",
     "dial.indicatorColors": "消灯インジケーター",
     "dial.indicatorBackground": "背景色",
-    "dial.indicatorOpacity": "背景の不透明度"
+    "dial.indicatorOpacity": "背景の不透明度",
+    "button.palette.standardTransparent": "白黒（透過・縁なし）",
+    "button.palette.standardTransparentOutlined": "白黒（透過・縁あり）",
+    "button.palette.voicemeeterTransparent": "VoiceMeeter（透過・縁なし）",
+    "button.palette.voicemeeterTransparentOutlined": "VoiceMeeter（透過・縁あり）"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

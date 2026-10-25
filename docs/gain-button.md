@@ -219,3 +219,9 @@ values. Older user presets receive opaque normal/muted backgrounds, no meter
 track, and white dial text. Built-in presets use those same opacity/text defaults;
 new actions remain transparent until a preset is applied. Meter style, visibility,
 notch and shared/independent appearance are not changed by palette selection.
+
+Four built-in transparent presets are available: standard and VoiceMeeter,
+each with and without inactive indicator outlines. They retain their base
+palette colors, set both background opacities to zero, and use black inactive
+indicators at 62% opacity. Like the other built-ins, they are read-only and can
+be copied into a named user preset.

@@ -26,6 +26,16 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("applies and recognizes the four transparent presets in the PI", async () => {
+    const {client}=await setup("gain-control");
+    for(const id of ["standardTransparent","standardTransparentOutlined","voicemeeterTransparent","voicemeeterTransparentOutlined"]){
+      fireEvent.change(screen.getByLabelText("Color preset"),{target:{value:id}});
+      const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+      expect(saved.dial.styles[0].palette).toMatchObject({backgroundOpacity:0,mutedBackgroundOpacity:0,indicatorBackground:"#000000",indicatorOpacity:62,indicatorOutline:id.endsWith("Outlined")});
+      expect((screen.getByLabelText("Color preset") as HTMLSelectElement).value).toBe(id);
+      expect(saved.channels).toEqual(defaultSettings.channels);
+    }
+  });
   it("saves and restores dial meter style, track opacity and indicator outlines", async () => {
     const {client,emit}=await setup("gain-control");
     fireEvent.change(screen.getByLabelText("Meter style"),{target:{value:"continuous"}});

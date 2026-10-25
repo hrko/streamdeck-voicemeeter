@@ -1,5 +1,6 @@
+import { defaultSettings } from "./generated/contracts";
 import { expect, it } from "vitest";
-import { gainPalettes, readPalettes } from "./gainColors";
+import { gainPalettes, readPalettes, gainPaletteName } from "./gainColors";
 it("loads older shared palettes without losing meter colors when label color is absent", () => {
   const { labelColor: _label, positiveLabelColor: _positiveLabel, ...older } = gainPalettes.voicemeeter;
   const items = readPalettes({ gainColorPresets: { version: 1, items: [{ id: "user:old", name: "Old VM", colors: older }] } });
@@ -28,4 +29,13 @@ it("preserves opacity and independent dial text colors in shared presets", () =>
  for(const key of ["backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity","dialLabelColor","dialPositiveLabelColor","dialGainColor","dialPositiveGainColor"]) delete old[key];
  expect(readPalettes(wrap(old))?.[0].colors).toMatchObject({backgroundOpacity:100,mutedBackgroundOpacity:100,meterTrackOpacity:0,dialLabelColor:"#ffffff",dialGainColor:"#ffffff"});
  for(const key of ["backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"]) expect(readPalettes(wrap({...colors,[key]:101}))).toBeUndefined();
+});
+
+it("recognizes all four transparent variants without changing their base colors", () => {
+ for(const name of ["standardTransparent","standardTransparentOutlined","voicemeeterTransparent","voicemeeterTransparentOutlined"] as const){
+  const value=gainPalettes[name];
+  const base=name.startsWith("standard")?gainPalettes.standard:gainPalettes.voicemeeter;
+  expect(value).toEqual({...base,backgroundOpacity:0,mutedBackgroundOpacity:0,indicatorBackground:"#000000",indicatorOpacity:62,indicatorOutline:name.endsWith("Outlined")});
+  expect(gainPaletteName({...defaultSettings.gainButton,...value})).toBe(name);
+ }
 });
