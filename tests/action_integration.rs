@@ -970,3 +970,71 @@ async fn scripts_use_gesture_text_report_errors_and_discard_offline_input() {
     settle(&worker).await;
     assert_eq!(state.lock().unwrap().writes.len(), count);
 }
+
+#[tokio::test]
+async fn combo_selection_controls_rotation_persists_and_does_not_mute_on_tap() {
+    let mut settings = Settings::default();
+    settings.dial.select_channel = true;
+    settings.channels[1].gain_step = 1.0;
+    let right = settings.channels[1].target;
+    let left = settings.channels[0].target;
+    let (worker, mut action, sender, mut output, state) =
+        setup::<1>(serde_json::to_value(&settings).unwrap()).await;
+    action
+        .handle(
+            event("touchTap", json!({"tapPos":[150,50],"hold":false})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert!(state.lock().unwrap().writes.is_empty());
+    let mut persisted = None;
+    while let Ok(raw) = output.try_recv() {
+        let v: Value = serde_json::from_str(&raw).unwrap();
+        if v["event"] == "setSettings" {
+            persisted = Some(v["payload"].clone());
+        }
+    }
+    let saved = persisted.unwrap();
+    assert_eq!(saved["dial"]["selectedChannel"], 1);
+    for pressed in [false, true] {
+        action
+            .handle(
+                event("dialRotate", json!({"ticks":2,"pressed":pressed})),
+                sender.clone(),
+            )
+            .await
+            .unwrap();
+    }
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().channels[&right].gain, 4.0);
+    assert_eq!(state.lock().unwrap().channels[&left].gain, 0.0);
+    action
+        .handle(event("dialDown", json!({})), sender.clone())
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert!(state.lock().unwrap().channels[&right].mute);
+    action
+        .handle(event("willDisappear", json!({})), sender.clone())
+        .await
+        .unwrap();
+    action
+        .handle(
+            event("willAppear", json!({"settings":saved})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    action
+        .handle(
+            event("dialRotate", json!({"ticks":1,"pressed":false})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert_eq!(state.lock().unwrap().channels[&right].gain, 5.0);
+}

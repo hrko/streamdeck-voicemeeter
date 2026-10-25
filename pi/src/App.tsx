@@ -264,6 +264,7 @@ function DialEditor({client,value,onChange}: {client:StreamDeckPiApi;value:DialS
         <ColorEditor label={t("dial.positiveGainColor")} value={value.palette.dialPositiveGainColor} onChange={v=>color("dialPositiveGainColor",v)}/>
       </fieldset>
       <fieldset><legend>{t("dial.indicatorColors")}</legend>
+        <ColorEditor label={t("selection.color")} value={value.palette.selectionColor} onChange={v=>color("selectionColor",v)}/>
         <ColorEditor label={t("dial.indicatorOutlineColor")} value={value.palette.indicatorOutlineColor} onChange={v=>color("indicatorOutlineColor",v)}/>
         <ColorEditor label={t("dial.indicatorBackground")} value={value.palette.indicatorBackground} onChange={v=>color("indicatorBackground",v)}/>
         <Row label={t("dial.indicatorOpacity")}><input type="range" min="0" max="100" step="1" aria-label={t("dial.indicatorOpacity")} value={value.palette.indicatorOpacity} onChange={e=>patch({palette:{...value.palette,indicatorOpacity:Number(e.target.value)}})}/><output>{value.palette.indicatorOpacity}%</output></Row>
@@ -331,7 +332,18 @@ export function App({ client }: { client: StreamDeckPiApi }) {
             {settings.dial[key]==="script" && <ScriptEditor label={t(`touch.${scriptKey}`)} value={settings.dial[scriptKey]} onChange={script=>save({...settings,dial:{...settings.dial,[scriptKey]:script}})}/>}</div>;
         })}
       </fieldset>}
-      {action === "gain-control-combo" && <p className="help">{t("help.combo")}</p>}
+      {action === "gain-control-combo" && <fieldset><legend>{t("selection.mode")}</legend>
+        <Select label={t("selection.mode")} value={settings.dial.selectChannel?"select":"hold"} options={[["hold",t("selection.hold")],["select",t("selection.select")]]} onChange={mode=>save({...settings,dial:{...settings.dial,selectChannel:mode==="select"}})}/>
+        {settings.dial.selectChannel && <>
+          <p className="help">{t("selection.help")}</p>
+          <Select label={t("selection.marker")} value={settings.dial.selectionMarker} options={(["A","B","C","D","E","F","G","H"] as const).map(v=>[v,t(`selection.${v}`)])} onChange={selectionMarker=>save({...settings,dial:{...settings.dial,selectionMarker}})}/>
+          {([0,1] as const).map(index=><div key={index}>
+            <Select label={t(index===0?"selection.leftHold":"selection.rightHold")} value={settings.dial.comboHold[index]} options={[["none",t("touch.none")],["toggleMute",t("touch.toggleMute")],["resetGain",t("touch.resetGain")],["script",t("touch.script")]]} onChange={op=>{const comboHold=[...settings.dial.comboHold] as Settings["dial"]["comboHold"];comboHold[index]=op;save({...settings,dial:{...settings.dial,comboHold}});}}/>
+            {settings.dial.comboHold[index]==="script" && <ScriptEditor label={t(index===0?"selection.leftScript":"selection.rightScript")} value={settings.dial.comboScripts[index]} onChange={script=>{const comboScripts=[...settings.dial.comboScripts] as [string,string];comboScripts[index]=script;save({...settings,dial:{...settings.dial,comboScripts}});}}/>}
+          </div>)}
+        </>}
+      </fieldset>}
+      {action === "gain-control-combo" && !settings.dial.selectChannel && <p className="help">{t("help.combo")}</p>}
       {action === "gain-control-combo" && <Row label={t("dial.shared")}><input type="checkbox" aria-label={t("dial.shared")} checked={settings.dial.shared} onChange={e=>save({...settings,dial:{...settings.dial,shared:e.target.checked}})}/></Row>}
       {(action === "gain-control-combo" && !settings.dial.shared ? [0,1] as const : [0] as const).map(index=><fieldset key={index}><legend>{t(index===1?"dial.rightAppearance":"dial.appearance")}</legend><DialEditor client={client} value={settings.dial.styles[index]} onChange={style=>{
         const styles:Settings["dial"]["styles"]=[...settings.dial.styles]; styles[index]=style;

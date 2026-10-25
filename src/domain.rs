@@ -57,7 +57,12 @@ pub fn rotated(
     if matches!(kind, ActionKind::Macro | ActionKind::GainButton) || ticks == 0 {
         return None;
     }
-    let channel = &settings.channels[usize::from(kind == ActionKind::Combo && pressed)];
+    let index = if kind == ActionKind::Combo && settings.dial.select_channel {
+        usize::from(settings.dial.selected_channel.min(1))
+    } else {
+        usize::from(kind == ActionKind::Combo && pressed)
+    };
+    let channel = &settings.channels[index];
     Some(Command::AdjustGain {
         target: channel.target,
         delta: channel.gain_step * ticks as f32,

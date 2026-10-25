@@ -176,6 +176,7 @@ pub struct GainButtonSettings {
     pub dial_positive_label_color: String,
     pub dial_gain_color: String,
     pub dial_positive_gain_color: String,
+    pub selection_color: String,
     pub indicator_outline_color: String,
     pub indicator_background: String,
     pub indicator_opacity: u8,
@@ -228,6 +229,7 @@ impl Default for GainButtonSettings {
             dial_positive_label_color: "#ffffff".into(),
             dial_gain_color: "#ffffff".into(),
             dial_positive_gain_color: "#ffffff".into(),
+            selection_color: "#ffffff".into(),
             indicator_outline_color: "#a0a0a0".into(),
             indicator_background: "#808080".into(),
             indicator_opacity: 100,
@@ -262,6 +264,7 @@ pub struct DialPalette {
     pub dial_positive_label_color: String,
     pub dial_gain_color: String,
     pub dial_positive_gain_color: String,
+    pub selection_color: String,
     pub indicator_outline_color: String,
     pub indicator_background: String,
     pub indicator_opacity: u8,
@@ -295,6 +298,7 @@ impl Default for DialPalette {
             dial_positive_label_color: "#ffffff".into(),
             dial_gain_color: "#ffffff".into(),
             dial_positive_gain_color: "#ffffff".into(),
+            selection_color: "#ffffff".into(),
             indicator_outline_color: "#91a4b5".into(),
             indicator_background: "#2c3d4d".into(),
             indicator_opacity: b.indicator_opacity,
@@ -363,9 +367,26 @@ pub enum TouchOperation {
     Script,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+pub enum SelectionMarker {
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DialSettings {
+    pub select_channel: bool,
+    pub selected_channel: u8,
+    pub selection_marker: SelectionMarker,
+    pub combo_hold: [TouchOperation; 2],
+    pub combo_scripts: [String; 2],
     pub tap_script: String,
     pub hold_script: String,
     pub tap_operation: TouchOperation,
@@ -376,6 +397,11 @@ pub struct DialSettings {
 impl Default for DialSettings {
     fn default() -> Self {
         Self {
+            select_channel: false,
+            selected_channel: 0,
+            selection_marker: SelectionMarker::G,
+            combo_hold: [TouchOperation::None; 2],
+            combo_scripts: [String::new(), String::new()],
             tap_script: String::new(),
             hold_script: String::new(),
             tap_operation: TouchOperation::ToggleMute,
@@ -464,6 +490,17 @@ impl IconSettings {
 
 impl Settings {
     pub fn validate(&self) -> Result<(), ValidationError> {
+        if self.dial.selected_channel > 1 {
+            return Err(ValidationError::new(
+                "invalidSettings",
+                "dial.selectedChannel",
+            ));
+        }
+        for script in &self.dial.combo_scripts {
+            if script.contains('\0') || script.encode_utf16().count() > 4096 {
+                return Err(ValidationError::new("invalidScript", "dial.comboScripts"));
+            }
+        }
         for (field, script) in [
             ("dial.tapScript", &self.dial.tap_script),
             ("dial.holdScript", &self.dial.hold_script),
@@ -505,6 +542,7 @@ impl Settings {
             }
             let p = &style.palette;
             for color in [
+                &p.selection_color,
                 &p.indicator_outline_color,
                 &p.indicator_background,
                 &p.bar_color,
@@ -562,6 +600,7 @@ impl Settings {
             &b.dial_gain_color,
             &b.dial_positive_gain_color,
             &b.empty_bar_color,
+            &b.selection_color,
             &b.indicator_outline_color,
             &b.indicator_background,
             &b.background,
@@ -619,6 +658,7 @@ pub fn typescript() -> String {
         DialPalette::decl(),
         DialMeterStyle::decl(),
         DialStyle::decl(),
+        SelectionMarker::decl(),
         TouchOperation::decl(),
         DialSettings::decl(),
         Settings::decl(),

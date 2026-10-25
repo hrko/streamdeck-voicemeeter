@@ -59,6 +59,18 @@ describe("property inspector forms", () => {
     expect(screen.getByRole("alert").textContent).toContain("4096");
     expect(client.sendToPlugin).toHaveBeenCalledTimes(1); // status request only
   });
+  it("configures all Combo selection markers and saves their color in presets",async()=>{
+    const {client}=await setup("gain-control-combo",{});
+    fireEvent.change(screen.getByLabelText("Control mode"),{target:{value:"select"}});
+    expect((screen.getByLabelText("Selection marker") as HTMLSelectElement).value).toBe("G");
+    expect((screen.getByLabelText("Selection marker") as HTMLSelectElement).options.length).toBe(8);
+    fireEvent.change(screen.getByLabelText("Selection marker"),{target:{value:"H"}});
+    fireEvent.change(screen.getByLabelText("Selection color"),{target:{value:"#abcdef"}});
+    const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial).toMatchObject({selectChannel:true,selectionMarker:"H",selectedChannel:0});
+    expect(saved.dial.styles[0].palette.selectionColor).toBe("#abcdef");
+    expect(saved.dial.comboHold).toEqual(["none","none"]);
+  });
   it("selects the default palette for a new dial and lists it first", async () => {
     await setup("gain-control",{});
     const select=screen.getByLabelText("Color preset") as HTMLSelectElement;

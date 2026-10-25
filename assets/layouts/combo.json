@@ -144,6 +144,13 @@
       "type": "pixmap",
       "zOrder": 3,
       "enabled": false
+    },
+    {
+      "key": "selection",
+      "rect": [0, 0, 200, 100],
+      "type": "pixmap",
+      "zOrder": 10,
+      "enabled": false
     }
   ]
 }

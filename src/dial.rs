@@ -146,7 +146,36 @@ pub fn feedback(
             payload.insert(format!("{key}Compact{suffix}"), compact);
         }
     }
+    if combo {
+        let index = usize::from(settings.dial.selected_channel.min(1));
+        let style = &settings.dial.styles[if settings.dial.shared { 0 } else { index }];
+        payload.insert("selection".into(), serde_json::json!({"enabled":settings.dial.select_channel,"value":render::data_url(&selection_marker(settings.dial.selection_marker,index,&style.palette.selection_color))}));
+    }
     (Value::Object(payload), missing)
+}
+
+fn selection_marker(marker: crate::settings::SelectionMarker, index: usize, color: &str) -> String {
+    use crate::settings::SelectionMarker::*;
+    let shape = match marker {
+        A => r#"<path d="M10 5H90"/><path d="M46 6L50 10L54 6Z" fill="currentColor"/>"#,
+        B => r#"<path d="M10 91V95H90V91"/><path d="M46 94L50 90L54 94Z" fill="currentColor"/>"#,
+        C => r#"<rect x="3" y="3" width="94" height="94" rx="5"/>"#,
+        D => r#"<path d="M15 4H4V15M85 4H96V15M4 85V96H15M85 96H96V85"/>"#,
+        E => r#"<circle cx="50" cy="5" r="2" fill="currentColor"/>"#,
+        F => r#"<path d="M47 3.5H53L50 6.5Z" fill="currentColor"/>"#,
+        G => r#"<rect x="42" y="93" width="16" height="2" rx="1" fill="currentColor"/>"#,
+        H => r#"<rect x="3" y="18" width="2" height="10" rx="1" fill="currentColor"/>"#,
+    };
+    let subtle = matches!(marker, E | F | G | H);
+    let (back, front) = if subtle { (1, 0) } else { (4, 2) };
+    svg(
+        200,
+        100,
+        &format!(
+            r#"<g transform="translate({} 0)" fill="none" stroke-linejoin="round" stroke-linecap="round" color="{color}"><g stroke="black" stroke-opacity="0.55" stroke-width="{back}">{shape}</g><g stroke="{color}" stroke-width="{front}">{shape}</g></g>"#,
+            index * 100
+        ),
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -689,6 +718,34 @@ mod tests {
         );
         assert_eq!(frame["gainValue"]["enabled"], false);
         assert_eq!(frame["gainValueCompact"]["enabled"], false);
+    }
+
+    #[test]
+    fn selection_is_independent_of_hidden_items_and_uses_selected_palette() {
+        use crate::settings::SelectionMarker::*;
+        let mut settings = Settings::default();
+        assert_eq!(settings.dial.selection_marker, G);
+        assert!(!settings.dial.select_channel);
+        settings.dial.select_channel = true;
+        settings.dial.shared = false;
+        settings.dial.selected_channel = 1;
+        settings.dial.styles[1].palette.selection_color = "#123456".into();
+        settings.dial.styles[1].show_label = false;
+        settings.dial.styles[1].show_meter = false;
+        for marker in [A, B, C, D, E, F, G, H] {
+            settings.dial.selection_marker = marker;
+            let (frame, _) = feedback(
+                &Snapshot::default(),
+                &settings,
+                ActionKind::Combo,
+                &mut IconCache::default(),
+                "en",
+            );
+            assert_eq!(frame["selection"]["enabled"], true);
+            let source = selection_marker(marker, 1, "#123456");
+            assert!(source.contains("translate(100 0)"));
+            assert!(source.contains("#123456"));
+        }
     }
 
     #[test]

@@ -81,6 +81,9 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
   }
   const dial=value.dial;
   if (!record(dial) || typeof dial.shared!=="boolean" || !Array.isArray(dial.styles) || dial.styles.length!==2) return error("invalidSettings","dial");
+  if(typeof dial.selectChannel!=="boolean" || ![0,1].includes(dial.selectedChannel as number) || !["A","B","C","D","E","F","G","H"].includes(String(dial.selectionMarker))) return error("invalidSettings","dial");
+  if(!Array.isArray(dial.comboHold) || dial.comboHold.length!==2 || dial.comboHold.some(v=>!["none","toggleMute","resetGain","script"].includes(v))) return error("invalidSettings","dial.comboHold");
+  if(!Array.isArray(dial.comboScripts) || dial.comboScripts.length!==2 || dial.comboScripts.some(v=>typeof v!=="string" || v.length>4096 || v.includes("\0"))) return error("invalidScript","dial.comboScripts");
   for(const key of ["tapOperation","holdOperation"]) if(!["none","toggleMute","resetGain","script"].includes(String(dial[key]))) return error("invalidSettings",`dial.${key}`);
   for(const key of ["tapScript","holdScript"]) if(typeof dial[key]!=="string" || dial[key].length>4096 || dial[key].includes("\0")) return error("invalidScript",`dial.${key}`);
   for(const style of dial.styles) {
@@ -104,7 +107,7 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
   for (const key of ["indicatorOutline", "syncPair", "meterNotch", "highlightPositive", "showLabel", "faderLabel", "showDb", "showMeter", "swapMeter"]) {
     if (typeof button[key] !== "boolean") return error("invalidSettings", `gainButton.${key}`);
   }
-  for (const key of ["indicatorOutlineColor", "dialLabelColor", "dialPositiveLabelColor", "dialGainColor", "dialPositiveGainColor", "emptyBarColor", "indicatorBackground", "background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
+  for (const key of ["selectionColor", "indicatorOutlineColor", "dialLabelColor", "dialPositiveLabelColor", "dialGainColor", "dialPositiveGainColor", "emptyBarColor", "indicatorBackground", "background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
     if (typeof button[key] !== "string" || !/^#[\da-f]{6}$/i.test(button[key])) return error("invalidColor", `gainButton.${key}`);
   }
   const buttonIconError = icon(button.icon, "gainButton.icon") ?? icon(button.mutedIcon, "gainButton.mutedIcon");

@@ -24,6 +24,8 @@ or assign MacroButtons to keys.
 
 For single-channel Gain Control, **Run VoiceMeeter command** executes a custom Remote API script on tap or long press. Each gesture has its own command field. Separate commands with semicolons; editing does not execute them. API failures are shown in the inspector, with details in the plugin log.
 
+Combo also offers **Select channel by touch** mode. Tap either half to select it, turn to adjust it, and press the knob to toggle mute. Choose from eight selection markers (default: G, a short bottom line). Selection color is saved with color presets and defaults to white. Long-press actions can be configured separately for each side.
+
 ## Requirements and availability
 
 - Windows 10 or later, x64, and Stream Deck software 6.4 or later.

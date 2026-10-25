@@ -311,6 +311,25 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
         if !(0..200).contains(&payload.tap_x) {
             return Ok(());
         }
+        if Self::kind() == ActionKind::Combo && ctx.settings().dial.select_channel {
+            let index = usize::from(payload.tap_x >= 100);
+            if self.invalid_settings || ctx.settings().validate().is_err() {
+                return Ok(());
+            }
+            ctx.update_settings(|settings| settings.dial.selected_channel = index as u8)?;
+            self.update(ctx)?;
+            if payload.hold {
+                let settings = ctx.settings();
+                let mut single = settings.clone();
+                single.channels[0] = settings.channels[index].clone();
+                single.dial.hold_operation = settings.dial.combo_hold[index];
+                single.dial.hold_script = settings.dial.combo_scripts[index].clone();
+                if let Some(command) = domain::touched(ActionKind::Gain, &single, 0, true) {
+                    self.command(ctx, command)?;
+                }
+            }
+            return Ok(());
+        }
         if let Some(command) = domain::touched(
             Self::kind(),
             &ctx.settings(),
@@ -322,7 +341,15 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
         Ok(())
     }
     async fn on_dial_down(&mut self, _: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
-        if Self::kind() == ActionKind::Gain {
+        if Self::kind() == ActionKind::Combo && ctx.settings().dial.select_channel {
+            let settings = ctx.settings();
+            self.command(
+                ctx,
+                Command::ToggleMute(
+                    settings.channels[usize::from(settings.dial.selected_channel.min(1))].target,
+                ),
+            )?;
+        } else if Self::kind() == ActionKind::Gain {
             self.command(ctx, Command::ToggleMute(ctx.settings().channels[0].target))?;
         }
         Ok(())
