@@ -19,6 +19,9 @@ pub trait Backend {
     }
     fn connect(&mut self) -> anyhow::Result<Option<Edition>>;
     fn poll(&mut self) -> anyhow::Result<()>;
+    fn channel_label(&mut self, _target: Target) -> anyhow::Result<String> {
+        Ok(String::new())
+    }
     fn channel(&mut self, target: Target) -> anyhow::Result<ChannelSnapshot>;
     fn set_gain(&mut self, target: Target, value: f32) -> anyhow::Result<()>;
     fn set_mute(&mut self, target: Target, value: bool) -> anyhow::Result<()>;

@@ -7,7 +7,8 @@ import glyphs from "./generated/glyphs.json";
 import { builtinPaletteNames, gainPalettes, gainPaletteName, meterColorKeys, paletteOf, readPalettes, samePalette, type UserPalette } from "./gainColors";
 import { IconPicker } from "./IconPicker";
 
-export interface Status { connected: boolean; edition?: Edition; error?: ValidationError | null }
+type ChannelLabels = [ChannelSettings["target"], string][];
+export interface Status { channelLabels?: ChannelLabels; connected: boolean; edition?: Edition; error?: ValidationError | null }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return <div className="row"><span className="row-label">{label}</span><div className="row-value">{children}</div></div>;
@@ -128,10 +129,14 @@ function IconEditor({ value, onChange, background }: { value: IconSettings; onCh
   </>;
 }
 
-function ChannelEditor({ title, value, edition, onChange, targetOnly = false }: { title: string; value: ChannelSettings; edition?: Edition; onChange: (value: ChannelSettings) => void; targetOnly?: boolean }) {
+function ChannelEditor({ title, value, edition, channelLabels = [], onChange, targetOnly = false }: { title: string; value: ChannelSettings; edition?: Edition; channelLabels?: ChannelLabels; onChange: (value: ChannelSettings) => void; targetOnly?: boolean }) {
   const { t, i18n } = useTranslation();
   const count = edition ? channelLimits[edition][value.target.kind] : 8;
-  const label = (index: number) => t("channel.name", { kind: t(`kind.${value.target.kind}`), index: new Intl.NumberFormat(i18n.language).format(index) });
+  const label = (index: number) => {
+    const name = t("channel.name", { kind: value.target.kind === "strip" ? "Strip" : "Bus", index: new Intl.NumberFormat(i18n.language).format(index) });
+    const custom = channelLabels.find(([target]) => target.kind === value.target.kind && target.index === index)?.[1];
+    return custom?.trim() ? `${name} — ${custom}` : name;
+  };
   return <fieldset><legend>{title}</legend>
     <Select label={t("field.kind")} value={value.target.kind} options={[["strip", t("kind.strip")], ["bus", t("kind.bus")]]} onChange={kind => onChange({ ...value, target: { ...value.target, kind } })} />
     <Row label={t("field.index")}><select aria-label={t("field.index")} value={value.target.index} onChange={event => {
@@ -322,7 +327,9 @@ export function App({ client }: { client: StreamDeckPiApi }) {
         const message = payload as Status;
         const edition = ["basic", "banana", "potato"].includes(String(message.edition)) ? message.edition : undefined;
         const error = message.error && typeof message.error.code === "string" ? message.error : undefined;
-        setStatus({ connected: message.connected, edition, error });
+        const channelLabels: ChannelLabels = message.connected && Array.isArray(message.channelLabels)
+          ? message.channelLabels.filter((entry): entry is ChannelLabels[number] => Array.isArray(entry) && entry.length === 2 && entry[0] && ["strip","bus"].includes(entry[0].kind) && Number.isInteger(entry[0].index) && typeof entry[1] === "string") : [];
+        setStatus({ connected: message.connected, edition, error, channelLabels });
       }
     });
     client.sendToPlugin({ event: "getStatus" });
@@ -340,7 +347,7 @@ export function App({ client }: { client: StreamDeckPiApi }) {
     <p role="status" className="status">{status.connected ? t("status.connected", { edition: status.edition }) : t("status.disconnected")}</p>
     {error && <p role="alert" className="error">{t(`error.${error.code}`, { defaultValue: t("error.invalidSettings") })}</p>}
     {!settings ? <button onClick={() => save(structuredClone(defaultSettings))}>{t("settings.reset")}</button> : action === "gain-button" ? <>
-      <ChannelEditor title={t("section.target")} value={settings.channels[0]} edition={status.connected ? status.edition : undefined} targetOnly onChange={channel => save({ ...settings, channels: [channel, settings.channels[1]] })} />
+      <ChannelEditor title={t("section.target")} value={settings.channels[0]} edition={status.connected ? status.edition : undefined} channelLabels={status.channelLabels} targetOnly onChange={channel => save({ ...settings, channels: [channel, settings.channels[1]] })} />
       <GainButtonEditor client={client} value={settings.gainButton} onChange={gainButton => save({ ...settings, gainButton })} />
     </> : action === "macro" ? <>
       <Input label={t("field.logicalId")} numeric value={settings.macroButton.logicalId} validate={text => /^\d+$/.test(text) && Number(text) < 80 ? undefined : "macroOutOfRange"} onCommit={text => save({ ...settings, macroButton: { ...settings.macroButton, logicalId: Number(text) } })} />
@@ -351,7 +358,7 @@ export function App({ client }: { client: StreamDeckPiApi }) {
         <ColorEditor label={t(`field.color${state}`)} value={settings.macroButton[`color${state}`]} onChange={color => save({ ...settings, macroButton: { ...settings.macroButton, [`color${state}`]: color } })} />
       </fieldset>)}
     </> : <>
-      {(action === "gain-control-combo" ? [0, 1] as const : [0] as const).map(index => <ChannelEditor key={index} edition={status.connected ? status.edition : undefined} title={t(action === "gain-control-combo" ? (index === 0 ? "section.left" : "section.right") : "section.target")} value={settings.channels[index]} onChange={channel => {
+      {(action === "gain-control-combo" ? [0, 1] as const : [0] as const).map(index => <ChannelEditor key={index} edition={status.connected ? status.edition : undefined} channelLabels={status.channelLabels} title={t(action === "gain-control-combo" ? (index === 0 ? "section.left" : "section.right") : "section.target")} value={settings.channels[index]} onChange={channel => {
         const channels: Settings["channels"] = [...settings.channels];
         channels[index] = channel;
         save({ ...settings, channels });

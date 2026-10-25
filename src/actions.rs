@@ -192,7 +192,7 @@ impl<const KIND: u8> DeckAction<KIND> {
 }
 
 pub fn inspector_status(snapshot: &Snapshot, context: &str) -> Value {
-    json!({"event":"status", "edition":snapshot.edition, "connected":snapshot.edition.is_some(), "error":snapshot.errors.get(context).map(|code| json!({"code":code,"field":""}))})
+    json!({"event":"status", "channelLabels":snapshot.channel_labels, "edition":snapshot.edition, "connected":snapshot.edition.is_some(), "error":snapshot.errors.get(context).map(|code| json!({"code":code,"field":""}))})
 }
 
 /// Text feedback is extended with SVG meter/icon fields by the renderer.

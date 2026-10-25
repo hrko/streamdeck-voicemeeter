@@ -16,6 +16,7 @@ pub struct Subscription {
 #[derive(Debug, Clone, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Snapshot {
+    pub channel_labels: Vec<(Target, String)>,
     pub frame_sequence: u64,
     pub frame_elapsed_ms: u64,
     pub generation: u64,
@@ -62,6 +63,7 @@ impl<B: Backend> Engine<B> {
         self.snapshot.generation = self.snapshot.generation.wrapping_add(1);
         self.snapshot.edition = None;
         self.snapshot.channels.clear();
+        self.snapshot.channel_labels.clear();
         self.snapshot.meter_peaks.clear();
         self.meters.clear();
         self.snapshot.macros.clear();
@@ -194,6 +196,27 @@ impl<B: Backend> Engine<B> {
     }
 
     /// Read each visible target once even when multiple actions refer to it.
+    pub fn refresh_labels(&mut self) {
+        self.snapshot.channel_labels.clear();
+        let Some(edition) = self.snapshot.edition else {
+            return;
+        };
+        let (_, strips, _, buses) = edition.counts();
+        for (kind, count) in [
+            (crate::settings::TargetKind::Strip, strips),
+            (crate::settings::TargetKind::Bus, buses),
+        ] {
+            for index in 0..count {
+                let target = Target { kind, index };
+                if let Ok(label) = self.backend.channel_label(target)
+                    && !label.trim().is_empty()
+                {
+                    self.snapshot.channel_labels.push((target, label));
+                }
+            }
+        }
+    }
+
     pub fn record_frame(&mut self, elapsed_ms: u64) {
         self.snapshot.frame_sequence += 1;
         self.snapshot.frame_elapsed_ms = elapsed_ms;

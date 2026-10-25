@@ -453,3 +453,19 @@ it("changes plugin refresh rate without overwriting saved palettes", async()=>{
  expect((screen.getByLabelText("Refresh rate") as HTMLSelectElement).value).toBe("20");
  expect(client.setSettings).not.toHaveBeenCalled();
 });
+
+it("shows live channel labels without changing stored target IDs", async()=>{
+ const {client,emit}=await setup("gain-control",{},"ja");
+ emit("sendToPropertyInspector",{event:"status",connected:true,edition:"potato",channelLabels:[[{kind:"strip",index:6},"通話"],[{kind:"bus",index:1},"配信"]]});
+ expect(screen.getByRole("option",{name:"Strip（入力）"})).toBeTruthy();
+ expect(screen.getByRole("option",{name:"Bus（出力）"})).toBeTruthy();
+ expect(screen.getByRole("option",{name:"Strip 6 — 通話"})).toBeTruthy();
+ expect(screen.getByRole("option",{name:"Strip 0"})).toBeTruthy();
+ fireEvent.change(screen.getByLabelText("チャンネル"),{target:{value:"6"}});
+ expect((vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings).channels[0].target).toEqual({kind:"strip",index:6});
+ fireEvent.change(screen.getByLabelText("種類"),{target:{value:"bus"}});
+ expect(screen.getByRole("option",{name:"Bus 1 — 配信"})).toBeTruthy();
+ emit("sendToPropertyInspector",{event:"status",connected:true,edition:"basic",channelLabels:[]});
+ expect(screen.queryByRole("option",{name:"Bus 1 — 配信"})).toBeNull();
+ expect(screen.getByRole("option",{name:"Bus 1"})).toBeTruthy();
+});

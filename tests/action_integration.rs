@@ -54,6 +54,16 @@ impl Backend for Fake {
         anyhow::ensure!(!self.0.lock().unwrap().unavailable, "simulated outage");
         Ok(())
     }
+    fn channel_label(&mut self, target: Target) -> anyhow::Result<String> {
+        Ok(self
+            .0
+            .lock()
+            .unwrap()
+            .channels
+            .get(&target)
+            .map(|c| c.label.clone())
+            .unwrap_or_default())
+    }
     fn channel(&mut self, target: Target) -> anyhow::Result<ChannelSnapshot> {
         Ok(self
             .0
@@ -1129,4 +1139,49 @@ async fn global_refresh_rate_changes_shared_worker_cadence() {
         fast < slow,
         "30 fps interval {fast}, 15 fps interval {slow}"
     );
+}
+
+#[test]
+fn inspector_catalog_includes_unsubscribed_labels_and_clears_on_disconnect() {
+    let state = Arc::new(Mutex::new(State::default()));
+    let target = Target {
+        kind: streamdeck_voicemeeter::settings::TargetKind::Strip,
+        index: 6,
+    };
+    state.lock().unwrap().channels.insert(
+        target,
+        ChannelSnapshot {
+            label: "通話".into(),
+            ..Default::default()
+        },
+    );
+    let mut engine = streamdeck_voicemeeter::engine::Engine::new(Fake(state.clone()));
+    engine.connect().unwrap();
+    engine.refresh_labels();
+    assert_eq!(
+        engine.snapshot().channel_labels,
+        vec![(target, "通話".into())]
+    );
+    assert!(engine.snapshot().channels.is_empty());
+    state
+        .lock()
+        .unwrap()
+        .channels
+        .get_mut(&target)
+        .unwrap()
+        .label
+        .clear();
+    engine.refresh_labels();
+    assert!(engine.snapshot().channel_labels.is_empty());
+    state
+        .lock()
+        .unwrap()
+        .channels
+        .get_mut(&target)
+        .unwrap()
+        .label = "Renamed".into();
+    engine.refresh_labels();
+    assert_eq!(engine.snapshot().channel_labels[0].1, "Renamed");
+    engine.disconnect();
+    assert!(engine.snapshot().channel_labels.is_empty());
 }

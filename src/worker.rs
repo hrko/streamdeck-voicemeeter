@@ -102,6 +102,7 @@ impl Worker {
                 let mut poll_at = Instant::now();
                 let started = Instant::now();
                 let mut frame_at = started;
+                let mut labels_at = started;
                 let mut frame_period = Duration::from_secs_f64(1.0 / 15.0);
                 while !stopped.load(Ordering::Acquire) {
                     let now = Instant::now();
@@ -110,6 +111,7 @@ impl Worker {
                             Ok(true) => {
                                 backoff = Duration::from_secs(1);
                                 frame_at = now;
+                                labels_at = now;
                             }
                             result => {
                                 if let Err(error) = result {
@@ -128,6 +130,10 @@ impl Worker {
                             snapshots.send_replace(engine.snapshot().clone());
                         }
                         poll_at = now + Duration::from_millis(10);
+                    }
+                    if engine.snapshot().edition.is_some() && now >= labels_at {
+                        engine.refresh_labels();
+                        labels_at = now + Duration::from_secs(1);
                     }
                     if now >= frame_at {
                         engine.refresh();

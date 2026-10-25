@@ -241,6 +241,11 @@ impl Backend for Remote {
         Ok(())
     }
 
+    fn channel_label(&mut self, target: Target) -> Result<String> {
+        self.check_target(target)?;
+        self.label(target)
+    }
+
     fn channel(&mut self, target: Target) -> Result<ChannelSnapshot> {
         let edition = self.check_target(target)?;
         let name = prefix(target);
