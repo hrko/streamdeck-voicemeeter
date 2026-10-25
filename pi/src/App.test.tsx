@@ -69,7 +69,20 @@ describe("property inspector forms", () => {
     const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
     expect(saved.dial).toMatchObject({selectChannel:true,selectionMarker:"H",selectedChannel:0});
     expect(saved.dial.styles[0].palette.selectionColor).toBe("#abcdef");
-    expect(saved.dial.comboHold).toEqual(["none","none"]);
+    expect(saved.dial.comboHold).toEqual(["toggleMute","toggleMute"]);
+  });
+  it("defaults Combo to selection and saves anywhere switching",async()=>{
+    const {client}=await setup("gain-control-combo",{});
+    expect((screen.getByLabelText("Control mode") as HTMLSelectElement).value).toBe("select");
+    expect((screen.getByLabelText("Channel switching") as HTMLSelectElement).value).toBe("position");
+    expect((screen.getByLabelText("Left long press") as HTMLSelectElement).value).toBe("toggleMute");
+    expect((screen.getByLabelText("Right long press") as HTMLSelectElement).value).toBe("toggleMute");
+    fireEvent.change(screen.getByLabelText("Channel switching"),{target:{value:"toggle"}});
+    const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial.toggleSelection).toBe(true);
+    const old=restoreSettings({dial:{selectChannel:false,comboHold:["none","resetGain"]}}).settings!;
+    expect(old.dial.selectChannel).toBe(false);
+    expect(old.dial.comboHold).toEqual(["none","resetGain"]);
   });
   it("selects the default palette for a new dial and lists it first", async () => {
     await setup("gain-control",{});

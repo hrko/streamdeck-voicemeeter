@@ -176,6 +176,7 @@ mod tests {
     #[test]
     fn combo_uses_independent_steps_and_tap_boundary() {
         let mut s = Settings::default();
+        s.dial.select_channel = false;
         s.channels[0].gain_step = 1.0;
         s.channels[1].gain_step = 0.5;
         assert_eq!(

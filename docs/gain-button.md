@@ -259,13 +259,19 @@ have applied earlier commands; no rollback or automatic retry is performed.
 
 ### Combo channel selection
 
-Combo retains hold-and-turn as the default mode. In touch-selection mode, tap
+Combo defaults to touch-selection mode; hold-and-turn remains selectable. In touch-selection mode, tap
 selects a half without muting; rotation (including pressed rotation) adjusts the
 selected channel, and dial press toggles its mute. Selection is persisted per
 action. Holding selects the touched side and runs its independently configured
-hold action (default disabled). Arbitrary scripts retain their literal targets.
+hold action (default mute toggle for both sides). Arbitrary scripts retain their literal targets.
 All eight selection markers A–H are available; G is the short bottom line and
 is the default. Markers remain visible when labels/meters are hidden. The
 selected channel's palette supplies selectionColor (white in all built-ins).
 User palettes save this color; older palettes receive white. Marker shape and
 operation mode are not palette fields.
+
+The tap switching method defaults to selecting the touched side. An optional
+anywhere-toggle method alternates the selection on each tap, regardless of its
+position. Long press always selects the touched side and executes that side's
+hold action; it does not toggle first. Saved explicit mode/hold values remain
+unchanged when defaults change.

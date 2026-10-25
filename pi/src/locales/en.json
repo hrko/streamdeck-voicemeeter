@@ -198,7 +198,11 @@
     "selection.E": "E: Small dot",
     "selection.F": "F: Small triangle",
     "selection.G": "G: Short bottom line",
-    "selection.H": "H: Label-side mark"
+    "selection.H": "H: Label-side mark",
+    "selection.switchMethod": "Channel switching",
+    "selection.position": "Select the tapped side",
+    "selection.toggle": "Tap anywhere to switch sides",
+    "selection.toggleHelp": "Tap anywhere to switch to the other channel. Long press selects the touched side and runs its assigned action. Turn to adjust the selection; press the knob to toggle mute."
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

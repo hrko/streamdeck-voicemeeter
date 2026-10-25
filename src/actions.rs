@@ -312,7 +312,12 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
             return Ok(());
         }
         if Self::kind() == ActionKind::Combo && ctx.settings().dial.select_channel {
-            let index = usize::from(payload.tap_x >= 100);
+            let settings = ctx.settings();
+            let index = if !payload.hold && settings.dial.toggle_selection {
+                usize::from(1 - settings.dial.selected_channel.min(1))
+            } else {
+                usize::from(payload.tap_x >= 100)
+            };
             if self.invalid_settings || ctx.settings().validate().is_err() {
                 return Ok(());
             }

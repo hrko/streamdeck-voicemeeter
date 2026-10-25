@@ -198,7 +198,11 @@
     "selection.E": "E：小さな点",
     "selection.F": "F：小さな三角",
     "selection.G": "G：下端の短い線",
-    "selection.H": "H：ラベル横の縦線"
+    "selection.H": "H：ラベル横の縦線",
+    "selection.switchMethod": "チャンネルの切替方法",
+    "selection.position": "タップした側を選択",
+    "selection.toggle": "どこでもタップで左右を切り替え",
+    "selection.toggleHelp": "どこをタップしても反対側に切り替えます。長押しは触れた側を選択し、指定の操作を実行します。回転で選択側のゲインを調整し、ノブ押下でMuteを切り替えます。"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

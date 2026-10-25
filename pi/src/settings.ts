@@ -81,7 +81,7 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
   }
   const dial=value.dial;
   if (!record(dial) || typeof dial.shared!=="boolean" || !Array.isArray(dial.styles) || dial.styles.length!==2) return error("invalidSettings","dial");
-  if(typeof dial.selectChannel!=="boolean" || ![0,1].includes(dial.selectedChannel as number) || !["A","B","C","D","E","F","G","H"].includes(String(dial.selectionMarker))) return error("invalidSettings","dial");
+  if(typeof dial.toggleSelection!=="boolean" || typeof dial.selectChannel!=="boolean" || ![0,1].includes(dial.selectedChannel as number) || !["A","B","C","D","E","F","G","H"].includes(String(dial.selectionMarker))) return error("invalidSettings","dial");
   if(!Array.isArray(dial.comboHold) || dial.comboHold.length!==2 || dial.comboHold.some(v=>!["none","toggleMute","resetGain","script"].includes(v))) return error("invalidSettings","dial.comboHold");
   if(!Array.isArray(dial.comboScripts) || dial.comboScripts.length!==2 || dial.comboScripts.some(v=>typeof v!=="string" || v.length>4096 || v.includes("\0"))) return error("invalidScript","dial.comboScripts");
   for(const key of ["tapOperation","holdOperation"]) if(!["none","toggleMute","resetGain","script"].includes(String(dial[key]))) return error("invalidSettings",`dial.${key}`);

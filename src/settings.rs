@@ -382,6 +382,7 @@ pub enum SelectionMarker {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DialSettings {
+    pub toggle_selection: bool,
     pub select_channel: bool,
     pub selected_channel: u8,
     pub selection_marker: SelectionMarker,
@@ -397,10 +398,11 @@ pub struct DialSettings {
 impl Default for DialSettings {
     fn default() -> Self {
         Self {
-            select_channel: false,
+            toggle_selection: false,
+            select_channel: true,
             selected_channel: 0,
             selection_marker: SelectionMarker::G,
-            combo_hold: [TouchOperation::None; 2],
+            combo_hold: [TouchOperation::ToggleMute; 2],
             combo_scripts: [String::new(), String::new()],
             tap_script: String::new(),
             hold_script: String::new(),

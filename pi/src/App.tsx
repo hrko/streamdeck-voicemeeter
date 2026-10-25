@@ -335,7 +335,8 @@ export function App({ client }: { client: StreamDeckPiApi }) {
       {action === "gain-control-combo" && <fieldset><legend>{t("selection.mode")}</legend>
         <Select label={t("selection.mode")} value={settings.dial.selectChannel?"select":"hold"} options={[["hold",t("selection.hold")],["select",t("selection.select")]]} onChange={mode=>save({...settings,dial:{...settings.dial,selectChannel:mode==="select"}})}/>
         {settings.dial.selectChannel && <>
-          <p className="help">{t("selection.help")}</p>
+          <Select label={t("selection.switchMethod")} value={settings.dial.toggleSelection?"toggle":"position"} options={[["position",t("selection.position")],["toggle",t("selection.toggle")]]} onChange={method=>save({...settings,dial:{...settings.dial,toggleSelection:method==="toggle"}})}/>
+          <p className="help">{t(settings.dial.toggleSelection?"selection.toggleHelp":"selection.help")}</p>
           <Select label={t("selection.marker")} value={settings.dial.selectionMarker} options={(["A","B","C","D","E","F","G","H"] as const).map(v=>[v,t(`selection.${v}`)])} onChange={selectionMarker=>save({...settings,dial:{...settings.dial,selectionMarker}})}/>
           {([0,1] as const).map(index=><div key={index}>
             <Select label={t(index===0?"selection.leftHold":"selection.rightHold")} value={settings.dial.comboHold[index]} options={[["none",t("touch.none")],["toggleMute",t("touch.toggleMute")],["resetGain",t("touch.resetGain")],["script",t("touch.script")]]} onChange={op=>{const comboHold=[...settings.dial.comboHold] as Settings["dial"]["comboHold"];comboHold[index]=op;save({...settings,dial:{...settings.dial,comboHold}});}}/>

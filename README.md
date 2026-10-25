@@ -11,7 +11,7 @@ or assign MacroButtons to keys.
 | Action | Controls |
 | --- | --- |
 | Gain Control | Turn to adjust gain; press to toggle mute. By default, tap toggles mute and long press resets gain to 0 dB. Both touch actions can be changed or disabled in the settings. |
-| Gain Control Combo | Turn for the left channel; hold and turn for the right. Tap either half to toggle its mute. |
+| Gain Control Combo | Tap to select a channel, turn to adjust it, and press or long-press to toggle mute. The original hold-and-turn mode is also available. |
 | Macro | Toggle a MacroButton on each press, or keep it ON while holding the key in Push mode. |
 | Gain Button (development version) | Adjust or set channel gain, or toggle mute from a key. Static icons or paired horizontal/vertical faders. |
 
@@ -24,7 +24,7 @@ or assign MacroButtons to keys.
 
 For single-channel Gain Control, **Run VoiceMeeter command** executes a custom Remote API script on tap or long press. Each gesture has its own command field. Separate commands with semicolons; editing does not execute them. API failures are shown in the inspector, with details in the plugin log.
 
-Combo also offers **Select channel by touch** mode. Tap either half to select it, turn to adjust it, and press the knob to toggle mute. Choose from eight selection markers (default: G, a short bottom line). Selection color is saved with color presets and defaults to white. Long-press actions can be configured separately for each side.
+Combo defaults to **Select channel by touch** mode. Tap either half to select it, turn to adjust it, and press the knob to toggle mute. Choose from eight selection markers (default: G, a short bottom line). Selection color is saved with color presets and defaults to white. Long-press actions default to mute toggle and can be configured separately for each side. Channel switching can select the tapped side (default), or alternate sides on any tap. Existing saved choices are preserved.
 
 ## Requirements and availability
 

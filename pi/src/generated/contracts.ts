@@ -14,7 +14,7 @@ export type DialMeterStyle = "cells" | "continuous";
 export type DialStyle = { palette: DialPalette, showLabel: boolean, showGain: boolean, showIcon: boolean, showMeter: boolean, showBar: boolean, showMute: boolean, showSolo: boolean, showRouting: boolean, showMono: boolean, showEq: boolean, meterNotch: boolean, meterStyle: DialMeterStyle, };
 export type SelectionMarker = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H";
 export type TouchOperation = "none" | "toggleMute" | "resetGain" | "script";
-export type DialSettings = { selectChannel: boolean, selectedChannel: number, selectionMarker: SelectionMarker, comboHold: [TouchOperation, TouchOperation], comboScripts: [string, string], tapScript: string, holdScript: string, tapOperation: TouchOperation, holdOperation: TouchOperation, shared: boolean, styles: [DialStyle, DialStyle], };
+export type DialSettings = { toggleSelection: boolean, selectChannel: boolean, selectedChannel: number, selectionMarker: SelectionMarker, comboHold: [TouchOperation, TouchOperation], comboScripts: [string, string], tapScript: string, holdScript: string, tapOperation: TouchOperation, holdOperation: TouchOperation, shared: boolean, styles: [DialStyle, DialStyle], };
 export type Settings = { dial: DialSettings, schemaVersion: number, channels: [ChannelSettings, ChannelSettings], macroButton: MacroSettings, gainButton: GainButtonSettings, };
 export type ValidationError = { code: string, field: string, };
 
@@ -22,12 +22,13 @@ export type Edition = "basic" | "banana" | "potato";
 
 export const defaultSettings: Settings = {
   "dial": {
-    "selectChannel": false,
+    "toggleSelection": false,
+    "selectChannel": true,
     "selectedChannel": 0,
     "selectionMarker": "G",
     "comboHold": [
-      "none",
-      "none"
+      "toggleMute",
+      "toggleMute"
     ],
     "comboScripts": [
       "",

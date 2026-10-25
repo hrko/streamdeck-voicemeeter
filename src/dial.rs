@@ -725,7 +725,7 @@ mod tests {
         use crate::settings::SelectionMarker::*;
         let mut settings = Settings::default();
         assert_eq!(settings.dial.selection_marker, G);
-        assert!(!settings.dial.select_channel);
+        assert!(settings.dial.select_channel);
         settings.dial.select_channel = true;
         settings.dial.shared = false;
         settings.dial.selected_channel = 1;

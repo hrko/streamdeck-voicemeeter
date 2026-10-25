@@ -204,6 +204,7 @@ async fn setup<const KIND: u8>(
 #[tokio::test]
 async fn sdk_combo_rotation_uses_both_steps_and_disappearance_stops_rendering() {
     let mut settings = Settings::default();
+    settings.dial.select_channel = false;
     settings.channels[1].gain_step = 0.5;
     let (worker, mut action, sender, mut output, state) =
         setup::<1>(serde_json::to_value(&settings).unwrap()).await;
@@ -1037,4 +1038,59 @@ async fn combo_selection_controls_rotation_persists_and_does_not_mute_on_tap() {
         .unwrap();
     settle(&worker).await;
     assert_eq!(state.lock().unwrap().channels[&right].gain, 5.0);
+}
+
+#[tokio::test]
+async fn combo_anywhere_tap_alternates_but_hold_targets_touched_side() {
+    let mut settings = Settings::default();
+    assert!(settings.dial.select_channel);
+    assert_eq!(
+        settings.dial.combo_hold,
+        [streamdeck_voicemeeter::settings::TouchOperation::ToggleMute; 2]
+    );
+    settings.dial.toggle_selection = true;
+    let left = settings.channels[0].target;
+    let right = settings.channels[1].target;
+    let (worker, mut action, sender, mut output, state) =
+        setup::<1>(serde_json::to_value(&settings).unwrap()).await;
+    for (x, expected) in [(10, 1), (10, 0), (150, 1), (150, 0)] {
+        while output.try_recv().is_ok() {}
+        action
+            .handle(
+                event("touchTap", json!({"tapPos":[x,50],"hold":false})),
+                sender.clone(),
+            )
+            .await
+            .unwrap();
+        settle(&worker).await;
+        let mut selected = None;
+        while let Ok(raw) = output.try_recv() {
+            let v: Value = serde_json::from_str(&raw).unwrap();
+            if v["event"] == "setSettings" {
+                selected = Some(v["payload"]["dial"]["selectedChannel"].clone());
+            }
+        }
+        assert_eq!(selected, Some(json!(expected)));
+    }
+    assert!(state.lock().unwrap().writes.is_empty());
+    // Left is already selected: holding left must not toggle to right.
+    action
+        .handle(
+            event("touchTap", json!({"tapPos":[10,50],"hold":true})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert!(state.lock().unwrap().channels[&left].mute);
+    assert!(!state.lock().unwrap().channels[&right].mute);
+    action
+        .handle(
+            event("touchTap", json!({"tapPos":[150,50],"hold":true})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    assert!(state.lock().unwrap().channels[&right].mute);
 }
