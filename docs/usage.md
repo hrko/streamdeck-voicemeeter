@@ -39,13 +39,20 @@ Horizontal faders use the left half for negative changes and right half for
 positive changes. Vertical faders use the upper half for positive changes and
 lower half for negative changes. Place two keys for the same channel next to
 each other and match their display options/colors. Step magnitudes can differ.
-The pair displays the full −60..+12 dB range; −24 dB is the geometric midpoint.
+The pair displays the full −60..+12 dB range.
 These are key images, not draggable sliders.
 
 The default fader uses a black background and white rounded rail/ring thumb.
 Customize rail, thumb, normal/muted background and positive-gain color separately.
 **Highlight above 0 dB** changes the rail and thumb only when the gain is positive.
-Enable channel label, current dB and stereo meters independently. Meters reuse
+Current dB and stereo meters are available only for fader styles. Enabling a
+meter shifts the fader to a separate track. Both stereo lanes span the full
+key pair with their ends aligned to the fader bar; **Swap fader and meter** exchanges the tracks (above/below for
+horizontal, left/right for vertical). Set the same options on both keys.
+Static styles ignore saved dB/meter preferences. Their channel label uses Stream
+Deck's native title; new keys default to bottom alignment. Existing keys retain
+their saved title formatting, which can be changed in the title controls.
+Disabling the channel label restores the user-entered title. Meters reuse
 the shared decay state and instantaneous-level marks. To approximate VoiceMeeter,
 choose a green rail/thumb (for example `#7bc99e`), enable positive-gain highlighting
 with red (`#ff6347`), and turn on the desired detail fields.

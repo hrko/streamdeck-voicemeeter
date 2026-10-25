@@ -25,6 +25,23 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("restricts meter and dB options to faders while retaining saved preferences", async () => {
+    const settings = structuredClone(defaultSettings);
+    settings.gainButton.showMeter = true;
+    settings.gainButton.showDb = true;
+    const { client } = await setup("gain-button", settings);
+    expect(screen.queryByLabelText("Show stereo meter")).toBeNull();
+    expect(screen.queryByLabelText("Show gain (dB)")).toBeNull();
+    expect(screen.queryByLabelText("Swap fader and meter")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Display style"), { target: { value: "horizontal" } });
+    expect((screen.getByLabelText("Show stereo meter") as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(screen.getByLabelText("Swap fader and meter"));
+    expect((vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings).gainButton.swapMeter).toBe(true);
+    fireEvent.change(screen.getByLabelText("Action"), { target: { value: "mute" } });
+    expect(screen.queryByLabelText("Show stereo meter")).toBeNull();
+    expect(screen.queryByLabelText("Show gain (dB)")).toBeNull();
+  });
+
   it("applies and restores fader palettes without changing behavior or detail options", async () => {
     const settings = structuredClone(defaultSettings);
     settings.gainButton.appearance = "vertical";

@@ -29,6 +29,7 @@ fn main() -> anyhow::Result<()> {
                 settings.channels[0].target,
                 ChannelSnapshot {
                     gain,
+                    levels: [-12.0, -36.0],
                     ..Default::default()
                 },
             )],
@@ -38,6 +39,14 @@ fn main() -> anyhow::Result<()> {
             format!("{directory}/{name}.svg"),
             gain_button::frame(&snapshot, &settings, &mut cache, "en").svg,
         )?;
+        settings.gain_button.show_meter = true;
+        for swap in [false, true] {
+            settings.gain_button.swap_meter = swap;
+            std::fs::write(
+                format!("{directory}/{name}-meter-{swap}.svg"),
+                gain_button::frame(&snapshot, &settings, &mut cache, "en").svg,
+            )?;
+        }
     }
     Ok(())
 }

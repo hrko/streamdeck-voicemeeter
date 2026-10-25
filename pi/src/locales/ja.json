@@ -94,7 +94,8 @@
     "button.palette": "配色プリセット",
     "button.palette.standard": "白／黒",
     "button.palette.voicemeeter": "VoiceMeeter",
-    "button.palette.custom": "カスタム"
+    "button.palette.custom": "カスタム",
+    "button.swapMeter": "フェーダーとメーターの位置を入れ替え"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

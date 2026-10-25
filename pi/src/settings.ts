@@ -56,7 +56,7 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
   if (!["adjust", "set", "mute"].includes(String(button.operation)) || !["static", "horizontal", "vertical"].includes(String(button.appearance))) return error("invalidSettings", "gainButton");
   if (typeof button.delta !== "number" || !Number.isFinite(button.delta) || button.delta === 0 || Math.abs(button.delta) > 72) return error("invalidButtonDelta", "gainButton.delta");
   if (typeof button.gain !== "number" || !Number.isFinite(button.gain) || button.gain < -60 || button.gain > 12) return error("invalidButtonGain", "gainButton.gain");
-  for (const key of ["highlightPositive", "showLabel", "showDb", "showMeter"]) {
+  for (const key of ["highlightPositive", "showLabel", "showDb", "showMeter", "swapMeter"]) {
     if (typeof button[key] !== "boolean") return error("invalidSettings", `gainButton.${key}`);
   }
   for (const key of ["background", "mutedBackground", "barColor", "thumbColor", "positiveColor"]) {

@@ -127,7 +127,8 @@ function GainButtonEditor({ value, onChange }: { value: GainButtonSettings; onCh
     <ColorEditor label={t("button.background")} value={value.background} onChange={background => patch({ background })} />
     <ColorEditor label={t("button.mutedBackground")} value={value.mutedBackground} onChange={mutedBackground => patch({ mutedBackground })} />
     <fieldset><legend>{t("button.details")}</legend>
-      {(["showLabel", "showDb", "showMeter"] as const).map(key => <Row key={key} label={t(`button.${key}`)}><input type="checkbox" aria-label={t(`button.${key}`)} checked={value[key]} onChange={event => patch({ [key]: event.target.checked })} /></Row>)}
+      {((fader ? ["showLabel", "showDb", "showMeter"] : ["showLabel"]) as ("showLabel" | "showDb" | "showMeter")[]).map(key => <Row key={key} label={t(`button.${key}`)}><input type="checkbox" aria-label={t(`button.${key}`)} checked={value[key]} onChange={event => patch({ [key]: event.target.checked })} /></Row>)}
+      {fader && value.showMeter && <Row label={t("button.swapMeter")}><input type="checkbox" aria-label={t("button.swapMeter")} checked={value.swapMeter} onChange={event => patch({ swapMeter: event.target.checked })} /></Row>}
     </fieldset>
     <p className="help">{t("button.help")}</p>
   </>;

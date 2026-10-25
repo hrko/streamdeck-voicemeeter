@@ -13,6 +13,37 @@ pub fn position(gain: f32, vertical: bool) -> f32 {
     start + 215.5 * ((gain.clamp(-60.0, 12.0) + 60.0) / 72.0)
 }
 
+pub fn is_fader(settings: &Settings) -> bool {
+    settings.gain_button.operation == GainOperation::Adjust
+        && settings.gain_button.appearance != GainAppearance::Static
+}
+
+fn label(snapshot: &Snapshot, settings: &Settings) -> String {
+    let target = settings.channels[0].target;
+    snapshot
+        .channels
+        .iter()
+        .find(|(key, _)| *key == target)
+        .map(|(_, channel)| channel.label.as_str())
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned)
+        .unwrap_or_else(|| format!("{:?} {}", target.kind, target.index))
+}
+
+/// None restores the host's user-entered title when automatic labels are off.
+pub fn title(snapshot: &Snapshot, settings: &Settings) -> Option<String> {
+    (!is_fader(settings) && settings.gain_button.show_label).then(|| label(snapshot, settings))
+}
+
+fn pair_transform(vertical: bool, positive: bool) -> &'static str {
+    match (vertical, positive) {
+        (true, true) => "translate(0 288) rotate(-90)",
+        (true, false) => "translate(0 144) rotate(-90)",
+        (false, true) => "translate(-144 0)",
+        (false, false) => "translate(0 0)",
+    }
+}
+
 pub fn frame(
     snapshot: &Snapshot,
     settings: &Settings,
@@ -45,25 +76,20 @@ pub fn frame(
     });
     let mut body = format!(r#"<rect width="144" height="144" fill="{bg}"/>"#);
     let mut missing = false;
-    let fader = b.operation == GainOperation::Adjust && b.appearance != GainAppearance::Static;
+    let fader = is_fader(settings);
     let vertical = fader && b.appearance == GainAppearance::Vertical;
     if fader {
-        let transform = if vertical {
-            if b.delta > 0.0 {
-                "translate(0 288) rotate(-90)"
-            } else {
-                "translate(0 144) rotate(-90)"
-            }
-        } else if b.delta > 0.0 {
-            "translate(-144 0)"
+        let transform = pair_transform(vertical, b.delta > 0.0);
+        let offset = if b.show_meter {
+            if b.swap_meter { 24 } else { -24 }
         } else {
-            "translate(0 0)"
+            0
         };
         let start = position(-60.0, vertical);
         let end = position(12.0, vertical);
         let _ = write!(
             body,
-            r#"<g transform="{transform}"><path d="M{start} 72H{end}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><path d="M{start} 72H{end}" fill="none" stroke="{bg}" stroke-width="16" stroke-linecap="round"/>"#
+            r#"<g transform="{transform}"><g transform="translate(0 {offset})"><path d="M{start} 72H{end}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><path d="M{start} 72H{end}" fill="none" stroke="{bg}" stroke-width="16" stroke-linecap="round"/>"#
         );
         if let Some(channel) = channel {
             let x = position(channel.gain, vertical);
@@ -72,7 +98,7 @@ pub fn frame(
                 r#"<path d="M{start} 72H{x}" fill="none" stroke="{bar}" stroke-width="28" stroke-linecap="round"/><circle cx="{x}" cy="72" r="26" fill="{bg}"/><circle cx="{x}" cy="72" r="17" fill="{bg}" stroke="{thumb}" stroke-width="6"/>"#
             );
         }
-        body.push_str("</g>");
+        body.push_str("</g></g>");
     } else {
         let icon = if muted { &b.muted_icon } else { &b.icon };
         body.push_str(&render::place_icon(
@@ -106,12 +132,8 @@ pub fn frame(
         );
     }
     body.push_str(r#"<defs><clipPath id="label"><rect x="6" y="0" width="132" height="24"/></clipPath></defs>"#);
-    if b.show_label {
-        let label = channel
-            .map(|c| c.label.as_str())
-            .filter(|label| !label.is_empty())
-            .map(str::to_owned)
-            .unwrap_or_else(|| format!("{:?} {}", target.kind, target.index));
+    if fader && b.show_label {
+        let label = label(snapshot, settings);
         let text = format!(
             r##"<text x="72" y="19" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" fill="#ffffff" clip-path="url(#label)">{}</text>"##,
             render::escape(&label)
@@ -125,25 +147,28 @@ pub fn frame(
             body.push_str(&text);
         }
     }
-    if b.show_db {
+    if fader && b.show_db {
         let value = channel
             .map(|c| format!("{} dB", crate::numbers::gain(c.gain, language)))
             .unwrap_or_else(|| "—".into());
         if vertical {
             let _ = write!(
                 body,
-                r##"<g transform="translate(0 144) rotate(-90)"><text x="72" y="32" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" fill="#ffffff">{}</text></g>"##,
+                r##"<g transform="translate(0 144) rotate(-90)"><text x="72" y="16" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" fill="#ffffff">{}</text></g>"##,
                 render::escape(&value)
             );
         } else {
             let _ = write!(
                 body,
-                r##"<text x="72" y="120" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="18" fill="#ffffff">{}</text>"##,
+                r##"<text x="72" y="132" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="18" fill="#ffffff">{}</text>"##,
                 render::escape(&value)
             );
         }
     }
-    if b.show_meter {
+    if fader && b.show_meter {
+        // Match the rail's outer rounded-cap extents, not just its centerline.
+        let meter_start = position(-60.0, vertical) - 14.0;
+        let meter_width = position(12.0, vertical) + 14.0 - meter_start;
         let levels = channel.map(|c| c.levels).unwrap_or([-120.0; 2]);
         let peaks = snapshot
             .meter_peaks
@@ -152,19 +177,15 @@ pub fn frame(
             .map(|(_, peaks)| *peaks)
             .unwrap_or(levels);
         for (index, peak) in peaks.iter().enumerate() {
-            let length = ((peak.clamp(-60.0, 12.0) + 60.0) / 72.0) * 128.0;
-            let marker = ((levels[index].clamp(-60.0, 12.0) + 60.0) / 72.0) * 128.0;
+            let length = ((peak.clamp(-60.0, 12.0) + 60.0) / 72.0) * meter_width;
+            let marker = ((levels[index].clamp(-60.0, 12.0) + 60.0) / 72.0) * meter_width;
             let color = if *peak > 0.0 { "#ff6347" } else { "#7bc99e" };
-            let y = 130 + index * 7;
-            let transform = if vertical {
-                "translate(-128 144) rotate(-90)"
-            } else {
-                ""
-            };
+            let y = (if b.swap_meter { 30 } else { 98 }) + index * 10;
+            let transform = pair_transform(vertical, b.delta > 0.0);
             let _ = write!(
                 body,
-                r##"<g transform="{transform}"><rect x="8" y="{y}" width="128" height="5" fill="#303030"/><rect x="8" y="{y}" width="{length}" height="5" fill="{color}"/><rect x="{}" y="{y}" width="1" height="5" fill="#ffffff"/></g>"##,
-                8.0 + marker
+                r##"<g transform="{transform}"><rect x="{meter_start}" y="{y}" width="{meter_width}" height="6" fill="#303030"/><rect x="{meter_start}" y="{y}" width="{length}" height="6" fill="{color}"/><rect x="{}" y="{y}" width="2" height="6" fill="#ffffff"/></g>"##,
+                meter_start + marker.min(meter_width - 2.0)
             );
         }
     }
@@ -225,6 +246,54 @@ mod tests {
             assert!(svg.contains(r#"r="17""#));
             assert!(svg.contains(r#"stroke-width="28""#));
         }
+    }
+
+    #[test]
+    fn static_styles_use_native_titles_and_ignore_saved_fader_details() {
+        let mut settings = Settings::default();
+        settings.gain_button.show_label = true;
+        let snapshot = Snapshot {
+            channels: vec![(
+                settings.channels[0].target,
+                ChannelSnapshot {
+                    label: "Voice <&>".into(),
+                    ..Default::default()
+                },
+            )],
+            ..Default::default()
+        };
+        let mut cache = IconCache::default();
+        for operation in [
+            GainOperation::Adjust,
+            GainOperation::Set,
+            GainOperation::Mute,
+        ] {
+            settings.gain_button.operation = operation;
+            for appearance in [
+                GainAppearance::Static,
+                GainAppearance::Horizontal,
+                GainAppearance::Vertical,
+            ] {
+                settings.gain_button.appearance = appearance;
+                if is_fader(&settings) {
+                    continue;
+                }
+                settings.gain_button.show_meter = false;
+                settings.gain_button.show_db = false;
+                let plain = frame(&snapshot, &settings, &mut cache, "en").svg;
+                settings.gain_button.show_meter = true;
+                settings.gain_button.show_db = true;
+                assert_eq!(plain, frame(&snapshot, &settings, &mut cache, "en").svg);
+                assert!(!plain.contains("Voice"));
+                assert_eq!(title(&snapshot, &settings).as_deref(), Some("Voice <&>"));
+            }
+        }
+        settings.gain_button.show_label = false;
+        assert_eq!(title(&snapshot, &settings), None);
+        settings.gain_button.show_label = true;
+        settings.gain_button.operation = GainOperation::Adjust;
+        settings.gain_button.appearance = GainAppearance::Horizontal;
+        assert_eq!(title(&snapshot, &settings), None);
     }
 
     #[test]

@@ -36,7 +36,7 @@ export async function buildPlugin(profile = "release") {
     DisableAutomaticStates: true,
     States: suffix === "macro"
       ? ["ON", "OFF"].map(Title => ({ Image: "imgs/key", Title, ShowTitle: true }))
-      : [{ Image: "imgs/key", ShowTitle: true, TitleAlignment: suffix === "gain-button" ? "top" : "middle", FontSize: suffix === "gain-button" ? 12 : 16 }],
+      : [{ Image: "imgs/key", ShowTitle: true, TitleAlignment: suffix === "gain-button" ? "bottom" : "middle", FontSize: suffix === "gain-button" ? 12 : 16 }],
     ...(suffix === "macro" || suffix === "gain-button" ? {} : { Encoder: { layout: `layouts/${suffix === "gain-control-combo" ? "combo" : "gain"}.json` } }),
   }));
   await writeJson(path.join(destination, "manifest.json"), {

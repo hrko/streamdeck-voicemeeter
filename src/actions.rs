@@ -86,6 +86,7 @@ impl<const KIND: u8> DeckAction<KIND> {
             let mut previous_image = String::new();
             let mut previous_feedback = Value::Null;
             let mut previous_state = None;
+            let mut previous_title: Option<Option<String>> = None;
             let mut cache = IconCache::default();
             loop {
                 let snapshot = snapshots.borrow_and_update().clone();
@@ -136,6 +137,18 @@ impl<const KIND: u8> DeckAction<KIND> {
                 {
                     let _ = sender.set_state(&context, if *on { 0 } else { 1 });
                     previous_state = Some(*on);
+                }
+                if Self::kind() == ActionKind::GainButton {
+                    let title = crate::gain_button::title(&snapshot, &settings);
+                    if previous_title.as_ref() != Some(&title) {
+                        let _ = sender.set_title(
+                            &context,
+                            title.as_deref(),
+                            streamdeck_plugin::Target::HardwareAndSoftware,
+                            None,
+                        );
+                        previous_title = Some(title);
+                    }
                 }
                 if let Some(frame) = frame
                     && frame.svg != previous_image

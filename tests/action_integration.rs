@@ -579,3 +579,50 @@ async fn macro_page_reentry_does_not_flash_offline_but_real_outage_does() {
             .any(|svg| svg.contains("M8 136L136 8"))
     );
 }
+
+#[tokio::test]
+async fn gain_key_native_title_tracks_labels_and_resets_when_disabled() {
+    let mut settings = Settings::default();
+    settings.gain_button.show_label = true;
+    let (worker, mut action, sender, mut output, state) =
+        setup::<3>(serde_json::to_value(&settings).unwrap()).await;
+    settle(&worker).await;
+    while output.try_recv().is_ok() {}
+    state
+        .lock()
+        .unwrap()
+        .channels
+        .get_mut(&settings.channels[0].target)
+        .unwrap()
+        .label = "Voice 日本語".into();
+    settle(&worker).await;
+    let mut titles = Vec::new();
+    while let Ok(message) = output.try_recv() {
+        let value: Value = serde_json::from_str(&message).unwrap();
+        if value["event"] == "setTitle" {
+            titles.push(value["payload"]["title"].clone());
+        }
+    }
+    assert!(titles.contains(&json!("Voice 日本語")));
+    settings.gain_button.show_label = false;
+    action
+        .handle(
+            event("didReceiveSettings", json!({"settings":settings})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+    settle(&worker).await;
+    let mut reset = false;
+    while let Ok(message) = output.try_recv() {
+        let value: Value = serde_json::from_str(&message).unwrap();
+        if value["event"] == "setTitle" && value["payload"]["title"].is_null() {
+            reset = true;
+        }
+    }
+    assert!(reset, "release the automatic title back to the host");
+    action
+        .handle(event("willDisappear", json!({})), sender)
+        .await
+        .unwrap();
+}

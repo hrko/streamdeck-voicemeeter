@@ -50,9 +50,19 @@ and #2c3d4d for both backgrounds, matching `src/dial.rs` and the owner's Potato
 screenshot. Applying a palette changes only colors and positive highlighting;
 channel, operation, step, orientation and label/dB/meter options are retained.
 Presets are inferred from saved color values; individual edits display Custom.
-No settings schema change is required. Labels are clipped to the key. Vertical labels and values run alongside
-the rail; horizontal/static labels and values use the top/bottom areas. Stereo
-meters include the current-level marks and reuse the shared decaying peaks.
+The new `swapMeter` field defaults to false for existing settings. Meter-enabled
+faders use separate tracks: canonical y=48 for the rail and y=98/108 for the
+stereo lanes, or y=96 and y=30/40 when swapped. Both lanes span the rounded rail's outer cap extents across
+the shared pair (x=20.5..264 horizontally, x=22.5..266 before vertical rotation) and use the same clipping/rotation as the fader. Pixel tests
+verify seam continuity and non-overlapping tracks for all four combinations.
+The meter includes current-level markers and shared decaying peaks.
+
+Only fader styles render dB and meters; static styles retain but ignore those
+preferences. Fader labels are SVG-clipped. Static channel names instead use
+`setTitle`, including external name updates; disabling labels or returning to a
+fader sends a null title to restore the host's title. New Gain Button instances
+have bottom title alignment. Existing host title-format preferences are retained.
+SDK integration tests cover label updates and resetting automatic titles.
 Static icons use the existing Material Symbols renderer, normal/muted icons and
 backgrounds; direction or absolute-target badges identify the operation.
 

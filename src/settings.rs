@@ -161,6 +161,7 @@ pub struct GainButtonSettings {
     pub show_label: bool,
     pub show_db: bool,
     pub show_meter: bool,
+    pub swap_meter: bool,
 }
 
 impl Default for GainButtonSettings {
@@ -187,6 +188,7 @@ impl Default for GainButtonSettings {
             show_label: false,
             show_db: false,
             show_meter: false,
+            swap_meter: false,
         }
     }
 }

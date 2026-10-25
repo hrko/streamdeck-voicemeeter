@@ -94,7 +94,8 @@
     "button.palette": "Color preset",
     "button.palette.standard": "White on black",
     "button.palette.voicemeeter": "VoiceMeeter",
-    "button.palette.custom": "Custom"
+    "button.palette.custom": "Custom",
+    "button.swapMeter": "Swap fader and meter"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",
