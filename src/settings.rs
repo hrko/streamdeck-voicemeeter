@@ -168,6 +168,10 @@ pub struct GainButtonSettings {
     pub show_meter: bool,
     pub meter_notch: bool,
     pub swap_meter: bool,
+    pub empty_bar_color: String,
+    pub indicator_background: String,
+    pub indicator_opacity: u8,
+    pub indicator_outline: bool,
     pub meter_background: String,
     pub meter_inactive: String,
     pub meter_low: String,
@@ -208,6 +212,10 @@ impl Default for GainButtonSettings {
             show_meter: false,
             meter_notch: false,
             swap_meter: false,
+            empty_bar_color: "#808080".into(),
+            indicator_background: "#808080".into(),
+            indicator_opacity: 100,
+            indicator_outline: false,
             meter_background: "#000000".into(),
             meter_inactive: "#191b1b".into(),
             meter_low: "#85adb9".into(),
@@ -230,6 +238,10 @@ pub struct DialPalette {
     pub background: String,
     pub muted_background: String,
     pub positive_color: String,
+    pub empty_bar_color: String,
+    pub indicator_background: String,
+    pub indicator_opacity: u8,
+    pub indicator_outline: bool,
     pub meter_background: String,
     pub meter_inactive: String,
     pub meter_low: String,
@@ -251,6 +263,10 @@ impl Default for DialPalette {
             background: b.background,
             muted_background: b.muted_background,
             positive_color: "#f8634d".into(),
+            empty_bar_color: "#2c3d4d".into(),
+            indicator_background: b.indicator_background,
+            indicator_opacity: b.indicator_opacity,
+            indicator_outline: b.indicator_outline,
             meter_background: b.meter_background,
             meter_inactive: b.meter_inactive,
             meter_low: b.meter_low,
@@ -287,12 +303,10 @@ pub struct DialStyle {
     pub meter_notch: bool,
     pub meter_style: DialMeterStyle,
     pub meter_track_opacity: u8,
-    pub indicator_outline: bool,
     pub background_opacity: u8,
     pub muted_background_opacity: u8,
     pub label_color: String,
     pub positive_label_color: String,
-    pub empty_bar_color: String,
     pub gain_color: String,
     pub positive_gain_color: String,
 }
@@ -313,12 +327,10 @@ impl Default for DialStyle {
             meter_notch: false,
             meter_style: DialMeterStyle::Cells,
             meter_track_opacity: 0,
-            indicator_outline: true,
             background_opacity: 0,
             muted_background_opacity: 0,
             label_color: "#ffffff".into(),
             positive_label_color: "#ffffff".into(),
-            empty_bar_color: "#2c3d4d".into(),
             gain_color: "#ffffff".into(),
             positive_gain_color: "#ffffff".into(),
         }
@@ -444,11 +456,13 @@ impl Settings {
             if style.background_opacity > 100
                 || style.muted_background_opacity > 100
                 || style.meter_track_opacity > 100
+                || style.palette.indicator_opacity > 100
             {
                 return Err(ValidationError::new("invalidOpacity", "dial"));
             }
             let p = &style.palette;
             for color in [
+                &p.indicator_background,
                 &p.bar_color,
                 &p.label_color,
                 &p.positive_label_color,
@@ -466,7 +480,7 @@ impl Settings {
                 &p.meter_muted_high,
                 &style.label_color,
                 &style.positive_label_color,
-                &style.empty_bar_color,
+                &p.empty_bar_color,
                 &style.gain_color,
                 &style.positive_gain_color,
             ] {
@@ -486,9 +500,17 @@ impl Settings {
         if !b.gain.is_finite() || !(-60.0..=12.0).contains(&b.gain) {
             return Err(ValidationError::new("invalidButtonGain", "gainButton.gain"));
         }
+        if b.indicator_opacity > 100 {
+            return Err(ValidationError::new(
+                "invalidOpacity",
+                "gainButton.indicatorOpacity",
+            ));
+        }
         b.icon.validate("gainButton.icon")?;
         b.muted_icon.validate("gainButton.mutedIcon")?;
         for color in [
+            &b.empty_bar_color,
+            &b.indicator_background,
             &b.background,
             &b.muted_background,
             &b.bar_color,
@@ -575,6 +597,23 @@ impl<'de> Deserialize<'de> for Settings {
                 if let Some(styles) = styles.as_array_mut() {
                     for style in styles {
                         if let Some(style) = style.as_object_mut() {
+                            if let Some(empty) = style.remove("emptyBarColor") {
+                                let palette = style
+                                    .entry("palette")
+                                    .or_insert_with(|| serde_json::json!({}));
+                                if let Some(palette) = palette.as_object_mut() {
+                                    palette.entry("emptyBarColor").or_insert(empty);
+                                }
+                            }
+                            if let Some(outline) = style.remove("indicatorOutline") {
+                                let palette = style
+                                    .entry("palette")
+                                    .or_insert_with(|| serde_json::json!({}));
+                                if let Some(palette) = palette.as_object_mut() {
+                                    palette.entry("indicatorOutline").or_insert(outline);
+                                }
+                            }
+
                             style
                                 .entry("backgroundOpacity")
                                 .or_insert(serde_json::json!(100));

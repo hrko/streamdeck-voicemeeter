@@ -32,12 +32,12 @@ describe("property inspector forms", () => {
     fireEvent.change(screen.getByLabelText("Inactive track opacity"),{target:{value:"65"}});
     fireEvent.click(screen.getByLabelText("Outline inactive indicators"));
     const saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
-    expect(saved.dial.styles[0]).toMatchObject({meterStyle:"continuous",meterTrackOpacity:65,indicatorOutline:false});
+    expect(saved.dial.styles[0]).toMatchObject({meterStyle:"continuous",meterTrackOpacity:65,palette:{indicatorOutline:true}});
     expect(saved.channels).toEqual(defaultSettings.channels);
     emit("didReceiveSettings",saved);
     expect((screen.getByLabelText("Meter style") as HTMLSelectElement).value).toBe("continuous");
     expect((screen.getByLabelText("Inactive track opacity") as HTMLInputElement).value).toBe("65");
-    expect((screen.getByLabelText("Outline inactive indicators") as HTMLInputElement).checked).toBe(false);
+    expect((screen.getByLabelText("Outline inactive indicators") as HTMLInputElement).checked).toBe(true);
   });
   it("migrates existing backgrounds to opaque and keeps new backgrounds transparent", () => {
     expect(restoreSettings({}).settings?.dial.styles[0].backgroundOpacity).toBe(0);
@@ -56,7 +56,13 @@ describe("property inspector forms", () => {
     expect(saved.channels).toEqual(defaultSettings.channels);
     fireEvent.change(screen.getByLabelText("Color preset"),{target:{value:"voicemeeter"}});
     saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
-    expect(saved.dial.styles[0].palette.barColor).toBe("#70c399");
+    expect(saved.dial.styles[0].palette).toMatchObject({barColor:"#70c399",indicatorBackground:"#000000",indicatorOpacity:62,indicatorOutline:false,emptyBarColor:"#2c3d4d"});
+    fireEvent.change(screen.getByLabelText("Color preset"),{target:{value:"standard"}});
+    saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial.styles[0].palette).toMatchObject({indicatorBackground:"#808080",indicatorOpacity:100,indicatorOutline:false,emptyBarColor:"#808080"});
+    fireEvent.change(screen.getByLabelText("Indicator background opacity"),{target:{value:"35"}});
+    saved=vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.dial.styles[0].palette.indicatorOpacity).toBe(35);
     expect(saved.dial.styles[0].showGain).toBe(false);
     fireEvent.click(screen.getByLabelText("Use the same appearance on both sides"));
     const right=within(screen.getByRole("group",{name:"Right dial appearance"}));

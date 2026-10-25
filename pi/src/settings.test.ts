@@ -5,7 +5,8 @@ import { restoreSettings, validateSettings } from "./settings";
 describe("settings contract", () => {
   it("migrates dial display defaults and rejects invalid new values", () => {
     const restored=restoreSettings({dial:{styles:[{},{}]}});
-    expect(restored.settings?.dial.styles[0]).toMatchObject({meterStyle:"cells",meterTrackOpacity:0,indicatorOutline:true});
+    expect(restored.settings?.dial.styles[0]).toMatchObject({meterStyle:"cells",meterTrackOpacity:0,palette:{indicatorOutline:false,indicatorBackground:"#808080",indicatorOpacity:100}});
+    expect(restoreSettings({dial:{styles:[{indicatorOutline:true,emptyBarColor:"#123456"},{}]}}).settings?.dial.styles[0].palette).toMatchObject({indicatorOutline:true,emptyBarColor:"#123456"});
     const settings=structuredClone(defaultSettings);
     settings.dial.styles[0].meterTrackOpacity=101;
     expect(validateSettings(settings)?.code).toBe("invalidOpacity");

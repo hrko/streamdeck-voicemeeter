@@ -159,7 +159,10 @@
     "dial.meterCells": "セル",
     "dial.meterContinuous": "連続バー",
     "dial.meterTrackOpacity": "消灯部分の下地の不透明度",
-    "dial.indicatorOutline": "消灯インジケーターの縁を表示"
+    "dial.indicatorOutline": "消灯インジケーターの縁を表示",
+    "dial.indicatorColors": "消灯インジケーター",
+    "dial.indicatorBackground": "背景色",
+    "dial.indicatorOpacity": "背景の不透明度"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

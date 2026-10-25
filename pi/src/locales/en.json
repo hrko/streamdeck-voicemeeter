@@ -159,7 +159,10 @@
     "dial.meterCells": "Cells",
     "dial.meterContinuous": "Continuous",
     "dial.meterTrackOpacity": "Inactive track opacity",
-    "dial.indicatorOutline": "Outline inactive indicators"
+    "dial.indicatorOutline": "Outline inactive indicators",
+    "dial.indicatorColors": "Inactive indicators",
+    "dial.indicatorBackground": "Indicator background",
+    "dial.indicatorOpacity": "Indicator background opacity"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

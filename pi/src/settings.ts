@@ -25,6 +25,14 @@ export function restoreSettings(value: unknown): { settings?: Settings; error?: 
     if(record(incoming.dial)) {
       if(incoming.dial.styles===undefined) incoming.dial.styles=[{},{}];
       if(Array.isArray(incoming.dial.styles)) for(const style of incoming.dial.styles) if(record(style)) {
+        if(style.emptyBarColor!==undefined) {
+          if(style.palette===undefined) style.palette={};
+          if(record(style.palette) && style.palette.emptyBarColor===undefined) style.palette.emptyBarColor=style.emptyBarColor;
+        }
+        if(style.indicatorOutline!==undefined) {
+          if(style.palette===undefined) style.palette={};
+          if(record(style.palette) && style.palette.indicatorOutline===undefined) style.palette.indicatorOutline=style.indicatorOutline;
+        }
         if(style.backgroundOpacity===undefined) style.backgroundOpacity=100;
         if(style.mutedBackgroundOpacity===undefined) style.mutedBackgroundOpacity=100;
       }
@@ -65,27 +73,28 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
   if (!record(dial) || typeof dial.shared!=="boolean" || !Array.isArray(dial.styles) || dial.styles.length!==2) return error("invalidSettings","dial");
   for(const style of dial.styles) {
     if(!record(style) || !record(style.palette)) return error("invalidSettings","dial");
-    for(const key of ["showLabel","showGain","showIcon","showBar","showMeter","showMute","showSolo","showRouting","showMono","showEq","meterNotch","indicatorOutline"]) {
+    for(const key of ["showLabel","showGain","showIcon","showBar","showMeter","showMute","showSolo","showRouting","showMono","showEq","meterNotch"]) {
       if(typeof style[key]!=="boolean") return error("invalidSettings",`dial.${key}`);
     }
     if(style.meterStyle!=="cells" && style.meterStyle!=="continuous") return error("invalidSettings","dial.meterStyle");
     for(const key of Object.keys(defaultSettings.dial.styles[0].palette)) {
       const v=style.palette[key];
-      if(key==="highlightPositive" ? typeof v!=="boolean" : typeof v!=="string" || !/^#[\da-f]{6}$/i.test(v)) return error("invalidColor",`dial.palette.${key}`);
+      if(key==="indicatorOpacity" ? !Number.isInteger(v) || (v as number)<0 || (v as number)>100 : key==="highlightPositive" || key==="indicatorOutline" ? typeof v!=="boolean" : typeof v!=="string" || !/^#[\da-f]{6}$/i.test(v)) return error("invalidColor",`dial.palette.${key}`);
     }
     for(const key of ["backgroundOpacity","mutedBackgroundOpacity","meterTrackOpacity"]) if(!Number.isInteger(style[key]) || (style[key] as number)<0 || (style[key] as number)>100) return error("invalidOpacity",`dial.${key}`);
-    for(const key of ["labelColor","positiveLabelColor","emptyBarColor","gainColor","positiveGainColor"]) if(typeof style[key]!=="string" || !/^#[\da-f]{6}$/i.test(style[key] as string)) return error("invalidColor",`dial.${key}`);
+    for(const key of ["labelColor","positiveLabelColor","gainColor","positiveGainColor"]) if(typeof style[key]!=="string" || !/^#[\da-f]{6}$/i.test(style[key] as string)) return error("invalidColor",`dial.${key}`);
   }
   const macro = value.macroButton;
   const button = value.gainButton;
   if (!record(button)) return error("invalidSettings", "gainButton");
+  if(!Number.isInteger(button.indicatorOpacity) || (button.indicatorOpacity as number)<0 || (button.indicatorOpacity as number)>100) return error("invalidOpacity","gainButton.indicatorOpacity");
   if (!["adjust", "set", "mute"].includes(String(button.operation)) || !["static", "horizontal", "vertical"].includes(String(button.appearance))) return error("invalidSettings", "gainButton");
   if (typeof button.delta !== "number" || !Number.isFinite(button.delta) || button.delta === 0 || Math.abs(button.delta) > 72) return error("invalidButtonDelta", "gainButton.delta");
   if (typeof button.gain !== "number" || !Number.isFinite(button.gain) || button.gain < -60 || button.gain > 12) return error("invalidButtonGain", "gainButton.gain");
-  for (const key of ["syncPair", "meterNotch", "highlightPositive", "showLabel", "faderLabel", "showDb", "showMeter", "swapMeter"]) {
+  for (const key of ["indicatorOutline", "syncPair", "meterNotch", "highlightPositive", "showLabel", "faderLabel", "showDb", "showMeter", "swapMeter"]) {
     if (typeof button[key] !== "boolean") return error("invalidSettings", `gainButton.${key}`);
   }
-  for (const key of ["background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
+  for (const key of ["emptyBarColor", "indicatorBackground", "background", "mutedBackground", "barColor", "labelColor", "positiveLabelColor", "thumbColor", "positiveColor", "meterBackground", "meterInactive", "meterLow", "meterMid", "meterHigh", "meterMutedLow", "meterMutedMid", "meterMutedHigh"]) {
     if (typeof button[key] !== "string" || !/^#[\da-f]{6}$/i.test(button[key])) return error("invalidColor", `gainButton.${key}`);
   }
   const buttonIconError = icon(button.icon, "gainButton.icon") ?? icon(button.mutedIcon, "gainButton.mutedIcon");

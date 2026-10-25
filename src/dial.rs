@@ -117,7 +117,7 @@ pub fn feedback(
             width,
             channel.map(|c| c.gain).unwrap_or(-60.0),
             colors,
-            &style.empty_bar_color,
+            &style.palette.empty_bar_color,
         );
         let status = channel
             .zip(snapshot.edition)
@@ -161,7 +161,7 @@ fn meter_styled(
     // Match the fader's outer rim, including alpha. The optional inner track is separate.
     let mut body = format!(
         r#"<rect width="{width}" height="5" rx="2.5" fill="black" fill-opacity="0.623529"/><rect x="2" y="1" width="{inner}" height="3" rx="1.5" fill="{}" fill-opacity="{}"/>"#,
-        style.empty_bar_color,
+        style.palette.empty_bar_color,
         f32::from(style.meter_track_opacity) / 100.0
     );
     for side in 0..2 {
@@ -243,6 +243,8 @@ fn status_styled(
     style: &DialStyle,
 ) -> String {
     let mut body = String::new();
+    let off_color = &style.palette.indicator_background;
+    let off_opacity = f32::from(style.palette.indicator_opacity) / 100.0;
     let flag = |key: &str| channel.flags.get(key).copied().unwrap_or(false);
     let (physical, _, physical_buses, buses) = edition.counts();
     let mut squares = vec![(channel.mute, "#f66051", style.show_mute)];
@@ -264,18 +266,19 @@ fn status_styled(
             }
             for (i, enabled) in flags.into_iter().enumerate() {
                 let x = 2.0 + i as f32 * 7.0;
-                if !enabled && style.indicator_outline {
+                if !enabled && style.palette.indicator_outline {
                     let _ = write!(
                         body,
-                        r##"<rect x="{}" y="{}" width="4" height="4" rx="1.5" fill="#2c3d4d" stroke="#91a4b5" stroke-width="1"/>"##,
+                        r##"<rect x="{}" y="{}" width="4" height="4" rx="1.5" fill="{off_color}" fill-opacity="{off_opacity}" stroke="#91a4b5" stroke-width="1"/>"##,
                         x + 0.5,
                         y as f32 + 0.5
                     );
                 } else {
-                    let color = if enabled { "#8bdfb1" } else { "#2c3d4d" };
+                    let color = if enabled { "#8bdfb1" } else { off_color };
                     let _ = write!(
                         body,
-                        r#"<rect x="{x}" y="{y}" width="5" height="5" rx="2" fill="{color}"/>"#
+                        r#"<rect x="{x}" y="{y}" width="5" height="5" rx="2" fill="{color}" fill-opacity="{}"/>"#,
+                        if enabled { 1.0 } else { off_opacity }
                     );
                 }
             }
@@ -301,22 +304,23 @@ fn status_styled(
         if !visible {
             continue;
         }
-        if !enabled && style.indicator_outline {
+        if !enabled && style.palette.indicator_outline {
             let _ = write!(
                 body,
-                r##"<rect x="{}" y="15.5" width="6" height="6" rx="1" fill="#2c3d4d" stroke="#91a4b5" stroke-width="1"/>"##,
+                r##"<rect x="{}" y="15.5" width="6" height="6" rx="1" fill="{off_color}" fill-opacity="{off_opacity}" stroke="#91a4b5" stroke-width="1"/>"##,
                 2.5 + i as f32 * 9.0
             );
         } else {
             let color = if enabled {
                 if color == "#296ffd" { "#72a9ff" } else { color }
             } else {
-                "#2c3d4d"
+                off_color
             };
             let _ = write!(
                 body,
-                r#"<rect x="{}" y="15" width="7" height="7" rx="1.5" fill="{color}"/>"#,
-                2 + i * 9
+                r#"<rect x="{}" y="15" width="7" height="7" rx="1.5" fill="{color}" fill-opacity="{}"/>"#,
+                2 + i * 9,
+                if enabled { 1.0 } else { off_opacity }
             );
         }
     }
@@ -407,11 +411,33 @@ mod tests {
     }
 
     #[test]
+    fn indicator_fill_opacity_does_not_dim_active_flags_and_migrates_old_settings() {
+        let settings: Settings=serde_json::from_value(serde_json::json!({"dial":{"styles":[{"indicatorOutline":true,"emptyBarColor":"#123456"},{}]}})).unwrap();
+        assert!(settings.dial.styles[0].palette.indicator_outline);
+        assert_eq!(settings.dial.styles[0].palette.empty_bar_color, "#123456");
+        let mut style = DialStyle::default();
+        style.palette.indicator_background = "#123456".into();
+        style.palette.indicator_opacity = 37;
+        let channel = ChannelSnapshot {
+            mute: true,
+            ..Default::default()
+        };
+        let image = status_styled(Edition::Potato, Target::default(), &channel, &style);
+        assert!(image.contains("fill=\"#123456\" fill-opacity=\"0.37\""));
+        assert!(image.contains("fill=\"#f66051\" fill-opacity=\"1\""));
+        style.palette.indicator_outline = true;
+        style.palette.indicator_opacity = 0;
+        let image = status_styled(Edition::Potato, Target::default(), &channel, &style);
+        assert!(image.contains("fill-opacity=\"0\" stroke=\"#91a4b5\""));
+    }
+
+    #[test]
     fn outline_toggle_retains_routing_and_status_geometry() {
         let mut style = DialStyle::default();
         let channel = ChannelSnapshot::default();
+        style.palette.indicator_outline = true;
         let outlined = status_styled(Edition::Potato, Target::default(), &channel, &style);
-        style.indicator_outline = false;
+        style.palette.indicator_outline = false;
         let plain = status_styled(Edition::Potato, Target::default(), &channel, &style);
         assert!(outlined.contains("width=\"4\" height=\"4\" rx=\"1.5\""));
         assert!(outlined.contains("width=\"6\" height=\"6\" rx=\"1\""));
@@ -543,6 +569,10 @@ mod tests {
         let style = DialStyle {
             show_mute: false,
             show_solo: false,
+            palette: DialPalette {
+                indicator_outline: true,
+                ..Default::default()
+            },
             ..Default::default()
         };
         let channel = ChannelSnapshot::default();
@@ -668,11 +698,11 @@ mod tests {
         };
         let physical = Target::default();
         let potato = status(Edition::Potato, physical, &channel);
-        assert_eq!(potato.matches("width=\"4\" height=\"4\"").count(), 8);
+        assert_eq!(potato.matches("width=\"5\" height=\"5\"").count(), 8);
         assert_eq!(potato.matches("<rect").count(), 12);
         assert!(potato.contains(r##"x="2" y="15" width="7" height="7" rx="1.5" fill="#f66051""##));
         let banana = status(Edition::Banana, physical, &channel);
-        assert_eq!(banana.matches("width=\"4\" height=\"4\"").count(), 5);
+        assert_eq!(banana.matches("width=\"5\" height=\"5\"").count(), 5);
         assert!(!banana.contains("y=\"0.5\""));
         assert_eq!(banana.matches("<rect").count(), 8);
         let basic = status(

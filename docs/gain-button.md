@@ -197,9 +197,16 @@ using emptyBarColor. At zero opacity, cells retain dim inactive cells; continuou
 meters show only the active portions. The legacy palette meterBackground field
 is retained for shared preset compatibility but is not used by dial meters.
 
-indicatorOutline defaults to true and controls outlines on inactive indicators.
+palette.indicatorOutline defaults to false and controls outlines on inactive indicators.
 Routing indicators have a 5 px footprint and 2 px outer corner radius. Other
 status indicators retain their 7 px footprint. Inset 1 px strokes align straight
 edges to pixels while curves remain antialiased. These settings follow the existing
 shared/independent Combo appearance selection. Old settings acquire these defaults
 without changing targets, steps, palettes or per-channel settings.
+
+Inactive indicator background color, opacity (0–100%) and outline are included
+in shared color presets. The standard preset uses #808080 at 100% with no outline;
+VoiceMeeter uses black at 62% with no outline. The dial's empty bar color is also
+part of the palette: #808080 for standard, #2c3d4d for VoiceMeeter. Previously
+saved top-level dial outline and empty bar values migrate into the palette.
+Changing inactive opacity does not affect the active colors or outline opacity.
