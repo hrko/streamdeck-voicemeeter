@@ -245,6 +245,7 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
         }
     }
     async fn on_will_appear(&mut self, payload: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
+        ctx.sender().get_global_settings(None)?;
         self.invalid_settings =
             serde_json::from_value::<Settings>(payload.settings.clone()).is_err();
         if KIND == 3 && !payload.is_in_multi_action && !self.invalid_settings {

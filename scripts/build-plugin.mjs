@@ -42,7 +42,7 @@ export async function buildPlugin(profile = "release") {
   if (profile === "debug") {
     for (const dial of [false, true]) actions.push({
       Name: dial ? "Frame Test (Dial)" : "Frame Test (Key)",
-      Tooltip: "30 fps frame counter. Large number: source frame; small number: elapsed milliseconds.",
+      Tooltip: "Frame counter at the global refresh rate. Large number: source frame; small number: elapsed milliseconds.",
       UUID: `${id}.frame-test-${dial ? "dial" : "key"}`, Icon: "imgs/action",
       Controllers: [dial ? "Encoder" : "Keypad"], DisableAutomaticStates: true,
       States: [{ Image: "imgs/key", ShowTitle: true, FontSize: 16, TitleAlignment: "middle" }],

@@ -14,15 +14,15 @@ beforeAll(() => {
   HTMLDialogElement.prototype.close = function () { this.open = false; };
 });
 async function setup(action = "gain-control-combo", settings: unknown = defaultSettings, language = "en") {
-  const handlers = new Map<string, (payload: unknown) => void>();
+  const handlers = new Map<string, Set<(payload: unknown) => void>>();
   const client: StreamDeckPiApi = {
     ready: true, uuid: "pi", actionInfo: { action: `jp.hrko.streamdeck.voicemeeter.rust.${action}`, context: "action", device: "device", payload: { settings: settings as Record<string, unknown> } },
     setSettings: vi.fn(), getSettings: vi.fn(), setGlobalSettings: vi.fn(), getGlobalSettings: vi.fn(), sendToPlugin: vi.fn(),
-    subscribe: (event, handler) => { handlers.set(event, handler); return () => { handlers.delete(event); }; },
+    subscribe: (event, handler) => { const listeners=handlers.get(event) ?? new Set(); listeners.add(handler); handlers.set(event,listeners); return () => { listeners.delete(handler); }; },
   };
   const i18n = await createLocalization(language);
   render(<I18nextProvider i18n={i18n}><App client={client} /></I18nextProvider>);
-  return { client, emit: (event: string, value: unknown) => act(() => { handlers.get(event)?.(value); }) };
+  return { client, emit: (event: string, value: unknown) => act(() => { handlers.get(event)?.forEach(handler=>handler(value)); }) };
 }
 
 describe("property inspector forms", () => {
@@ -439,4 +439,17 @@ describe("property inspector forms", () => {
     emit("sendToPropertyInspector", { event: "status", connected: true, error: { code: "apiError", field: "" } });
     expect(screen.getByRole("alert").textContent).not.toContain("error.apiError");
   });
+});
+
+it("changes plugin refresh rate without overwriting saved palettes", async()=>{
+ const {client,emit}=await setup("gain-control",{});
+ emit("didReceiveGlobalSettings",{});
+ expect((screen.getByLabelText("Refresh rate") as HTMLSelectElement).value).toBe("15");
+ fireEvent.change(screen.getByLabelText("Refresh rate"),{target:{value:"30"}});
+ const palettes={version:1,items:[]};
+ emit("didReceiveGlobalSettings",{gainColorPresets:palettes,unknownOption:123});
+ expect(client.setGlobalSettings).toHaveBeenLastCalledWith({gainColorPresets:palettes,unknownOption:123,refreshRate:30});
+ emit("didReceiveGlobalSettings",{refreshRate:20});
+ expect((screen.getByLabelText("Refresh rate") as HTMLSelectElement).value).toBe("20");
+ expect(client.setSettings).not.toHaveBeenCalled();
 });

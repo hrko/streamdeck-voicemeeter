@@ -21,3 +21,5 @@ mod gain_label;
 
 #[cfg(debug_assertions)]
 pub mod frame_test;
+
+pub mod global_settings;

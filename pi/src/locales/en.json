@@ -207,7 +207,10 @@
     "button.keyInactiveOpacity": "Inactive cell opacity",
     "button.keyRailOpacity": "Empty fader opacity",
     "button.keyThumbOpacity": "Thumb fill opacity",
-    "button.keyThumbClearance": "Space outside thumb ring"
+    "button.keyThumbClearance": "Space outside thumb ring",
+    "global.title": "Plugin-wide settings",
+    "global.refreshRate": "Refresh rate",
+    "global.refreshHelp": "Applies to all keys and dials, including frame tests. Default: 15 fps. Higher rates may drop frames when many actions are visible. Not included in color presets."
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

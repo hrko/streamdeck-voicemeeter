@@ -29,6 +29,9 @@ async fn run() -> anyhow::Result<()> {
     worker.client.language = registration.info.application.language;
     let plugin = streamdeck_plugin::Plugin::builder(&args)
         .state(worker.client.clone())
+        .lifecycle(streamdeck_voicemeeter::global_settings::GlobalSettings(
+            worker.client.clone(),
+        ))
         .add_action::<DeckAction<0>>()
         .add_action::<DeckAction<1>>()
         .add_action::<DeckAction<2>>()

@@ -1094,3 +1094,39 @@ async fn combo_anywhere_tap_alternates_but_hold_targets_touched_side() {
     settle(&worker).await;
     assert!(state.lock().unwrap().channels[&right].mute);
 }
+
+#[tokio::test]
+async fn global_refresh_rate_changes_shared_worker_cadence() {
+    use streamdeck_plugin::PluginLifecycle;
+    let state = Arc::new(Mutex::new(State::default()));
+    let worker = Worker::spawn(move || Fake(state)).unwrap();
+    wait_connected(&worker, true).await;
+    let mut hook = streamdeck_voicemeeter::global_settings::GlobalSettings(worker.client.clone());
+    async fn sample(worker: &Worker) -> u64 {
+        let mut snapshots = worker.client.snapshots.clone();
+        snapshots.changed().await.unwrap();
+        let first = snapshots.borrow_and_update().clone();
+        loop {
+            snapshots.changed().await.unwrap();
+            let last = snapshots.borrow_and_update().clone();
+            if last.frame_sequence >= first.frame_sequence + 8 {
+                return (last.frame_elapsed_ms - first.frame_elapsed_ms)
+                    / (last.frame_sequence - first.frame_sequence);
+            }
+        }
+    }
+    let slow = tokio::time::timeout(Duration::from_secs(5), sample(&worker))
+        .await
+        .unwrap();
+    hook.on_did_receive_global_settings(&json!({"refreshRate":30}))
+        .await
+        .unwrap();
+    let fast = tokio::time::timeout(Duration::from_secs(5), sample(&worker))
+        .await
+        .unwrap();
+    assert!(slow >= 60, "default frame interval: {slow}");
+    assert!(
+        fast < slow,
+        "30 fps interval {fast}, 15 fps interval {slow}"
+    );
+}

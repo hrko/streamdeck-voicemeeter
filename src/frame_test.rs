@@ -43,6 +43,7 @@ impl<const DIAL: bool> Action for FrameTest<DIAL> {
         Self { client, task: None }
     }
     async fn on_will_appear(&mut self, _: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
+        ctx.sender().get_global_settings(None)?;
         if let Some(task) = self.task.take() {
             task.abort();
         }

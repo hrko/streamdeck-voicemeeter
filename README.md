@@ -21,6 +21,7 @@ or assign MacroButtons to keys.
 - Gain Button supports optional channel labels, dB values, stereo meters and positive-gain colors. This action is included in the 0.1.6 development build, not the published 0.1.5 package.
 - Set independent channels and gain steps for Combo.
 - Use Japanese or English settings screens; additional languages can be added through translation resources.
+- Choose 15 (default), 20, 25, or 30 fps under **Plugin-wide settings → Refresh rate** at the bottom of the settings screen. The rate applies to all keys and dials and is saved independently of color presets. Reduce it if frames drop with many visible actions.
 
 For single-channel Gain Control, **Run VoiceMeeter command** executes a custom Remote API script on tap or long press. Each gesture has its own command field. Separate commands with semicolons; editing does not execute them. API failures are shown in the inspector, with details in the plugin log.
 

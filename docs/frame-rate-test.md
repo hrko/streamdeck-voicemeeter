@@ -10,6 +10,7 @@ normal actions, including when VoiceMeeter is disconnected.
 - Top-left square: alternates light/dark every source update.
 
 Record at 120 or 240 fps, with a short enough exposure to distinguish digits.
+Choose the desired rate in the PI plugin-wide settings (default 15 fps).
 At a nominal 30 fps, one number should last about 4 or 8 camera frames respectively.
 Camera and device clocks are not synchronized, so occasional differences in
 repeat counts and partially scanned digits are not alone proof of a dropped frame.

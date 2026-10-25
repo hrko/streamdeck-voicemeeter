@@ -15,6 +15,7 @@ use std::{
 use tokio::sync::watch;
 
 pub enum Request {
+    RefreshRate(u32),
     Subscribe {
         context: String,
         subscription: Box<Subscription>,
@@ -101,6 +102,7 @@ impl Worker {
                 let mut poll_at = Instant::now();
                 let started = Instant::now();
                 let mut frame_at = started;
+                let mut frame_period = Duration::from_secs_f64(1.0 / 15.0);
                 while !stopped.load(Ordering::Acquire) {
                     let now = Instant::now();
                     if engine.snapshot().edition.is_none() && now >= reconnect_at {
@@ -131,7 +133,7 @@ impl Worker {
                         engine.refresh();
                         engine.record_frame(started.elapsed().as_millis() as u64);
                         snapshots.send_replace(engine.snapshot().clone());
-                        frame_at = now + Duration::from_micros(33_333);
+                        frame_at = now + frame_period;
                     }
                     let request = receiver
                         .recv_timeout(Duration::from_millis(2))
@@ -142,6 +144,12 @@ impl Worker {
                             queued.request
                         });
                     match request {
+                        Ok(Request::RefreshRate(fps)) => {
+                            if matches!(fps, 15 | 20 | 25 | 30) {
+                                frame_period = Duration::from_secs_f64(1.0 / f64::from(fps));
+                                frame_at = Instant::now() + frame_period;
+                            }
+                        }
                         Ok(Request::Subscribe {
                             context,
                             subscription,

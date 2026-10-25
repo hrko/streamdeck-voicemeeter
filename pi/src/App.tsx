@@ -75,6 +75,36 @@ function Select<T extends string | number>({ label, value, options, onChange }: 
   }}>{options.map(([value, title]) => <option key={value} value={value}>{title}</option>)}</select></Row>;
 }
 
+export function GlobalSettingsEditor({client}:{client:StreamDeckPiApi}) {
+  const {t}=useTranslation();
+  const [rate,setRate]=useState(15);
+  const [ready,setReady]=useState(false);
+  const [busy,setBusy]=useState(false);
+  const pending=useRef<number|null>(null);
+  useEffect(()=>{
+    const unsubscribe=client.subscribe("didReceiveGlobalSettings", value=>{
+      const global=(value && typeof value === "object" ? value : {}) as Record<string,unknown>;
+      const next=pending.current;
+      pending.current=null;
+      if(next!==null){
+        client.setGlobalSettings({...global,refreshRate:next});
+        setRate(next);setBusy(false);
+      } else setRate([15,20,25,30].includes(global.refreshRate as number)?global.refreshRate as number:15);
+      setReady(true);
+    });
+    client.getGlobalSettings();
+    return unsubscribe;
+  },[client]);
+  return <details><summary>{t("global.title")}</summary>
+    <fieldset disabled={!ready || busy}>
+      <Select label={t("global.refreshRate")} value={rate} options={[15,20,25,30].map(fps=>[fps,`${fps} fps`])} onChange={fps=>{
+        pending.current=fps;setBusy(true);client.getGlobalSettings();
+      }}/>
+      <p className="help">{t("global.refreshHelp")}</p>
+    </fieldset>
+  </details>;
+}
+
 function IconEditor({ value, onChange, background }: { value: IconSettings; onChange: (value: IconSettings) => void; background?: string }) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
@@ -353,6 +383,7 @@ export function App({ client }: { client: StreamDeckPiApi }) {
         save({...settings,dial:{...settings.dial,styles}});
       }}/></fieldset>)}
     </>}
+    <GlobalSettingsEditor client={client}/>
     {!status.connected && <p className="help">{t("help.offline")}</p>}
   </main>;
 }

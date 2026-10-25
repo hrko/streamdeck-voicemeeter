@@ -207,7 +207,10 @@
     "button.keyInactiveOpacity": "消灯セルの不透明度",
     "button.keyRailOpacity": "フェーダー空き部分の不透明度",
     "button.keyThumbOpacity": "つまみ内部の不透明度",
-    "button.keyThumbClearance": "つまみの外周に余白を設ける"
+    "button.keyThumbClearance": "つまみの外周に余白を設ける",
+    "global.title": "プラグイン全体の設定",
+    "global.refreshRate": "更新レート",
+    "global.refreshHelp": "テスト用を含むすべてのキー・ダイヤルに適用します。既定は15 fpsです。高い値では同時表示数によってコマ落ちする場合があります。配色プリセットには含まれません。"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",
