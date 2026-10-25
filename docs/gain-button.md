@@ -133,3 +133,18 @@ The thumb covers the channel label. Meter and fader centers remain at 46/96
 (canonical 144px coordinates), or 98/48 when swapped, with or without gain text. Numbers are clipped to
 the inner circle; pixel tests verify that removing that clip reveals no missing
 glyphs for −60, −24, −12.5, 0, +6 and +12. Key-boundary splitting remains visible.
+
+## Adjacent setting synchronization
+
+The worker client's shared visible-key registry is populated by `willAppear`
+and removed by `willDisappear` and Drop. It matches device, coordinates,
+orientation, opposite signs and the pre-edit target. There is no persisted page
+identity or background editing of hidden profiles. Duplicate matching contexts
+are treated as ambiguous and skipped. Multi-actions are never registered.
+
+Settings edits copy the first channel and gain-button settings to the peer,
+preserving its delta sign. SDK state is refreshed with `getSettings` after
+`setSettings`; host replies update the worker and rendering through the normal
+settings handler. Pending snapshots suppress acknowledgement loops and restore
+the latest settings if an older reply arrives during rapid edits. The registry
+is scoped to a worker/client rather than process-global static state.

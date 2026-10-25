@@ -247,6 +247,13 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
     async fn on_will_appear(&mut self, payload: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
         self.invalid_settings =
             serde_json::from_value::<Settings>(payload.settings.clone()).is_err();
+        if KIND == 3 && !payload.is_in_multi_action && !self.invalid_settings {
+            self.client
+                .pairs
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .appear(ctx.identity().clone(), ctx.settings());
+        }
         self.update(ctx)
     }
     async fn on_did_receive_settings(
@@ -261,11 +268,28 @@ impl<const KIND: u8> Action for DeckAction<KIND> {
         Ok(())
     }
     async fn on_settings_changed(&mut self, _: &Settings, ctx: &Context<'_>) -> Result<()> {
+        if KIND == 3 {
+            let mut pairs = self.client.pairs.lock().unwrap_or_else(|e| e.into_inner());
+            if self.invalid_settings {
+                pairs.remove(&ctx.identity().context);
+            } else {
+                if let Some(latest) =
+                    pairs.changed(&ctx.identity().context, ctx.settings(), ctx.sender())?
+                {
+                    ctx.update_settings(|settings| *settings = latest)?;
+                }
+            }
+        }
         self.update(ctx)
     }
     async fn on_will_disappear(&mut self, _: &ActionPayload, ctx: &Context<'_>) -> Result<()> {
         self.stop_rendering();
         self.context = None;
+        self.client
+            .pairs
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(&ctx.identity().context);
         self.send(Request::Remove(ctx.identity().context.clone()))
     }
     async fn on_dial_rotate(
@@ -375,6 +399,11 @@ impl<const KIND: u8> Drop for DeckAction<KIND> {
     fn drop(&mut self) {
         self.stop_rendering();
         if let Some(context) = self.context.take() {
+            self.client
+                .pairs
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .remove(&context);
             let _ = self.client.send(Request::Remove(context));
         }
     }

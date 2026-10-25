@@ -188,9 +188,10 @@ function GainButtonEditor({ client, value, onChange }: { client: StreamDeckPiApi
       <fieldset><legend>{t("button.normalIcon")}</legend><IconEditor value={value.icon} background={value.background} onChange={icon => patch({ icon })} /></fieldset>
       <fieldset><legend>{t("button.mutedIcon")}</legend><IconEditor value={value.mutedIcon} background={value.mutedBackground} onChange={mutedIcon => patch({ mutedIcon })} /></fieldset>
     </>}
+    {fader && <><Row label={t("button.syncPair")}><input type="checkbox" aria-label={t("button.syncPair")} checked={value.syncPair} onChange={event => patch({ syncPair: event.target.checked })} /></Row><p className="help">{t("button.syncPairHelp")}</p></>}
     <fieldset><legend>{t("button.details")}</legend>
-      {((fader ? [...(value.delta < 0 ? ["faderLabel"] : []), "showDb", "showMeter"] : ["showLabel"]) as ("faderLabel" | "showLabel" | "showDb" | "showMeter")[]).map(key => <Row key={key} label={t(`button.${key}`)}><input type="checkbox" aria-label={t(`button.${key}`)} checked={value[key]} onChange={event => patch({ [key]: event.target.checked })} /></Row>)}
-      {fader && value.delta > 0 && <p className="help">{t("button.labelNegativeOnly")}</p>}
+      {((fader ? [...(value.delta < 0 || value.syncPair ? ["faderLabel"] : []), "showDb", "showMeter"] : ["showLabel"]) as ("faderLabel" | "showLabel" | "showDb" | "showMeter")[]).map(key => <Row key={key} label={t(`button.${key}`)}><input type="checkbox" aria-label={t(`button.${key}`)} checked={value[key]} onChange={event => patch({ [key]: event.target.checked })} /></Row>)}
+      {fader && value.delta > 0 && !value.syncPair && <p className="help">{t("button.labelNegativeOnly")}</p>}
       {fader && value.showMeter && <Row label={t("button.swapMeter")}><input type="checkbox" aria-label={t("button.swapMeter")} checked={value.swapMeter} onChange={event => patch({ swapMeter: event.target.checked })} /></Row>}
     </fieldset>
     {fader ? <>

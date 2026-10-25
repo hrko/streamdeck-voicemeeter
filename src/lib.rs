@@ -14,3 +14,5 @@ pub mod shutdown;
 #[cfg(windows)]
 pub mod voicemeeter;
 pub mod worker;
+
+mod pairs;

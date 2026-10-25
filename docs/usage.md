@@ -131,3 +131,21 @@ before sharing them because local paths and context identifiers may be present.
 
 For translations, see [translating.md](translating.md). User-defined labels and
 VoiceMeeter names remain unchanged by localization.
+
+### Adjacent fader synchronization
+
+**Sync adjacent fader** defaults to on, including existing settings. Both keys
+must enable it and be visible on the same device, with the same channel and
+orientation: decrease on the left and increase on the right, or increase above
+and decrease below. Multi-actions and ambiguous slots are excluded.
+
+Edits synchronize channel, step magnitude, colors, meter options, gain display
+and label options. Each half keeps its increase/decrease sign. With sync enabled,
+either PI can edit the label; only the left/lower key draws it. The keys must
+already target the same channel to form a pair; after that, changing the channel
+updates both. Orientation, operation or sign changes break the current pair.
+
+Opening a page does not overwrite either key's existing settings. Synchronization
+starts with the next edit. Turning sync off on either half stops synchronization;
+a hidden or removed key is never updated. User-entered Stream Deck titles and
+shared palette definitions are not synchronized.

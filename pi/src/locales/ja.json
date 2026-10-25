@@ -120,6 +120,8 @@
     "button.faderLabel": "フェーダー内ラベル（左／下側のみ）",
     "button.labelNegativeOnly": "フェーダー内ラベルは減少キー（左／下側）で設定します。",
     "button.positiveLabelColor": "正ゲイン時の文字色",
+    "button.syncPair": "隣接するフェーダーと同期",
+    "button.syncPairHelp": "同じチャンネルの増減キーが隣接し、両方で同期が有効な場合に編集を反映します。ラベルはどちらからも設定でき、左・下側だけに表示します。",
     "button.labelColor": "フェーダー内の文字色",
     "palette.adjustColors": "配色を調整",
     "palette.includesMeter": "プリセットにはフェーダー・文字・背景と、ミュート時を含むメーターの全配色を保存します。",

@@ -25,9 +25,12 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
-  it("offers fader labels only on the negative half and keeps them separate from static titles", async () => {
+  it("offers labels on both synchronized halves and only the negative half when unlinked", async () => {
     const settings=structuredClone(defaultSettings);settings.gainButton.appearance="vertical";
     const {client}=await setup("gain-button",settings);
+    expect((screen.getByLabelText("Sync adjacent fader") as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByLabelText("Label inside fader (left/lower key)")).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Sync adjacent fader"));
     expect(screen.queryByLabelText("Label inside fader (left/lower key)")).toBeNull();
     fireEvent.change(screen.getByLabelText("Change (dB)"),{target:{value:"-3"}});
     fireEvent.click(screen.getByLabelText("Label inside fader (left/lower key)"));

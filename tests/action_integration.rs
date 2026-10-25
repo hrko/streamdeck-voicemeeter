@@ -719,3 +719,131 @@ async fn gain_hold_repeats_every_quarter_second_and_cancels_on_lifecycle_changes
         "page exit cancels repeats"
     );
 }
+
+#[tokio::test]
+async fn adjacent_faders_sync_settings_and_refresh_sdk_without_echo_loops() {
+    use streamdeck_plugin::Coordinates;
+    use streamdeck_voicemeeter::settings::GainAppearance;
+    for vertical in [false, true] {
+        let mut settings = Settings::default();
+        settings.gain_button.appearance = if vertical {
+            GainAppearance::Vertical
+        } else {
+            GainAppearance::Horizontal
+        };
+        settings.gain_button.delta = -3.0;
+        let (worker, mut left, sender, mut output, state) = setup::<3>(json!(settings)).await;
+        left.attach(
+            "ctx".into(),
+            DeckAction::<3>::UUID.into(),
+            "device".into(),
+            Some(Coordinates {
+                column: 0,
+                row: if vertical { 1 } else { 0 },
+            }),
+        );
+        left.handle(
+            event("willAppear", json!({"settings":settings})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+        let mut right = TypedInstance::<DeckAction<3>>::new(Arc::new(worker.client.clone()));
+        right.attach(
+            "other".into(),
+            DeckAction::<3>::UUID.into(),
+            "device".into(),
+            Some(Coordinates {
+                column: if vertical { 0 } else { 1 },
+                row: 0,
+            }),
+        );
+        let mut peer = settings.clone();
+        peer.gain_button.delta = 3.0;
+        right.apply_settings(&json!(peer));
+        right
+            .handle(
+                event("willAppear", json!({"settings":peer})),
+                sender.clone(),
+            )
+            .await
+            .unwrap();
+        while output.try_recv().is_ok() {}
+        // Edit from the positive half, including the channel and negative-only label.
+        peer.channels[0].target.index = 1;
+        peer.gain_button.delta = 1.5;
+        peer.gain_button.fader_label = true;
+        peer.gain_button.show_meter = true;
+        right
+            .handle(
+                event("didReceiveSettings", json!({"settings":peer})),
+                sender.clone(),
+            )
+            .await
+            .unwrap();
+        let mut persisted = None;
+        let mut requested = false;
+        while let Ok(raw) = output.try_recv() {
+            let m: Value = serde_json::from_str(&raw).unwrap();
+            if m["context"] == "ctx" && m["event"] == "setSettings" {
+                persisted = Some(m["payload"].clone());
+            }
+            if m["context"] == "ctx" && m["event"] == "getSettings" {
+                requested = true;
+            }
+        }
+        let persisted = persisted.expect("peer settings must be persisted");
+        assert!(requested);
+        assert_eq!(persisted["gainButton"]["delta"], -1.5);
+        assert_eq!(persisted["gainButton"]["faderLabel"], true);
+        assert_eq!(persisted["channels"][0]["target"]["index"], 1);
+        // Simulate the host's getSettings reply, then verify real key behavior.
+        left.handle(
+            event("didReceiveSettings", json!({"settings":persisted})),
+            sender.clone(),
+        )
+        .await
+        .unwrap();
+        while let Ok(raw) = output.try_recv() {
+            assert_ne!(
+                serde_json::from_str::<Value>(&raw).unwrap()["event"],
+                "setSettings"
+            );
+        }
+        left.handle(event("keyDown", json!({})), sender.clone())
+            .await
+            .unwrap();
+        left.handle(event("keyUp", json!({})), sender.clone())
+            .await
+            .unwrap();
+        settle(&worker).await;
+        assert_eq!(
+            state
+                .lock()
+                .unwrap()
+                .channels
+                .get(&peer.channels[0].target)
+                .unwrap()
+                .gain,
+            -1.5
+        );
+        // Once the peer disappears, further edits must not write its old context.
+        left.handle(event("willDisappear", json!({})), sender.clone())
+            .await
+            .unwrap();
+        peer.gain_button.show_db = true;
+        right
+            .handle(
+                event("didReceiveSettings", json!({"settings":peer})),
+                sender.clone(),
+            )
+            .await
+            .unwrap();
+        while let Ok(raw) = output.try_recv() {
+            assert_ne!(
+                serde_json::from_str::<Value>(&raw).unwrap()["event"],
+                "setSettings"
+            );
+        }
+    }
+}
