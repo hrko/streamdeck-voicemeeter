@@ -12,7 +12,7 @@ function proposal(s){
  s=s.replace(/(<path d="M36.5 72H252"[^>]*stroke-width="28"[^>]*)(\/>)/,'$1 mask="url(#rail-hole)"$2');
  s=s.replace(/stroke="#000000" stroke-width="16"/g,'stroke="#000000" stroke-opacity="0.4" stroke-width="16"');
  s=s.replace(m[0],'</g>');
- s=s.replace(/(<circle cx="[\d.]+" cy="72" r="25" fill=")[^"]+(" stroke=")[^"]+(" stroke-width="6"\/>)/,'$1#000000" fill-opacity="0.8"/>');
+ s=s.replace(/(<circle cx="[\d.]+" cy="72" r="25" fill=")[^"]+(" stroke=")[^"]+(" stroke-width="6"\/>)/,'$1#000000" fill-opacity="0.8" stroke="#ffffff" stroke-width="6"/>');
  s=s.replace(/(height="24" fill="#000000")/g,'$1 fill-opacity="0.4"');
  return s;
 }
@@ -38,5 +38,5 @@ for(const scale of [1,3]){
    layers.push({input:await sharp(pair).resize(72*scale,152*scale,{kernel:'nearest'}).png().toBuffer(),left:x,top:60});
   }
  }
- await sharp(svg(w,h,body)).composite(layers).png().toFile(`${dir}/comparison-${scale}x.png`);
+ await sharp(svg(w,h,body)).composite(layers).png().toFile(`${dir}/comparison-ring-${scale}x.png`);
 }
