@@ -4,6 +4,7 @@ import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
 import { defaultSettings, type Settings, type IconSettings, type ChannelSettings, type Edition, type ValidationError, type GainButtonSettings } from "./generated/contracts";
 import { channelLimits, restoreSettings, validateSettings } from "./settings";
 import glyphs from "./generated/glyphs.json";
+import { gainPalettes, gainPaletteName } from "./gainColors";
 import { IconPicker } from "./IconPicker";
 
 export interface Status { connected: boolean; edition?: Edition; error?: ValidationError | null }
@@ -114,6 +115,7 @@ function GainButtonEditor({ value, onChange }: { value: GainButtonSettings; onCh
     {value.operation === "adjust" && <Select label={t("button.appearance")} value={value.appearance} options={(["static", "horizontal", "vertical"] as const).map(key => [key, t(`button.${key}`)])} onChange={appearance => patch({ appearance })} />}
     {fader ? <>
       <p className="help">{t(value.appearance === "horizontal" ? (value.delta > 0 ? "button.rightHalf" : "button.leftHalf") : (value.delta > 0 ? "button.upperHalf" : "button.lowerHalf"))}</p>
+      <Select label={t("button.palette")} value={gainPaletteName(value)} options={(["standard", "voicemeeter", "custom"] as const).map(key => [key, t(`button.palette.${key}`)])} onChange={name => { if (name !== "custom") patch(gainPalettes[name]); }} />
       <ColorEditor label={t("button.barColor")} value={value.barColor} onChange={barColor => patch({ barColor })} />
       <ColorEditor label={t("button.thumbColor")} value={value.thumbColor} onChange={thumbColor => patch({ thumbColor })} />
       <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.highlightPositive} onChange={event => patch({ highlightPositive: event.target.checked })} /></Row>

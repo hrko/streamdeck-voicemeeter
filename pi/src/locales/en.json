@@ -90,7 +90,11 @@
     "button.operation": "Action",
     "button.leftHalf": "Left half: place to the left of an increase key for the same channel.",
     "button.showMeter": "Show stereo meter",
-    "button.details": "Additional display"
+    "button.details": "Additional display",
+    "button.palette": "Color preset",
+    "button.palette.standard": "White on black",
+    "button.palette.voicemeeter": "VoiceMeeter",
+    "button.palette.custom": "Custom"
   },
   "manifest": {
     "Name": "VoiceMeeter (Rust)",

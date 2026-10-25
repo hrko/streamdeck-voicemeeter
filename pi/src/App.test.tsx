@@ -25,6 +25,27 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("applies and restores fader palettes without changing behavior or detail options", async () => {
+    const settings = structuredClone(defaultSettings);
+    settings.gainButton.appearance = "vertical";
+    settings.gainButton.delta = -2.5;
+    settings.gainButton.showDb = true;
+    const { client, emit } = await setup("gain-button", settings);
+    const palette = screen.getByLabelText("Color preset") as HTMLSelectElement;
+    expect(palette.value).toBe("standard");
+    fireEvent.change(palette, { target: { value: "voicemeeter" } });
+    let saved = vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.gainButton).toMatchObject({ barColor: "#70c399", thumbColor: "#70c399", positiveColor: "#f8634d", background: "#2c3d4d", mutedBackground: "#2c3d4d", highlightPositive: true, delta: -2.5, appearance: "vertical", showDb: true });
+    expect(saved.channels).toEqual(settings.channels);
+    emit("didReceiveSettings", saved);
+    expect(palette.value).toBe("voicemeeter");
+    fireEvent.change(screen.getByLabelText("Fader color"), { target: { value: "#123456" } });
+    expect(palette.value).toBe("custom");
+    fireEvent.change(palette, { target: { value: "standard" } });
+    saved = vi.mocked(client.setSettings).mock.calls.at(-1)![0] as Settings;
+    expect(saved.gainButton).toMatchObject({ barColor: "#ffffff", background: "#000000", highlightPositive: false, delta: -2.5, showDb: true });
+  });
+
   it("configures gain keys with signed steps, optional details and absolute/mute operations", async () => {
     const { client } = await setup("gain-button");
     expect(screen.queryByLabelText("Step (dB)")).toBeNull();

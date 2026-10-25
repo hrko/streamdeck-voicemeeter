@@ -44,7 +44,13 @@ comparison with the supplied screenshot; updated hardware rendering still
 requires confirmation. No claim of byte-identical antialiasing is made.
 
 Color and detail options are independent, with all optional detail fields off by
-default. Labels are clipped to the key. Vertical labels and values run alongside
+default. The PI offers White on black and VoiceMeeter color presets. VoiceMeeter
+uses #70c399 for the rail/thumb, #f8634d for positive gain (highlight enabled),
+and #2c3d4d for both backgrounds, matching `src/dial.rs` and the owner's Potato
+screenshot. Applying a palette changes only colors and positive highlighting;
+channel, operation, step, orientation and label/dB/meter options are retained.
+Presets are inferred from saved color values; individual edits display Custom.
+No settings schema change is required. Labels are clipped to the key. Vertical labels and values run alongside
 the rail; horizontal/static labels and values use the top/bottom areas. Stereo
 meters include the current-level marks and reuse the shared decaying peaks.
 Static icons use the existing Material Symbols renderer, normal/muted icons and
