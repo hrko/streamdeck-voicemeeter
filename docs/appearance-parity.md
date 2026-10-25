@@ -84,3 +84,13 @@ This is a definition-level comparison with published layouts, corroborated by
 the installed brightness manifest, not a pixel comparison of every stock
 plugin. The owner's hardware confirmation covers the restored Go appearance.
 Windows CI for `79bed2c` passed (run `39819336073`).
+
+## Aligned gain and status rows (2026-10-25)
+
+The approved readability update retains the fader at y=74 and all label/icon
+positions. With meters visible, gain text starts at y=43 and status at y=40.
+With meters hidden, gain text starts at y=48 and status at y=45. The status
+shapes and gain glyphs have aligned visual bottoms in the preview; host font
+rasterization still requires hardware confirmation. Separate native slots are
+toggled through feedback because item rectangles cannot change at runtime.
+Combo channels choose their slots independently unless their styles are shared.

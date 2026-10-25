@@ -304,8 +304,8 @@ mod tests {
         settings.gain_button.meter_notch = true;
         let marked = frame(&snapshot, &settings, &mut cache, "en").svg;
         assert_eq!(
-            marked.matches("#191b1b").count(),
-            plain.matches("#191b1b").count() + 2
+            marked.matches("#1b1b1b").count(),
+            plain.matches("#1b1b1b").count() + 2
         );
         assert_eq!(
             marked.matches("<rect ").count(),
@@ -413,21 +413,21 @@ mod tests {
         let normal = frame(&snapshot, &settings, &mut cache, "en").svg;
         assert_eq!(normal.matches("height=\"8\"").count(), 80);
         assert!(normal.contains("#123456"));
-        for color in ["#85adb9", "#1efe5b", "#fa0000"] {
+        for color in ["#a6a6a6", "#1efe5b", "#fa0000"] {
             assert!(normal.contains(color));
         }
         snapshot.channels[0].1.mute = true;
         let muted = frame(&snapshot, &settings, &mut cache, "en").svg;
-        for color in ["#394547", "#384b34", "#583328"] {
+        for color in ["#424242", "#384b34", "#583328"] {
             assert!(muted.contains(color));
         }
-        for color in ["#85adb9", "#1efe5b", "#fa0000"] {
+        for color in ["#a6a6a6", "#1efe5b", "#fa0000"] {
             assert!(!muted.contains(color));
         }
         assert!(muted.contains("#123456"));
         snapshot.channels[0].1.levels = [-120.0; 2];
         let silence = frame(&snapshot, &settings, &mut cache, "en").svg;
-        assert_eq!(silence.matches("fill=\"#191b1b\"").count(), 80);
+        assert_eq!(silence.matches("fill=\"#1b1b1b\"").count(), 80);
         settings.gain_button.meter_background = "invalid".into();
         assert!(settings.validate().is_err());
     }

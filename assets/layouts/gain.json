@@ -20,9 +20,9 @@
         "weight": 600
       },
       "key": "gainValue",
-      "rect": [112, 40, 72, 24],
+      "rect": [112, 43, 72, 24],
       "type": "text",
-      "zOrder": 1
+      "zOrder": 2
     },
     {
       "key": "levelMeter",
@@ -52,6 +52,25 @@
       "rect": [76, 40, 36, 24],
       "type": "pixmap",
       "zOrder": 1
+    },
+    {
+      "alignment": "right",
+      "font": {
+        "size": 16,
+        "weight": 600
+      },
+      "key": "gainValueCompact",
+      "rect": [112, 48, 72, 24],
+      "type": "text",
+      "zOrder": 3,
+      "enabled": false
+    },
+    {
+      "key": "statusCompact",
+      "rect": [76, 45, 36, 24],
+      "type": "pixmap",
+      "zOrder": 3,
+      "enabled": false
     }
   ]
 }

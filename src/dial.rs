@@ -134,6 +134,17 @@ pub fn feedback(
                 serde_json::json!({"value":render::data_url(&image),"enabled":match key {"icon"=>style.show_icon,"levelMeter"=>style.show_meter,"gainSlider"=>style.show_bar,_=>true}}),
             );
         }
+        // Layout rectangles cannot move through setFeedback. Toggle native
+        // slots instead, independently for each Combo channel.
+        for key in ["gainValue", "status"] {
+            let regular_key = format!("{key}{suffix}");
+            let regular = payload.get_mut(&regular_key).unwrap();
+            let enabled = regular["enabled"].as_bool().unwrap_or(true);
+            let mut compact = regular.clone();
+            regular["enabled"] = Value::Bool(enabled && style.show_meter);
+            compact["enabled"] = Value::Bool(enabled && !style.show_meter);
+            payload.insert(format!("{key}Compact{suffix}"), compact);
+        }
     }
     (Value::Object(payload), missing)
 }
@@ -643,6 +654,41 @@ mod tests {
                     .starts_with("Strip")
             );
         }
+    }
+
+    #[test]
+    fn meter_visibility_selects_aligned_slots_per_channel() {
+        let mut settings = Settings::default();
+        settings.dial.shared = false;
+        for left in [false, true] {
+            for right in [false, true] {
+                settings.dial.styles[0].show_meter = left;
+                settings.dial.styles[1].show_meter = right;
+                let (frame, _) = feedback(
+                    &Snapshot::default(),
+                    &settings,
+                    ActionKind::Combo,
+                    &mut IconCache::default(),
+                    "en",
+                );
+                for (suffix, visible) in [("", left), ("1", right)] {
+                    for key in ["gainValue", "status"] {
+                        assert_eq!(frame[format!("{key}{suffix}")]["enabled"], visible);
+                        assert_eq!(frame[format!("{key}Compact{suffix}")]["enabled"], !visible);
+                    }
+                }
+            }
+        }
+        settings.dial.styles[0].show_gain = false;
+        let (frame, _) = feedback(
+            &Snapshot::default(),
+            &settings,
+            ActionKind::Gain,
+            &mut IconCache::default(),
+            "en",
+        );
+        assert_eq!(frame["gainValue"]["enabled"], false);
+        assert_eq!(frame["gainValueCompact"]["enabled"], false);
     }
 
     #[test]
