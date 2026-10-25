@@ -237,13 +237,16 @@ function DialEditor({client,value,onChange}: {client:StreamDeckPiApi;value:DialS
     <PaletteEditor client={client} value={{...defaultSettings.gainButton,...value.palette}} onChange={v=>patch({palette:paletteOf(v)})}/>
     <details><summary>{t("palette.adjustColors")}</summary>
       <fieldset><legend>{t("dial.barColors")}</legend>
-        {(["barColor","positiveColor","labelColor","positiveLabelColor"] as const).map(key=><ColorEditor key={key} label={t(`button.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
+        {(["barColor","positiveColor"] as const).map(key=><ColorEditor key={key} label={t(`button.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
         <Row label={t("button.highlightPositive")}><input type="checkbox" aria-label={t("button.highlightPositive")} checked={value.palette.highlightPositive} onChange={e=>color("highlightPositive",e.target.checked)}/></Row>
+        <ColorEditor label={t("dial.labelColor")} value={value.labelColor} onChange={labelColor=>patch({labelColor})}/>
+        <ColorEditor label={t("dial.positiveLabelColor")} value={value.positiveLabelColor} onChange={positiveLabelColor=>patch({positiveLabelColor})}/>
         <ColorEditor label={t("dial.emptyBarColor")} value={value.emptyBarColor} onChange={emptyBarColor=>patch({emptyBarColor})}/>
         <ColorEditor label={t("dial.gainColor")} value={value.gainColor} onChange={gainColor=>patch({gainColor})}/>
         <ColorEditor label={t("dial.positiveGainColor")} value={value.positiveGainColor} onChange={positiveGainColor=>patch({positiveGainColor})}/>
       </fieldset>
       <fieldset><legend>{t("dial.background")}</legend>
+        {(["backgroundOpacity","mutedBackgroundOpacity"] as const).map(key=><Row key={key} label={t(`dial.${key}`)}><input type="range" min="0" max="100" step="10" aria-label={t(`dial.${key}`)} value={value[key]} onChange={e=>patch({[key]:Number(e.target.value)})}/><output>{value[key]}%</output></Row>)}
         {(["background","mutedBackground"] as const).map(key=><ColorEditor key={key} label={t(`button.${key}`)} value={value.palette[key]} onChange={v=>color(key,v)}/>)}
       </fieldset>
       <fieldset><legend>{t("meter.colors")}</legend>

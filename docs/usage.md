@@ -168,7 +168,7 @@ does not disable its corresponding VoiceMeeter operation.
 Color presets and saved user palettes are shared with Gain Button. Applying a
 preset changes the common colors only, keeping channels, steps, icons and display
 options intact. **Adjust colors** contains bar, label, background and normal/muted
-meter colors. The empty-bar color and normal/positive gain-number colors are
+meter colors. The channel-label colors, background opacity, empty-bar color and normal/positive gain-number colors are
 separate dial options; they are not part of the common palette. Positive-gain
 highlighting controls the positive bar, label and gain-number colors together.
 
@@ -181,3 +181,23 @@ Existing settings receive the original layout, green/red gain bar and white text
 The current-level unlit-cell marker defaults to off, and muted meters use the
 muted palette colors. Stream Deck still renders the native text (font size,
 alignment and overflow); the appearance controls specify its color and visibility.
+
+### Transparent dial backgrounds
+
+Under **Adjust colors → Background colors**, set normal and muted background
+opacity independently in 10% steps. 0% hides only the background layer so the
+Stream Deck wallpaper remains visible; 100% draws the selected solid color.
+Intermediate values blend the background with the wallpaper. Meter backgrounds,
+icons and text keep their own colors and opacity. Combo follows shared/independent
+appearance selection. Applying a color preset preserves opacity.
+
+New actions start transparent. Existing serialized settings missing the opacity
+fields retain 100%, even if they predate dial appearance settings. Explicitly
+saved opacity values always win. To make an existing action transparent, set
+both sliders to 0% (or set only the desired normal/muted state).
+
+Dial channel-label colors are separate from the text drawn inside button faders.
+Both Combo halves use the same native text element behavior; the host's generic
+Title color/text no longer overrides the left label. Labels show the VoiceMeeter
+channel name (or channel identifier), and their color/visibility is controlled
+by the dial appearance options in the PI.

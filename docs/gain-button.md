@@ -172,3 +172,12 @@ items remain at their original rectangles with zOrder 1. Status visibility skips
 the original slot rather than compacting the other indicators. The native
 loopback test checks these structured feedback messages. Renderer tests cover
 muted colors, shared/independent Combo styles and retained status positions.
+
+Dial backgrounds use numeric SVG dimensions (200x100 for single, 100x100 for
+Combo halves), avoiding percentage interpretation differences in the host SVG
+renderer. Opacity is applied to the background pixmap only, and 0 disables it.
+`channelLabel`/`channelLabel1` replace the host-special `title` key so both sides
+respect explicit PI label colors. Shared palettes retain button label fields,
+but dial text uses independent `DialStyle.labelColor`/`positiveLabelColor`.
+Rust deserialization and PI restore both distinguish empty new settings from
+nonempty legacy settings to preserve the existing opaque background.

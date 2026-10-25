@@ -42,7 +42,7 @@
         "size": 16,
         "weight": 600
       },
-      "key": "title",
+      "key": "channelLabel",
       "rect": [16, 10, 136, 24],
       "type": "text",
       "zOrder": 1

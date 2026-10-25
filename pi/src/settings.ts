@@ -19,7 +19,18 @@ function merge(defaults: unknown, value: unknown): unknown {
 }
 
 export function restoreSettings(value: unknown): { settings?: Settings; error?: ValidationError } {
-  const merged = merge(defaultSettings, value);
+  const incoming=structuredClone(value);
+  if(record(incoming) && Object.keys(incoming).length) {
+    if(incoming.dial===undefined) incoming.dial={};
+    if(record(incoming.dial)) {
+      if(incoming.dial.styles===undefined) incoming.dial.styles=[{},{}];
+      if(Array.isArray(incoming.dial.styles)) for(const style of incoming.dial.styles) if(record(style)) {
+        if(style.backgroundOpacity===undefined) style.backgroundOpacity=100;
+        if(style.mutedBackgroundOpacity===undefined) style.mutedBackgroundOpacity=100;
+      }
+    }
+  }
+  const merged = merge(defaultSettings, incoming);
   const error = validateSettings(merged);
   return error ? { error } : { settings: merged as Settings };
 }
@@ -61,7 +72,8 @@ export function validateSettings(value: unknown, edition?: Edition): ValidationE
       const v=style.palette[key];
       if(key==="highlightPositive" ? typeof v!=="boolean" : typeof v!=="string" || !/^#[\da-f]{6}$/i.test(v)) return error("invalidColor",`dial.palette.${key}`);
     }
-    for(const key of ["emptyBarColor","gainColor","positiveGainColor"]) if(typeof style[key]!=="string" || !/^#[\da-f]{6}$/i.test(style[key] as string)) return error("invalidColor",`dial.${key}`);
+    for(const key of ["backgroundOpacity","mutedBackgroundOpacity"]) if(!Number.isInteger(style[key]) || (style[key] as number)<0 || (style[key] as number)>100) return error("invalidOpacity",`dial.${key}`);
+    for(const key of ["labelColor","positiveLabelColor","emptyBarColor","gainColor","positiveGainColor"]) if(typeof style[key]!=="string" || !/^#[\da-f]{6}$/i.test(style[key] as string)) return error("invalidColor",`dial.${key}`);
   }
   const macro = value.macroButton;
   const button = value.gainButton;

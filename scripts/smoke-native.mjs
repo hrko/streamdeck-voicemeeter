@@ -63,7 +63,7 @@ server.on("upgrade", (request, connection, head) => {
         } else if (message.event === "setFeedback") {
           assert.ok(invalidRejected && layoutSelected);
           assert.equal(message.context, "smoke-action");
-          assert.equal(typeof message.payload.title.value, "string");
+          assert.equal(typeof message.payload.channelLabel.value, "string");
           for (const key of ["icon", "levelMeter", "gainSlider", "status"]) {
             assert.match(message.payload[key].value, /^data:image\/svg\+xml;base64,/);
             const svg = Buffer.from(message.payload[key].value.split(",")[1], "base64").toString();

@@ -50,20 +50,23 @@ pub fn feedback(
             .unwrap_or_else(|| format!("{:?} {}", config.target.kind, config.target.index));
         let muted = channel.is_some_and(|c| c.mute);
         let positive = colors.highlight_positive && channel.is_some_and(|c| c.gain > 0.0);
-        payload.insert(format!("title{suffix}"), serde_json::json!({"value":label,"enabled":style.show_label,"color": if positive {&colors.positive_label_color} else {&colors.label_color}}));
+        payload.insert(format!("channelLabel{suffix}"), serde_json::json!({"value":label,"enabled":style.show_label,"color": if positive {&style.positive_label_color} else {&style.label_color}}));
         let bg = if muted {
             &colors.muted_background
         } else {
             &colors.background
         };
-        payload.insert(
-            format!("background{suffix}"),
-            Value::String(render::data_url(&svg(
-                if combo { 100 } else { 200 },
-                100,
-                &format!(r#"<rect width="100%" height="100%" fill="{bg}"/>"#),
-            ))),
-        );
+        let background_width = if combo { 100 } else { 200 };
+        let opacity = if muted {
+            style.muted_background_opacity
+        } else {
+            style.background_opacity
+        };
+        payload.insert(format!("background{suffix}"), serde_json::json!({
+            "value":render::data_url(&svg(background_width,100,&format!(r#"<rect width="{background_width}" height="100" fill="{bg}"/>"#))),
+            "enabled":opacity != 0,
+            "opacity":f32::from(opacity)/100.0,
+        }));
         let gain = channel
             .map(|c| {
                 let number = crate::numbers::gain(c.gain, language);
@@ -308,6 +311,46 @@ fn meter(width: usize, padding: usize, levels: [f32; 2], peaks: [f32; 2]) -> Str
 mod tests {
     use super::*;
     #[test]
+    fn opacity_migration_background_extent_and_label_colors() {
+        use base64::Engine;
+        let fresh: Settings = serde_json::from_value(serde_json::json!({})).unwrap();
+        assert_eq!(fresh.dial.styles[0].background_opacity, 0);
+        let old: Settings = serde_json::from_value(serde_json::json!({"schemaVersion":1})).unwrap();
+        assert_eq!(old.dial.styles[0].background_opacity, 100);
+        let mut settings = old;
+        settings.dial.styles[0].background_opacity = 40;
+        settings.dial.styles[0].palette.label_color = "#000000".into();
+        settings.dial.styles[0].label_color = "#abcdef".into();
+        for kind in [ActionKind::Gain, ActionKind::Combo] {
+            let (p, _) = feedback(
+                &Snapshot::default(),
+                &settings,
+                kind,
+                &mut IconCache::default(),
+                "en",
+            );
+            assert!((p["background"]["opacity"].as_f64().unwrap() - 0.4).abs() < 0.0001);
+            let img = p["background"]["value"].as_str().unwrap();
+            let svg = String::from_utf8(
+                base64::engine::general_purpose::STANDARD
+                    .decode(img.split_once(',').unwrap().1)
+                    .unwrap(),
+            )
+            .unwrap();
+            assert!(svg.contains(if kind == ActionKind::Gain {
+                "<rect width=\"200\" height=\"100\""
+            } else {
+                "<rect width=\"100\" height=\"100\""
+            }));
+            assert!(!svg.contains('%'));
+            assert_eq!(p["channelLabel"]["color"], "#abcdef");
+            if kind == ActionKind::Combo {
+                assert_eq!(p["channelLabel1"]["color"], "#abcdef");
+            }
+        }
+    }
+
+    #[test]
     fn appearance_toggles_colors_and_combo_sharing_are_independent_of_channels() {
         use base64::Engine;
         let image = |p: &Value, key: &str| -> String {
@@ -358,7 +401,7 @@ mod tests {
             "en",
         );
         for suffix in ["", "1"] {
-            assert_eq!(shared[format!("title{suffix}")]["enabled"], false);
+            assert_eq!(shared[format!("channelLabel{suffix}")]["enabled"], false);
             assert_eq!(shared[format!("icon{suffix}")]["enabled"], false);
             assert_eq!(shared[format!("levelMeter{suffix}")]["enabled"], false);
             assert_eq!(shared[format!("gainValue{suffix}")]["color"], "#abcdef");
@@ -373,10 +416,10 @@ mod tests {
             &mut IconCache::default(),
             "en",
         );
-        assert_eq!(split["title"]["enabled"], false);
-        assert_eq!(split["title1"]["enabled"], true);
+        assert_eq!(split["channelLabel"]["enabled"], false);
+        assert_eq!(split["channelLabel1"]["enabled"], true);
         assert_eq!(split["gainValue1"]["color"], "#ffffff");
-        assert_eq!(split["title1"]["value"], "Bus 0");
+        assert_eq!(split["channelLabel1"]["value"], "Bus 0");
     }
 
     #[test]
@@ -447,7 +490,7 @@ mod tests {
                 layout["items"].as_array().unwrap().len()
             );
             assert!(
-                payload["title"]["value"]
+                payload["channelLabel"]["value"]
                     .as_str()
                     .unwrap()
                     .starts_with("Strip")
@@ -477,7 +520,7 @@ mod tests {
             &mut IconCache::default(),
             "en",
         );
-        assert_eq!(gain["title"]["value"], "<script>&日本語");
+        assert_eq!(gain["channelLabel"]["value"], "<script>&日本語");
         assert_eq!(gain["gainValue"]["value"], "-12.5 dB");
         let (combo, _) = feedback(
             &snapshot,

@@ -116,7 +116,7 @@ impl Default for MacroSettings {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Settings {
     pub dial: DialSettings,
@@ -278,6 +278,10 @@ pub struct DialStyle {
     pub show_mono: bool,
     pub show_eq: bool,
     pub meter_notch: bool,
+    pub background_opacity: u8,
+    pub muted_background_opacity: u8,
+    pub label_color: String,
+    pub positive_label_color: String,
     pub empty_bar_color: String,
     pub gain_color: String,
     pub positive_gain_color: String,
@@ -297,6 +301,10 @@ impl Default for DialStyle {
             show_mono: true,
             show_eq: true,
             meter_notch: false,
+            background_opacity: 0,
+            muted_background_opacity: 0,
+            label_color: "#ffffff".into(),
+            positive_label_color: "#ffffff".into(),
             empty_bar_color: "#2c3d4d".into(),
             gain_color: "#ffffff".into(),
             positive_gain_color: "#ffffff".into(),
@@ -420,6 +428,9 @@ impl Settings {
             channel.icon.validate(&format!("{field}.icon"))?;
         }
         for style in &self.dial.styles {
+            if style.background_opacity > 100 || style.muted_background_opacity > 100 {
+                return Err(ValidationError::new("invalidOpacity", "dial"));
+            }
             let p = &style.palette;
             for color in [
                 &p.bar_color,
@@ -437,6 +448,8 @@ impl Settings {
                 &p.meter_muted_low,
                 &p.meter_muted_mid,
                 &p.meter_muted_high,
+                &style.label_color,
+                &style.positive_label_color,
                 &style.empty_bar_color,
                 &style.gain_color,
                 &style.positive_gain_color,
@@ -526,6 +539,66 @@ pub fn typescript() -> String {
             .collect::<Vec<_>>()
             .join("\n")
     )
+}
+
+// Distinguish a newly placed action ({}) from existing serialized settings.
+impl<'de> Deserialize<'de> for Settings {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let mut value = serde_json::Value::deserialize(deserializer)?;
+        if let Some(object) = value.as_object_mut()
+            && !object.is_empty()
+        {
+            let dial = object
+                .entry("dial")
+                .or_insert_with(|| serde_json::json!({}));
+            if let Some(dial) = dial.as_object_mut() {
+                let styles = dial
+                    .entry("styles")
+                    .or_insert_with(|| serde_json::json!([{}, {}]));
+                if let Some(styles) = styles.as_array_mut() {
+                    for style in styles {
+                        if let Some(style) = style.as_object_mut() {
+                            style
+                                .entry("backgroundOpacity")
+                                .or_insert(serde_json::json!(100));
+                            style
+                                .entry("mutedBackgroundOpacity")
+                                .or_insert(serde_json::json!(100));
+                        }
+                    }
+                }
+            }
+        }
+        #[derive(Deserialize)]
+        #[serde(default, rename_all = "camelCase")]
+        struct Wire {
+            schema_version: u32,
+            channels: [ChannelSettings; 2],
+            macro_button: MacroSettings,
+            gain_button: GainButtonSettings,
+            dial: DialSettings,
+        }
+        impl Default for Wire {
+            fn default() -> Self {
+                let s = Settings::default();
+                Self {
+                    schema_version: s.schema_version,
+                    channels: s.channels,
+                    macro_button: s.macro_button,
+                    gain_button: s.gain_button,
+                    dial: s.dial,
+                }
+            }
+        }
+        let w: Wire = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
+        Ok(Self {
+            schema_version: w.schema_version,
+            channels: w.channels,
+            macro_button: w.macro_button,
+            gain_button: w.gain_button,
+            dial: w.dial,
+        })
+    }
 }
 
 #[cfg(test)]

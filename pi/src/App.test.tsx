@@ -4,6 +4,7 @@ import { I18nextProvider } from "react-i18next";
 import type { StreamDeckPiApi } from "@mikanseilaboratory/streamdeck-pi-client";
 import { App } from "./App";
 import { createLocalization } from "./i18n";
+import { restoreSettings } from "./settings";
 import { defaultSettings, type Settings } from "./generated/contracts";
 
 afterEach(cleanup);
@@ -25,6 +26,14 @@ async function setup(action = "gain-control-combo", settings: unknown = defaultS
 }
 
 describe("property inspector forms", () => {
+  it("migrates existing backgrounds to opaque and keeps new backgrounds transparent", () => {
+    expect(restoreSettings({}).settings?.dial.styles[0].backgroundOpacity).toBe(0);
+    expect(restoreSettings({schemaVersion:1}).settings?.dial.styles[0].backgroundOpacity).toBe(100);
+    expect(restoreSettings({dial:{styles:[{},{}]}}).settings?.dial.styles[1].mutedBackgroundOpacity).toBe(100);
+    const saved=structuredClone(defaultSettings);saved.dial.styles[0].backgroundOpacity=40;
+    expect(restoreSettings(saved).settings?.dial.styles[0].backgroundOpacity).toBe(40);
+  });
+
   it("edits shared and independent dial appearances without changing targets or steps", async () => {
     const {client}=await setup();
     expect((screen.getByLabelText("Use the same appearance on both sides") as HTMLInputElement).checked).toBe(true);
